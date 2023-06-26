@@ -1,12 +1,8 @@
-<div class="main-grid-container">
-            <div class="grid-container">
-                <% data.json.forEach(function callback(element, index) { %>
-                    <div class="grid-item" onclick="displaySongs( <%= index %> )"><%= element.name %> </div>
-                    <% }); %>
- 
-            </div>
-        <div class="grid-container2" id="grid-container2">
-           
-                
-            </div>
-        </div>
+  .popup-button-container {
+    position: absolute;
+    left: 1vw;
+    top: 1vh;
+    height: 9vh;
+    width: 10vw;
+    overflow: hidden;
+  }

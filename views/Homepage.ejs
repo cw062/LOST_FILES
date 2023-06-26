@@ -16,18 +16,20 @@
         <div class="popup">
             <iframe class="popup-iframe" src="/add_tracks" title="ADDTRACKS"></iframe>
         </div>  
-        <div class="main-grid-container">
-            <div class="grid-container">
+        <div class="playlist-list-container">
+            <ul class="playlist-list">
                 <% data.json.forEach(function callback(element, index) { %>
-                    <div class="grid-item" onclick="displaySongs( <%= index %> )"><%= element.name %> </div>
+                    <li class="playlist-list-item<%=index%>" onclick="handleListClick( <%= index %> )"><%= element.name %> </li>
                     <% }); %>
  
-            </div>
+                </ul>
         </div>
+          <div class="playlist-songs-container">
             <ul class="list" id ="list">
             
                     
                 </ul>
+          </div>
     </div>
 
 
@@ -248,6 +250,19 @@
             }
           }
 
+          function handleListClick(index) {
+            displaySongs(index);
+            changeListTextColor(index);
+            currentPlaylist = index;
+          }
+
+          function changeListTextColor(index) {
+            document.querySelector('.playlist-list-item' + currentPlaylist).style.color = '#F072A9';
+            const name = '.playlist-list-item' + index;
+            document.querySelector(name).style.color = 'white';
+
+          }
+
           function displaySongs(index) {
 
             for (i = 0; i < track_list.length; i++) {
@@ -256,9 +271,9 @@
                 }
             }
             track_list = datajson[index].data;
-            currentPlaylist = index;
             for (i = 0; i < track_list.length; i++) {
                     var li = document.createElement('li');
+                    li.className = "playlist-songs-item";
                     li.innerText = track_list[i].name;
                     playlistData.appendChild(li);
             }
