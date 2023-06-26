@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "*.ejs": "html"
+    },
+    "emmet.includeLanguages": {
+        "ejs": "html"
+    },
+    "htmlhint.options": {
+        "spec-char-escape": false,
+        "doctype-first": false
+    },
+    "html.validate.scripts": false,
+}

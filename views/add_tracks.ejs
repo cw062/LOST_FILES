@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<link rel="stylesheet" type="text/css" href="/style.css">
+<head>
+    <title>ADD TRACKS</title>
+</head>
+<body stlye="overflow:hidden">
+<div class="form-style-3">
+    <h1 class="add-tracks-title">ADD TRACKS</h1>
+    <!--<div class="browse-button">
+        <input type="file" id="file" name="file" accept=".wav, .mp3">
+        </div><br></br>-->
+    <form action="/add_tracks" method="POST" enctype="multipart/form-data">
+    <div class="text-input-container">
+        <label for="field1"><span>Track Name</span><input type="text" class="input-field" name="nameData" value="" /></label>
+    </div>
+    <div class="text-input-container">
+        <label for="field2"><span>Artist    </span><input type="text" class="input-field" name="artistData" value="" /></label>
+    </div>
+        
+    <div class="drop-zone">
+		<span class="drop-zone__prompt">Drop file here or click to upload</span>
+		<input type="file" name="file" id="file" accept=".wav, .mp3" class="drop-zone__input">
+	</div>
+    <div class="submit-button-container">
+        <input class="submit-button" type="submit" value="Submit" name="submit">
+    </div>
+</form>
+</div>
+<script type="text/javascript">
+    document.querySelectorAll(".drop-zone__input").forEach((inputElement) => {
+	const dropZoneElement = inputElement.closest(".drop-zone");
+
+	dropZoneElement.addEventListener("click", (e) => {
+		inputElement.click();
+	});
+
+	inputElement.addEventListener("change", (e) => {
+		if (inputElement.files.length) {
+			updateThumbnail(dropZoneElement, inputElement.files[0]);
+		}
+	});
+
+	dropZoneElement.addEventListener("dragover", (e) => {
+		e.preventDefault();
+		dropZoneElement.classList.add("drop-zone--over");
+	});
+
+	["dragleave", "dragend"].forEach((type) => {
+		dropZoneElement.addEventListener(type, (e) => {
+			dropZoneElement.classList.remove("drop-zone--over");
+		});
+	});
+
+	dropZoneElement.addEventListener("drop", (e) => {
+		e.preventDefault();
+
+		if (e.dataTransfer.files.length) {
+			inputElement.files = e.dataTransfer.files;
+			updateThumbnail(dropZoneElement, e.dataTransfer.files[0]);
+		}
+
+		dropZoneElement.classList.remove("drop-zone--over");
+	});
+});
+
+/**
+ * Updates the thumbnail on a drop zone element.
+ *
+ * @param {HTMLElement} dropZoneElement
+ * @param {File} file
+ */
+function updateThumbnail(dropZoneElement, file) {
+	let thumbnailElement = dropZoneElement.querySelector(".drop-zone__thumb");
+
+	// First time - remove the prompt
+	if (dropZoneElement.querySelector(".drop-zone__prompt")) {
+		dropZoneElement.querySelector(".drop-zone__prompt").remove();
+	}
+
+	// First time - there is no thumbnail element, so lets create it
+	if (!thumbnailElement) {
+		thumbnailElement = document.createElement("div");
+		thumbnailElement.classList.add("drop-zone__thumb");
+		dropZoneElement.appendChild(thumbnailElement);
+	}
+
+	thumbnailElement.dataset.label = file.name;
+
+	// Show thumbnail for image files
+	if (file.type.startsWith("image/")) {
+		const reader = new FileReader();
+
+		reader.readAsDataURL(file);
+		reader.onload = () => {
+			thumbnailElement.style.backgroundImage = `url('${reader.result}')`;
+		};
+	} else {
+		thumbnailElement.style.backgroundImage = null;
+	}
+}
+</script>
+</body>
+</html>
