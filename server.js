@@ -14,6 +14,8 @@ app.use(cors());
 app.set('view engine', 'ejs');
 const public = path.join(__dirname, 'public');
 const port = 5000;   
+
+//hello world
 /*
 const pool = mysql.createPool({
   host: "database-1.ceoemktliflj.us-east-1.rds.amazonaws.com",
