@@ -60,7 +60,7 @@ body {
   .playpause-track,
   .prev-track,
   .next-track {
-    padding: 25px;
+    padding: 0px;
     opacity: 0.8;
     
     /* Smoothly transition the opacity */
@@ -79,7 +79,16 @@ body {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: center;
+    justify-content: start;
+    position: fixed;
+    top: 90vh;
+    left: 1vw;
+    width: 98vw;
+    background-color: black;
+    color: #F072A9;
+    border: 2px solid #F072A9;
+    border-radius: 10px;
+    padding: 0px;    
   } 
     
   /* Modify the appearance of the slider */
@@ -87,12 +96,13 @@ body {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    height: 5px;
-    background: black;
-    opacity: 0.7;
+    height: 1vh;
+    background: #F072A9;
+    opacity: .65;
     -webkit-transition: .2s;
     transition: opacity .2s;
-    width: 60%;
+    width: 90%;
+    border-radius: 10px;
   }
     
   /* Modify the appearance of the slider thumb */
@@ -117,12 +127,16 @@ body {
     
   .current-time,
   .total-duration {
-    padding: 10px;
+    font-size: 1vw;
+    padding-top: 1vh;
+    padding-bottom: 1vh;
+    padding-left: 1vw;
+    padding-right: 1vw;
   }
     
   i.fa-volume-down,
   i.fa-volume-up {
-    padding: 10px;
+    padding: 0px;
   }
     
   /* Change the mouse cursor to a pointer
@@ -131,7 +145,11 @@ body {
   i.fa-pause-circle,
   i.fa-step-forward,
   i.fa-step-backward {
+    display: flex;
+    font-size: 1vw;
     cursor: pointer;
+    padding-left: 1vw;
+    padding-right: 1vw;
   }
 
  
@@ -361,7 +379,7 @@ body {
   padding: 0px;
   color: #F072A9;
   top: 8vh;
-  left: 11vw;
+  left: 12vw;
   width: 10vw;
   height: 80vh;
   overflow-x: hidden;
@@ -369,6 +387,12 @@ body {
   direction: rtl;
   border-radius: 10px;
   border: 2px solid #F072A9;
+  scrollbar-color: #F072A9 black;
+  scrollbar-width: none;
+
+}
+.playlist-songs-container::-webkit-scrollbar {
+  display: none;
 }
 
 .list {
@@ -377,7 +401,6 @@ body {
   padding: 0px;
   margin: 0px;
   direction: ltr;
-
 }
 
 .playlist-songs-item {
@@ -399,7 +422,14 @@ body {
   overflow-y: scroll;
   border-radius: 10px;
   border: 2px solid #F072A9;
+  scrollbar-color: #F072A9 black;
+  scrollbar-width: none;
 }
+
+.playlist-list-container::-webkit-scrollbar {
+  display: none;
+}
+
 .playlist-list {
   list-style: none;
   padding: 0px;

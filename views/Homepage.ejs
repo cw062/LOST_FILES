@@ -44,15 +44,7 @@
         </div>
     </div>
     <div class="buttons">
-        <div class="next-track" onclick="nextTrack()">
-        <i class="fa fa-step-backward fa-2x"></i>
-    </div>
-    <div class="playpause-track" onclick="playpauseTrack()">
-        <i class="fa fa-play-circle fa-5x"></i>
-    </div>
-    <div class="prev-track" onclick="prevTrack()">
-        <i class="fa fa-step-forward fa-2x"></i>
-    </div>
+        
     </div>
 
     <!--Seek Slider-->
@@ -61,6 +53,15 @@
         <input type="range" min="1" max="100" value="0"
             class="seek_slider" onchange="seekTo()">
         <div class="total-duration">00:00</div>
+        <div class="next-track" onclick="nextTrack()">
+          <i class="fa fa-step-backward fa-2x"></i>
+      </div>
+      <div class="playpause-track" onclick="playpauseTrack()">
+          <i class="fa fa-play-circle fa-5x"></i>
+      </div>
+      <div class="prev-track" onclick="prevTrack()">
+          <i class="fa fa-step-forward fa-2x"></i>
+      </div>
     </div>
 
     <script type="text/javascript">
@@ -84,7 +85,15 @@
         const popup_button = document.querySelector(".popup-button");
         const overlay = document.querySelector(".overlay");
         const popup = document.querySelector(".popup"); 
-        
+        let list_items = document.querySelectorAll(".playlist-songs-item");
+        const list_container = document.querySelector(".playlist-songs-container");
+        let playlistDisplaying = false;
+        let scrollAdder = 0;
+        let scrollPosition = 0;
+      
+    
+     
+  
         popup_button.addEventListener("click", function() {
             overlay.style.display = "block";
             popup.style.display = "block";
@@ -254,6 +263,54 @@
             displaySongs(index);
             changeListTextColor(index);
             currentPlaylist = index;
+            playlistDisplaying = true;
+            addDrag();
+          }
+
+      const initSortableList = (e) => {
+      e.preventDefault();
+      const draggingItem = document.querySelector(".dragging");
+      // Getting all items except currently dragging and making array of them
+      let siblings = [...list.querySelectorAll(".playlist-songs-item:not(.dragging)")];
+      // Finding the sibling after which the dragging item should be placed
+      let nextSibling = siblings.find(sibling => {
+        console.log(e.clientY);
+        console.log(list_container.offsetHeight);
+        console.log(list_container.offsetTop);
+        console.log(sibling.offsetHeight);
+        console.log(sibling.offsetTop);
+        console.log(" ");
+        if (scrollPosition == 0 && (e.clientY > (list_container.offsetHeight + list_container.offsetTop) * 0.8)) {
+          console.log("should be scrollin" + scrollAdder);
+          scrollAdder += sibling.offsetTop;
+          list_container.scroll({top: scrollAdder, behavior: "smooth"});
+          scrollPosition = 1;
+        } else if (scrollPosition == 1 && (e.clientY < sibling.offsetHeight * 2)) {
+          console.log("should be scrollin" + scrollAdder);
+          scrollAdder -= list_container.height - sibling.offsetTop;
+          list_container.scroll({top: scrollAdder, behavior: "smooth"});
+          scrollPosition = 0;
+        }
+        return e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2;
+      });
+
+      // Inserting the dragging item before the found sibling
+      list.insertBefore(draggingItem, nextSibling);
+      }
+      list.addEventListener("dragover", initSortableList);
+      list.addEventListener("dragenter", e => e.preventDefault());
+
+
+
+
+          function addDrag() {
+            list_items = document.querySelectorAll(".playlist-songs-item");
+            list_items.forEach(item => {
+            item.addEventListener("dragstart", () => {
+              setTimeout( () => item.classList.add("dragging"), 0);
+            });
+            item.addEventListener("dragend", () => item.classList.remove("dragging"));
+          });
           }
 
           function changeListTextColor(index) {
@@ -274,7 +331,9 @@
             for (i = 0; i < track_list.length; i++) {
                     var li = document.createElement('li');
                     li.className = "playlist-songs-item";
+                    li.draggable = true;
                     li.innerText = track_list[i].name;
+                    li.id = i;
                     playlistData.appendChild(li);
             }
           }

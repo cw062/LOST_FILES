@@ -62,7 +62,23 @@ app.get('/', (req, res) => {
       data: [
         {
           id: 0,
-          name: "Italy",
+          name: "Fisrt",
+          artist: "Yeezy",
+          image: "yeee.png",
+          path: "italy.wav",
+          ts: 4,
+          te: 220
+        }, {
+          id: 1,
+          name: "Second",
+          artist: "Yeezy",
+          image: "yeee.png",
+          path: "Diamonds.wav",
+          ts: 3,
+          te: 260
+        }, {
+          id: 0,
+          name: "Third",
           artist: "Yeezy",
           image: "yeee.png",
           path: "italy.wav",
@@ -118,23 +134,7 @@ app.get('/', (req, res) => {
           te: 220
         }, {
           id: 1,
-          name: "Diamonds",
-          artist: "Yeezy",
-          image: "yeee.png",
-          path: "Diamonds.wav",
-          ts: 3,
-          te: 260
-        }, {
-          id: 0,
-          name: "Italy",
-          artist: "Yeezy",
-          image: "yeee.png",
-          path: "italy.wav",
-          ts: 4,
-          te: 220
-        }, {
-          id: 1,
-          name: "Diamonds",
+          name: "tenth",
           artist: "Yeezy",
           image: "yeee.png",
           path: "Diamonds.wav",
