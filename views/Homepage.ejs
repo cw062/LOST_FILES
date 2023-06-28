@@ -89,7 +89,6 @@
         const list_container = document.querySelector(".playlist-songs-container");
         let playlistDisplaying = false;
         let scrollAdder = 0;
-        let scrollPosition = 0;
       
     
      
@@ -145,7 +144,7 @@
             
             // Apply a random background color
             random_bg_color();
-          }
+        }
             
           function random_bg_color() {
             // Get a random number between 64 to 256
@@ -266,7 +265,7 @@
             playlistDisplaying = true;
             addDrag();
           }
-
+        var scrollPosition = list_container.scrollTop;
       const initSortableList = (e) => {
       e.preventDefault();
       const draggingItem = document.querySelector(".dragging");
@@ -274,22 +273,33 @@
       let siblings = [...list.querySelectorAll(".playlist-songs-item:not(.dragging)")];
       // Finding the sibling after which the dragging item should be placed
       let nextSibling = siblings.find(sibling => {
-        console.log(e.clientY);
-        console.log(list_container.offsetHeight);
-        console.log(list_container.offsetTop);
-        console.log(sibling.offsetHeight);
-        console.log(sibling.offsetTop);
-        console.log(" ");
-        if (scrollPosition == 0 && (e.clientY > (list_container.offsetHeight + list_container.offsetTop) * 0.8)) {
-          console.log("should be scrollin" + scrollAdder);
-          scrollAdder += sibling.offsetTop;
-          list_container.scroll({top: scrollAdder, behavior: "smooth"});
-          scrollPosition = 1;
-        } else if (scrollPosition == 1 && (e.clientY < sibling.offsetHeight * 2)) {
-          console.log("should be scrollin" + scrollAdder);
-          scrollAdder -= list_container.height - sibling.offsetTop;
-          list_container.scroll({top: scrollAdder, behavior: "smooth"});
-          scrollPosition = 0;
+        console.log(list_container.scrollTop);
+        console.log(list_container.clientTop + "pdcT");
+        console.log(playlistData.clientHeight + "pdch");
+        console.log(list_container.offsetHeight + "lcoh");
+        console.log(list_container.offsetTop + "lcot");
+        console.log(sibling.offsetHeight + "soh");
+        console.log(sibling.offsetTop + "sot");
+        console.log(list_items.length + "lil");
+        console.log(list_items.clientHeight + "lih");
+
+
+        if ((e.clientY > (list_container.offsetHeight + list_container.offsetTop) * 0.8)) {
+
+          if (scrollAdder < playlistData.clientHeight - list_container.offsetHeight) {
+          scrollAdder += .5;
+          list_container.scroll({top: scrollAdder, behavior: "auto"});   
+          console.log(list_container.scrollTop);  
+          }
+
+        } 
+        if ((e.clientY < (list_container.offsetHeight + list_container.offsetTop) / 2)) {
+          if (scrollAdder >= 0) {
+          scrollAdder -= .5;
+          list_container.scroll({top: scrollAdder, behavior: "auto"});
+          console.log(list_container.scrollTop);
+          }
+
         }
         return e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2;
       });
