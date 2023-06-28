@@ -267,21 +267,14 @@
           }
         var scrollPosition = list_container.scrollTop;
       const initSortableList = (e) => {
-      e.preventDefault();
+      //e.preventDefault();
       const draggingItem = document.querySelector(".dragging");
       // Getting all items except currently dragging and making array of them
       let siblings = [...list.querySelectorAll(".playlist-songs-item:not(.dragging)")];
       // Finding the sibling after which the dragging item should be placed
+      scrollAdder = list_container.scrollTop;
       let nextSibling = siblings.find(sibling => {
-        console.log(list_container.scrollTop);
-        console.log(list_container.clientTop + "pdcT");
-        console.log(playlistData.clientHeight + "pdch");
-        console.log(list_container.offsetHeight + "lcoh");
-        console.log(list_container.offsetTop + "lcot");
-        console.log(sibling.offsetHeight + "soh");
-        console.log(sibling.offsetTop + "sot");
-        console.log(list_items.length + "lil");
-        console.log(list_items.clientHeight + "lih");
+        
 
 
         if ((e.clientY > (list_container.offsetHeight + list_container.offsetTop) * 0.8)) {
@@ -289,7 +282,6 @@
           if (scrollAdder < playlistData.clientHeight - list_container.offsetHeight) {
           scrollAdder += .5;
           list_container.scroll({top: scrollAdder, behavior: "auto"});   
-          console.log(list_container.scrollTop);  
           }
 
         } 
@@ -297,18 +289,17 @@
           if (scrollAdder >= 0) {
           scrollAdder -= .5;
           list_container.scroll({top: scrollAdder, behavior: "auto"});
-          console.log(list_container.scrollTop);
           }
 
         }
-        return e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2;
+        return e.clientY + scrollAdder <= sibling.offsetTop + sibling.offsetHeight;
       });
 
       // Inserting the dragging item before the found sibling
       list.insertBefore(draggingItem, nextSibling);
       }
       list.addEventListener("dragover", initSortableList);
-      list.addEventListener("dragenter", e => e.preventDefault());
+      list.addEventListener("dragenter");
 
 
 
