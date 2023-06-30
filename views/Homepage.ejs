@@ -25,10 +25,10 @@
                 </ul>
         </div>
           <div class="playlist-songs-container">
-            <ul class="list" id ="list">
+            <ol class="list" id ="list">
             
                     
-                </ul>
+                </ol>
           </div>
     </div>
 
@@ -53,13 +53,13 @@
         <input type="range" min="1" max="100" value="0"
             class="seek_slider" onchange="seekTo()">
         <div class="total-duration">00:00</div>
-        <div class="next-track" onclick="nextTrack()">
+        <div class="prev-track" onclick="prevTrack()">
           <i class="fa fa-step-backward fa-2x"></i>
       </div>
       <div class="playpause-track" onclick="playpauseTrack()">
           <i class="fa fa-play-circle fa-5x"></i>
       </div>
-      <div class="prev-track" onclick="prevTrack()">
+      <div class="next-track" onclick="nextTrack()">
           <i class="fa fa-step-forward fa-2x"></i>
       </div>
     </div>
@@ -87,10 +87,16 @@
         const popup = document.querySelector(".popup"); 
         let list_items = document.querySelectorAll(".playlist-songs-item");
         const list_container = document.querySelector(".playlist-songs-container");
+        let track_list = datajson[currentPlaylist].data; 
         let playlistDisplaying = false;
         let scrollAdder = 0;
-      
-    
+        var track_index = 0;
+        let isPlaying = false;
+        let updateTimer;
+        var droppedElementId = 0;
+        var draggingElementId = 0;
+        var dragStartPosition = 0;
+        var dragEndPosition = 0;
      
   
         popup_button.addEventListener("click", function() {
@@ -104,33 +110,34 @@
         });
 
         // Specify globally used values
-        let track_index = 0;
-        let isPlaying = false;
-        let updateTimer;
+        
           
         // Create the audio element for the player
         let curr_track = document.createElement('audio');
-        let track_list = datajson[currentPlaylist].data; 
         
         
         
         // Define the list of tracks that have to be played
         
         
+
+
         function loadTrack(track_index) {
             // Clear the previous seek timer
             clearInterval(updateTimer);
             resetValues();
-            
+            console.log("loadTrack: " + track_index);
+
+            var current_track = track_id_finder(track_index);
             // Load a new track
-            curr_track.src = track_list[track_index].path;
+            curr_track.src = track_list[current_track].path;
             curr_track.load();
             
             // Update details of the track
             track_art.style.backgroundImage = 
-               "url(" + track_list[track_index].image + ")";
-            track_name.textContent = track_list[track_index].name;
-            track_artist.textContent = track_list[track_index].artist;
+               "url(" + track_list[current_track].image + ")";
+            track_name.textContent = track_list[current_track].name;
+            track_artist.textContent = track_list[current_track].artist;
             now_playing.textContent = 
                "PLAYING " + (track_index + 1) + " OF " + track_list.length;
             
@@ -198,6 +205,7 @@
             if (track_index < track_list.length - 1)
               track_index += 1;
             else track_index = 0;
+            console.log("nextTrack: " + track_index);
             
             // Load and play the new track
             loadTrack(track_index);
@@ -266,42 +274,86 @@
             addDrag();
           }
         var scrollPosition = list_container.scrollTop;
-      const initSortableList = (e) => {
-      //e.preventDefault();
-      const draggingItem = document.querySelector(".dragging");
-      // Getting all items except currently dragging and making array of them
-      let siblings = [...list.querySelectorAll(".playlist-songs-item:not(.dragging)")];
-      // Finding the sibling after which the dragging item should be placed
-      scrollAdder = list_container.scrollTop;
-      let nextSibling = siblings.find(sibling => {
-        
+        const initSortableList = (e) => {
+          e.preventDefault();
+          const draggingItem = document.querySelector(".dragging");
+          // Getting all items except currently dragging and making array of them
+          let siblings = [...list.querySelectorAll(".playlist-songs-item:not(.dragging)")];
+          // Finding the sibling after which the dragging item should be placed
+          scrollAdder = list_container.scrollTop;
+          let nextSibling = siblings.find(sibling => {
+          
 
+            //Logic for scrolling
+            //TODO probably remove scrollAdder and use scrollPosition
+            if ((e.clientY > (list_container.offsetHeight + list_container.offsetTop) * 0.8)) {
 
-        if ((e.clientY > (list_container.offsetHeight + list_container.offsetTop) * 0.8)) {
+              if (scrollAdder < playlistData.clientHeight - list_container.offsetHeight) {
+              scrollAdder += .5;
+              list_container.scroll({top: scrollAdder, behavior: "auto"});   
+              }
 
-          if (scrollAdder < playlistData.clientHeight - list_container.offsetHeight) {
-          scrollAdder += .5;
-          list_container.scroll({top: scrollAdder, behavior: "auto"});   
-          }
+            } 
+            if ((e.clientY < (list_container.offsetHeight + list_container.offsetTop) / 2)) {
+              if (scrollAdder >= 0) {
+              scrollAdder -= .5;
+              list_container.scroll({top: scrollAdder, behavior: "auto"});
+              }
 
-        } 
-        if ((e.clientY < (list_container.offsetHeight + list_container.offsetTop) / 2)) {
-          if (scrollAdder >= 0) {
-          scrollAdder -= .5;
-          list_container.scroll({top: scrollAdder, behavior: "auto"});
-          }
+            }
 
-        }
-        return e.clientY + scrollAdder <= sibling.offsetTop + sibling.offsetHeight;
-      });
+            
 
-      // Inserting the dragging item before the found sibling
-      list.insertBefore(draggingItem, nextSibling);
+            return e.clientY + scrollAdder <= sibling.offsetTop + sibling.offsetHeight;
+          });
+
+          // Inserting the dragging item before the found sibling   
+            if (nextSibling == undefined) {
+              droppedElementId = track_list.length-1;
+            } else {
+              droppedElementId = nextSibling.id;
+            }
+            draggingElementId = draggingItem.id;
+
+            list.insertBefore(draggingItem, nextSibling);
+
       }
-      list.addEventListener("dragover", initSortableList);
-      list.addEventListener("dragenter");
+        playlistData.addEventListener("drop", (event) => reorderPlaylist(draggingElementId, droppedElementId)); 
+        playlistData.addEventListener("dragover", initSortableList);
+        playlistData.addEventListener("dragenter", e => e.preventDefault());
 
 
+        function reorderPlaylist(draggingElementId, droppedElementId) {
+         const startPos = track_list[draggingElementId].index;
+         const endPos = track_list[droppedElementId].index;
+          if (startPos > endPos) { //moved up
+            for (i = startPos - 1; i >= endPos; i--) {
+              track_list.find(o => o.index === i).index = i+1;
+            }
+            track_list[draggingElementId].index = endPos;
+            track_index = endPos;                                     //todo organize this
+          } else {        //moved down
+            for (i = startPos + 1; i < endPos; i++) {
+              track_list.find(o => o.index === i).index = i-1;
+            }
+            track_list[draggingElementId].index = endPos-1;
+            track_index = endPos-1;
+          }
+          
+          
+
+          //color
+          //todo should be in a seperate function
+          console.log(playlistData.childNodes);
+          for(i = 0; i < playlistData.childNodes.length; i++) {
+            console.log('here');
+            if (i %2 == 0)
+                      playlistData.childNodes[i].style.color = 'white';
+            else {
+              playlistData.childNodes[i].style.color = '#F072A9';
+            }
+          }
+        }
 
 
           function addDrag() {
@@ -309,8 +361,12 @@
             list_items.forEach(item => {
             item.addEventListener("dragstart", () => {
               setTimeout( () => item.classList.add("dragging"), 0);
+              dragStartPosition = item.offsetTop;
             });
-            item.addEventListener("dragend", () => item.classList.remove("dragging"));
+            item.addEventListener("dragend", () => {
+              item.classList.remove("dragging");
+              dragEndPosition = item.offsetTop;
+            });
           });
           }
 
@@ -330,14 +386,21 @@
             }
             track_list = datajson[index].data;
             for (i = 0; i < track_list.length; i++) {
+                    const elem = track_list.find(o => o.index === i);
                     var li = document.createElement('li');
                     li.className = "playlist-songs-item";
                     li.draggable = true;
-                    li.innerText = track_list[i].name;
+                    li.innerText = elem.name;
                     li.id = i;
+                    if (i %2 == 0)
+                      li.style.color = 'white';
                     playlistData.appendChild(li);
             }
           }
+
+          function track_id_finder(track_index) {
+          return track_list.find(o => o.index === track_index).id;
+        }
 
         
 

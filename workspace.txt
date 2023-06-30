@@ -6,3 +6,11 @@
     width: 10vw;
     overflow: hidden;
   }
+
+  1
+  2{console.log("nextSibling " + temps); console.log(track_list[event.target.id].index)}
+  5
+  3
+  4
+  6
+  7

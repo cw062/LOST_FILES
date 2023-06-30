@@ -397,8 +397,7 @@ body {
 
 .list {
   cursor: pointer;
-  list-style: none;
-  padding: 0px;
+  padding: 2vw;
   margin: 0px;
   direction: ltr;
 }
