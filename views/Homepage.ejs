@@ -10,12 +10,16 @@
     <main class="main-container">
 
     <div class="popup-button-container">
-                <button class="popup-button">ADD SONG</button>
+                <button class="popup-button" onclick="toggleEditMode()">ADD SONG</button>
     </div>
         <div class="overlay"></div>
         <div class="popup">
             <iframe class="popup-iframe" src="/add_tracks" title="ADDTRACKS"></iframe>
         </div>  
+        <div class="edit-playlist-button-container">
+          <button class="edit-playlist-button">Edit Playlist</button>
+
+        </div>
         <div class="playlist-list-container">
             <ul class="playlist-list">
                 <% data.json.forEach(function callback(element, index) { %>
@@ -97,8 +101,10 @@
         var draggingElementId = 0;
         var dragStartPosition = 0;
         var dragEndPosition = 0;
-     
-  
+
+        // Create the audio element for the player
+        let curr_track = document.createElement('audio');
+ 
         popup_button.addEventListener("click", function() {
             overlay.style.display = "block";
             popup.style.display = "block";
@@ -107,39 +113,28 @@
         overlay.addEventListener("click", function() {
             overlay.style.display = "none";
             popup.style.display = "none";
-        });
-
-        // Specify globally used values
-        
-          
-        // Create the audio element for the player
-        let curr_track = document.createElement('audio');
-        
-        
-        
-        // Define the list of tracks that have to be played
-        
+        });        
         
 
+        //Functions
 
         function loadTrack(track_index) {
             // Clear the previous seek timer
             clearInterval(updateTimer);
             resetValues();
             console.log("loadTrack: " + track_index);
-
+                                                                              //May be able to rework this using playlistdata.id
             var current_track = track_id_finder(track_index);
             // Load a new track
             curr_track.src = track_list[current_track].path;
             curr_track.load();
-            
             // Update details of the track
             track_art.style.backgroundImage = 
                "url(" + track_list[current_track].image + ")";
             track_name.textContent = track_list[current_track].name;
             track_artist.textContent = track_list[current_track].artist;
             now_playing.textContent = 
-               "PLAYING " + (track_index + 1) + " OF " + track_list.length;
+               "PLAYING " + (Number(track_index) + 1) + " OF " + track_list.length;
             
             // Set an interval of 1000 milliseconds
             // for updating the seek slider
@@ -271,7 +266,7 @@
             changeListTextColor(index);
             currentPlaylist = index;
             playlistDisplaying = true;
-            addDrag();
+            //addDrag();
           }
         var scrollPosition = list_container.scrollTop;
         const initSortableList = (e) => {
@@ -280,31 +275,28 @@
           // Getting all items except currently dragging and making array of them
           let siblings = [...list.querySelectorAll(".playlist-songs-item:not(.dragging)")];
           // Finding the sibling after which the dragging item should be placed
-          scrollAdder = list_container.scrollTop;
+          //scrollAdder = list_container.scrollTop;
           let nextSibling = siblings.find(sibling => {
           
 
             //Logic for scrolling
-            //TODO probably remove scrollAdder and use scrollPosition
             if ((e.clientY > (list_container.offsetHeight + list_container.offsetTop) * 0.8)) {
-
-              if (scrollAdder < playlistData.clientHeight - list_container.offsetHeight) {
-              scrollAdder += .5;
-              list_container.scroll({top: scrollAdder, behavior: "auto"});   
+              if (list_container.scrollTop < playlistData.clientHeight - list_container.offsetHeight) {
+                list_container.scrollTop += 1;
+                console.log(list_container.scrollTop);
               }
 
             } 
             if ((e.clientY < (list_container.offsetHeight + list_container.offsetTop) / 2)) {
-              if (scrollAdder >= 0) {
-              scrollAdder -= .5;
-              list_container.scroll({top: scrollAdder, behavior: "auto"});
+              if (list_container.scrollTop >= 0) {
+              list_container.scrollTop -= .5;
               }
 
             }
 
             
 
-            return e.clientY + scrollAdder <= sibling.offsetTop + sibling.offsetHeight;
+            return e.clientY + list_container.scrollTop <= sibling.offsetTop + sibling.offsetHeight;
           });
 
           // Inserting the dragging item before the found sibling   
@@ -317,11 +309,37 @@
 
             list.insertBefore(draggingItem, nextSibling);
 
-      }
-        playlistData.addEventListener("drop", (event) => reorderPlaylist(draggingElementId, droppedElementId)); 
+        }
+        //event listeners for playlistdata
+        playlistData.addEventListener("drop", (event) => {
+          reorderPlaylist(draggingElementId, droppedElementId);
+          recolorPlaylist();
+          reloadTrack(track_index);
+        }); 
         playlistData.addEventListener("dragover", initSortableList);
         playlistData.addEventListener("dragenter", e => e.preventDefault());
 
+        function reloadTrack(track_index) {
+          var current_track = track_id_finder(track_index);
+          track_art.style.backgroundImage = 
+               "url(" + track_list[current_track].image + ")";
+            track_name.textContent = track_list[current_track].name;
+            track_artist.textContent = track_list[current_track].artist;
+            now_playing.textContent = 
+               "PLAYING " + (track_index + 1) + " OF " + track_list.length;
+        }
+        
+        function recolorPlaylist() {
+          //recolor playlist so it is always alternating
+          console.log(playlistData.childNodes);
+          for(i = 0; i < playlistData.childNodes.length; i++) {
+            if (i %2 == 0)
+                      playlistData.childNodes[i].style.color = 'white';
+            else {
+              playlistData.childNodes[i].style.color = '#F072A9';
+            }
+          }
+        }
 
         function reorderPlaylist(draggingElementId, droppedElementId) {
          const startPos = track_list[draggingElementId].index;
@@ -331,76 +349,75 @@
               track_list.find(o => o.index === i).index = i+1;
             }
             track_list[draggingElementId].index = endPos;
-            track_index = endPos;                                     //todo organize this
+            track_index = endPos;                                     
           } else {        //moved down
             for (i = startPos + 1; i < endPos; i++) {
               track_list.find(o => o.index === i).index = i-1;
             }
             track_list[draggingElementId].index = endPos-1;
             track_index = endPos-1;
-          }
-          
-          
-
-          //color
-          //todo should be in a seperate function
-          console.log(playlistData.childNodes);
-          for(i = 0; i < playlistData.childNodes.length; i++) {
-            console.log('here');
-            if (i %2 == 0)
-                      playlistData.childNodes[i].style.color = 'white';
-            else {
-              playlistData.childNodes[i].style.color = '#F072A9';
-            }
-          }
+          }          
         }
 
 
-          function addDrag() {
-            list_items = document.querySelectorAll(".playlist-songs-item");
-            list_items.forEach(item => {
+        function addDrag() {
+          list_items = document.querySelectorAll(".playlist-songs-item");
+          list_items.forEach(item => {
             item.addEventListener("dragstart", () => {
-              setTimeout( () => item.classList.add("dragging"), 0);
-              dragStartPosition = item.offsetTop;
+              setTimeout( () => item.classList.add("dragging"), 0);              
+            dragStartPosition = item.offsetTop;
             });
             item.addEventListener("dragend", () => {
               item.classList.remove("dragging");
               dragEndPosition = item.offsetTop;
             });
-          });
-          }
-
-          function changeListTextColor(index) {
-            document.querySelector('.playlist-list-item' + currentPlaylist).style.color = '#F072A9';
-            const name = '.playlist-list-item' + index;
-            document.querySelector(name).style.color = 'white';
-
-          }
-
-          function displaySongs(index) {
-
-            for (i = 0; i < track_list.length; i++) {
-                while(playlistData.firstChild) {
-                    playlistData.removeChild(playlistData.lastChild);
-                }
-            }
-            track_list = datajson[index].data;
-            for (i = 0; i < track_list.length; i++) {
-                    const elem = track_list.find(o => o.index === i);
-                    var li = document.createElement('li');
-                    li.className = "playlist-songs-item";
-                    li.draggable = true;
-                    li.innerText = elem.name;
-                    li.id = i;
-                    if (i %2 == 0)
-                      li.style.color = 'white';
-                    playlistData.appendChild(li);
-            }
-          }
-
-          function track_id_finder(track_index) {
-          return track_list.find(o => o.index === track_index).id;
+         });
         }
+
+        function changeListTextColor(index) {
+          document.querySelector('.playlist-list-item' + currentPlaylist).style.color = '#F072A9';
+          const name = '.playlist-list-item' + index;
+          document.querySelector(name).style.color = 'white';
+
+        }
+
+        function handleSongClick(index) {                     //update this with probably a global var that keeps track of editMode on/off
+          track_index = index;
+          loadTrack(track_index);
+          
+        }
+
+        function displaySongs(index) {
+          for (i = 0; i < track_list.length; i++) {
+            while(playlistData.firstChild) {
+              playlistData.removeChild(playlistData.lastChild);
+            }
+          }
+          track_list = datajson[index].data;
+          for (i = 0; i < track_list.length; i++) {
+            const elem = track_list.find(o => o.index === i);
+            var li = document.createElement('li');
+            li.className = "playlist-songs-item";
+            li.draggable = true;
+            li.innerText = elem.name;
+            li.id = i;
+            li.addEventListener('click', (event) => handleSongClick(event.target.id));
+            if (i %2 == 0)
+              li.style.color = 'white';
+            playlistData.appendChild(li);
+          }
+        }
+
+        function track_id_finder(track_index) {
+          console.log(track_list);
+          return track_list.find(o => o.index == track_index).id;
+        }
+
+        function toggleEditMode() {
+
+        }
+
+
 
         
 

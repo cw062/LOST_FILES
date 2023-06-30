@@ -207,6 +207,34 @@ body {
   overflow: hidden;
   }
 
+  .edit-playlist-button-container {
+    position: absolute;
+    left: 12vw;
+    top: 1vh;
+    height: 6vh;
+    width: 10vw;
+    overflow: hidden;
+  }
+
+  .edit-playlist-button {
+  display: absolute;
+  top: 1vh;
+  height: 6vh;
+  left: 12vw;
+  width: 10vw;
+  justify-content: center;
+  background-color: black;
+  border: solid 2px;
+  color: #F072A9;
+  font-size: 1rem;
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+  border-radius: 10px;
+  font-family: "Quicksand", sans-serif;
+  padding: 0px;
+  overflow: hidden;
+  }
   .overlay {
     display: none;
     position: fixed;
