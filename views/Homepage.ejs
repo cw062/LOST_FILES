@@ -10,14 +10,14 @@
     <main class="main-container">
 
     <div class="popup-button-container">
-                <button class="popup-button" onclick="toggleEditMode()">ADD SONG</button>
+                <button class="popup-button">ADD SONG</button>
     </div>
         <div class="overlay"></div>
         <div class="popup">
             <iframe class="popup-iframe" src="/add_tracks" title="ADDTRACKS"></iframe>
         </div>  
         <div class="edit-playlist-button-container">
-          <button class="edit-playlist-button">Edit Playlist</button>
+          <button class="edit-playlist-button" onclick="toggleEditMode()">Edit Playlist OFF</button>
 
         </div>
         <div class="playlist-list-container">
@@ -91,6 +91,7 @@
         const popup = document.querySelector(".popup"); 
         let list_items = document.querySelectorAll(".playlist-songs-item");
         const list_container = document.querySelector(".playlist-songs-container");
+        let edit_playlist_button = document.querySelector(".edit-playlist-button");
         let track_list = datajson[currentPlaylist].data; 
         let playlistDisplaying = false;
         let scrollAdder = 0;
@@ -101,6 +102,7 @@
         var draggingElementId = 0;
         var dragStartPosition = 0;
         var dragEndPosition = 0;
+        var editMode = false;
 
         // Create the audio element for the player
         let curr_track = document.createElement('audio');
@@ -125,6 +127,8 @@
             console.log("loadTrack: " + track_index);
                                                                               //May be able to rework this using playlistdata.id
             var current_track = track_id_finder(track_index);
+            console.log("current track: " + current_track);
+
             // Load a new track
             curr_track.src = track_list[current_track].path;
             curr_track.load();
@@ -266,9 +270,9 @@
             changeListTextColor(index);
             currentPlaylist = index;
             playlistDisplaying = true;
-            //addDrag();
+            addDrag();
           }
-        var scrollPosition = list_container.scrollTop;
+
         const initSortableList = (e) => {
           e.preventDefault();
           const draggingItem = document.querySelector(".dragging");
@@ -314,10 +318,13 @@
         playlistData.addEventListener("drop", (event) => {
           reorderPlaylist(draggingElementId, droppedElementId);
           recolorPlaylist();
+          console.log("reload track: "+ track_index);
           reloadTrack(track_index);
-        }); 
-        playlistData.addEventListener("dragover", initSortableList);
-        playlistData.addEventListener("dragenter", e => e.preventDefault());
+        });
+        
+        //playlistData.addEventListener("dragover", initSortableList);
+        //playlistData.addEventListener("dragenter", e => e.preventDefault());
+        
 
         function reloadTrack(track_index) {
           var current_track = track_id_finder(track_index);
@@ -355,7 +362,8 @@
               track_list.find(o => o.index === i).index = i-1;
             }
             track_list[draggingElementId].index = endPos-1;
-            track_index = endPos-1;
+            if (track_index == startPos)
+              track_index = endPos-1;
           }          
         }
 
@@ -381,8 +389,10 @@
 
         }
 
-        function handleSongClick(index) {                     //update this with probably a global var that keeps track of editMode on/off
-          track_index = index;
+        var handleSongClick = function(event) {                     //update this with probably a global var that keeps track of editMode on/off
+          console.log(track_list[event.target.id].index);
+          track_index = track_list[event.target.id].index;
+          //track_index = event.target.id;        
           loadTrack(track_index);
           
         }
@@ -401,20 +411,36 @@
             li.draggable = true;
             li.innerText = elem.name;
             li.id = i;
-            li.addEventListener('click', (event) => handleSongClick(event.target.id));
-            if (i %2 == 0)
+            //li.addEventListener('click', (event) => handleSongClick(event));          //use this to make onclick for li
+            if (i %2 == 0)                                                                         //mainly remove event listeners
               li.style.color = 'white';
             playlistData.appendChild(li);
           }
+          playlistData.addEventListener('click', handleSongClick, true);
         }
 
         function track_id_finder(track_index) {
           console.log(track_list);
+          console.log("track_finder index: " + track_index);
           return track_list.find(o => o.index == track_index).id;
         }
 
         function toggleEditMode() {
-
+            editMode = !editMode;
+            console.log(editMode);
+            //addDrag();              //need remove drag and remove onclick
+            if (editMode) {
+              edit_playlist_button.textContent = "Edit Playlist ON";
+              playlistData.addEventListener("dragover", initSortableList);
+              playlistData.addEventListener("dragenter", e => e.preventDefault());
+              playlistData.removeEventListener('click', handleSongClick, true);
+              
+            } else {
+              edit_playlist_button.textContent = "Edit Playlist OFF";
+              playlistData.removeEventListener("dragover", initSortableList);
+              playlistData.removeEventListener("dragenter", e => e.preventDefault());
+              playlistData.addEventListener('click', handleSongClick, true);
+            }
         }
 
 

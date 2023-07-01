@@ -9,6 +9,14 @@
 
   1
   2{console.log("nextSibling " + temps); console.log(track_list[event.target.id].index)}
+
+
+
+  TODO 
+  -add ts and te options 
+  -figure out how im storing newly added files because i wont send them to the server and then request all of the data from the server again
+  -finish db hookup (probably will take a while lots of server.js work needs to be done to parse the data into the json i want)
+  -
   5
   3
   4
