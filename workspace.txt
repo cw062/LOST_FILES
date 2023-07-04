@@ -16,9 +16,14 @@
   -add ts and te options 
   -figure out how im storing newly added files because i wont send them to the server and then request all of the data from the server again
   -finish db hookup (probably will take a while lots of server.js work needs to be done to parse the data into the json i want)
-  -
-  5
+  -i also have no exception / error handling and no promises so see about that
+  -!!! refactor to use array to keep track of track position in list!!!
   3
   4
   6
   7
+  
+  track_list.forEach( item => {
+          console.log("id: "+item.id);
+          console.log("index: "+item.index);
+        });

@@ -14,7 +14,60 @@
     </div>
         <div class="overlay"></div>
         <div class="popup">
-            <iframe class="popup-iframe" src="/add_tracks" title="ADDTRACKS"></iframe>
+          <div class="form-style-3">
+            <h1 class="add-tracks-title">ADD TRACKS</h1>
+            <form action="/add_tracks" method="POST" enctype="multipart/form-data">
+            <div class="text-input-container">
+                <label for="field1"><span>Track Name</span><input type="text" class="input-field" name="nameData" value="" /></label>
+            </div>
+            <div class="text-input-container">
+                <label for="field2"><span>Artist    </span><input type="text" class="input-field" name="artistData" value="" /></label>
+            </div>
+          <div class="checkboxes-container">
+            <label class="container">One
+              <input type="checkbox" checked="checked">
+              <span class="checkmark"></span>
+            </label>
+            <label class="container">Two
+              <input type="checkbox">
+              <span class="checkmark"></span>
+            </label>
+            <label class="container">Three
+              <input type="checkbox">
+              <span class="checkmark"></span>
+            </label>
+            <label class="container">Four
+              <input type="checkbox" class="checkk">
+              <span class="checkmark"></span>
+            </label>
+            <label class="container">five
+              <input type="checkbox" checked="checked">
+              <span class="checkmark"></span>
+            </label>
+            <label class="container">xis
+              <input type="checkbox">
+              <span class="checkmark"></span>
+            </label>
+            <label class="container">seven
+              <input type="checkbox">
+              <span class="checkmark"></span>
+            </label>
+            <label class="container">ate
+              <input type="checkbox">
+              <span class="checkmark"></span>
+            </label>
+            
+            </div>
+                
+            <div class="drop-zone">
+            <span class="drop-zone__prompt">Drop file here or click to upload</span>
+            <input type="file" name="file" id="file" accept=".wav, .mp3" class="drop-zone__input">
+          </div>
+            <div class="submit-button-container">
+                <input class="submit-button" type="submit" value="Submit" name="submit">
+            </div>
+        </form>
+        </div>
         </div>  
         <div class="edit-playlist-button-container">
           <button class="edit-playlist-button" onclick="toggleEditMode()">Edit Playlist OFF</button>
@@ -33,6 +86,18 @@
             
                     
                 </ol>
+          </div>
+
+          <form action="/settings" method="POST" id="settings-form">
+            <div class="save-button-container">
+              <input class="save-button" type="submit" value="Save" name="Save">
+            </div>
+          </form>
+
+          <div class="playlist-songs-settings-container">
+            <ol class="song-settings-list">
+
+            </ol>
           </div>
     </div>
 
@@ -92,6 +157,9 @@
         let list_items = document.querySelectorAll(".playlist-songs-item");
         const list_container = document.querySelector(".playlist-songs-container");
         let edit_playlist_button = document.querySelector(".edit-playlist-button");
+        let settings_container = document.querySelector(".playlist-songs-settings-container");
+        let settings_list = document.querySelector(".song-settings-list");
+        let settings_form = document.querySelector("#settings-form");
         let track_list = datajson[currentPlaylist].data; 
         let playlistDisplaying = false;
         let scrollAdder = 0;
@@ -124,21 +192,19 @@
             // Clear the previous seek timer
             clearInterval(updateTimer);
             resetValues();
-            console.log("loadTrack: " + track_index);
                                                                               //May be able to rework this using playlistdata.id
-            var current_track = track_id_finder(track_index);
-            console.log("current track: " + current_track);
+            //let current_track = track_id_finder(track_index);
 
             // Load a new track
-            curr_track.src = track_list[current_track].path;
+            curr_track.src = track_list[track_index].path;
             curr_track.load();
             // Update details of the track
             track_art.style.backgroundImage = 
-               "url(" + track_list[current_track].image + ")";
-            track_name.textContent = track_list[current_track].name;
-            track_artist.textContent = track_list[current_track].artist;
+               "url(" + track_list[track_index].image + ")";
+            track_name.textContent = track_list[track_index].name;
+            track_artist.textContent = track_list[track_index].artist;
             now_playing.textContent = 
-               "PLAYING " + (Number(track_index) + 1) + " OF " + track_list.length;
+               "PLAYING " + (Number(track_list[track_index].index) + 1) + " OF " + track_list.length;
             
             // Set an interval of 1000 milliseconds
             // for updating the seek slider
@@ -158,12 +224,16 @@
             let red = Math.floor(Math.random() * 256) + 64;
             let green = Math.floor(Math.random() * 256) + 64;
             let blue = Math.floor(Math.random() * 256) + 64;
-            
+            let red2 = Math.floor(Math.random() * 256) + 64;
+            let green2 = Math.floor(Math.random() * 256) + 64;
+            let blue2 = Math.floor(Math.random() * 256) + 64;
+
             // Construct a color withe the given values
             let bgColor = "rgb(" + red + ", " + green + ", " + blue + ")";
-            
+            let bgColor2 = "rgb(" + red2 + ", " + green2 + ", " + blue2 + ")";
+
             // Set the background to the new color
-            document.body.style.background = bgColor;
+            document.body.style.background = "linear-gradient("+bgColor+","+bgColor2+")";
           }
             
           // Function to reset all values to their default
@@ -201,11 +271,15 @@
           function nextTrack() {
             // Go back to the first track if the
             // current one is the last in the track list
-            if (track_index < track_list.length - 1)
-              track_index += 1;
-            else track_index = 0;
-            console.log("nextTrack: " + track_index);
+          
+            let track_index_helper = track_list[track_index].index;
             
+            if (track_index_helper < track_list.length - 1)
+              track_index_helper += 1;
+            else track_index_helper = 0;
+            
+            track_index = track_id_finder(track_index_helper);
+        
             // Load and play the new track
             loadTrack(track_index);
             playTrack();
@@ -213,11 +287,16 @@
             
           function prevTrack() {
             // Go back to the last track if the
-            // current one is the first in the track list
-            if (track_index > 0)
-              track_index -= 1;
-            else track_index = track_list.length - 1;
+            // current one is the first in the track list                       //ADD TRACK_ID_FIDER THING
+           
+            let track_index_helper = track_list[track_index].index;
+
+            
+            if (track_index_helper > 0)
+              track_index_helper -= 1;
+            else track_index_helper = track_list.length - 1;
               
+            track_index = track_id_finder(track_index_helper);
             // Load and play the new track
             loadTrack(track_index);
             playTrack();
@@ -271,6 +350,7 @@
             currentPlaylist = index;
             playlistDisplaying = true;
             addDrag();
+            //populateTrackListOrder();
           }
 
         const initSortableList = (e) => {
@@ -278,8 +358,7 @@
           const draggingItem = document.querySelector(".dragging");
           // Getting all items except currently dragging and making array of them
           let siblings = [...list.querySelectorAll(".playlist-songs-item:not(.dragging)")];
-          // Finding the sibling after which the dragging item should be placed
-          //scrollAdder = list_container.scrollTop;
+
           let nextSibling = siblings.find(sibling => {
           
 
@@ -287,7 +366,6 @@
             if ((e.clientY > (list_container.offsetHeight + list_container.offsetTop) * 0.8)) {
               if (list_container.scrollTop < playlistData.clientHeight - list_container.offsetHeight) {
                 list_container.scrollTop += 1;
-                console.log(list_container.scrollTop);
               }
 
             } 
@@ -306,6 +384,8 @@
           // Inserting the dragging item before the found sibling   
             if (nextSibling == undefined) {
               droppedElementId = track_list.length-1;
+
+        
             } else {
               droppedElementId = nextSibling.id;
             }
@@ -317,28 +397,29 @@
         //event listeners for playlistdata
         playlistData.addEventListener("drop", (event) => {
           reorderPlaylist(draggingElementId, droppedElementId);
-          recolorPlaylist();
-          console.log("reload track: "+ track_index);
-          reloadTrack(track_index);
+          track_list.forEach( item => {
+          console.log("id: "+item.id+" || "+item.index+" :item.index");
         });
-        
-        //playlistData.addEventListener("dragover", initSortableList);
-        //playlistData.addEventListener("dragenter", e => e.preventDefault());
+          recolorPlaylist();
+          reloadTrack();
+          displaySettings();
+        });
+
+      
+
         
 
-        function reloadTrack(track_index) {
-          var current_track = track_id_finder(track_index);
+        function reloadTrack() {
           track_art.style.backgroundImage = 
-               "url(" + track_list[current_track].image + ")";
-            track_name.textContent = track_list[current_track].name;
-            track_artist.textContent = track_list[current_track].artist;
+               "url(" + track_list[track_index].image + ")";
+            track_name.textContent = track_list[track_index].name;
+            track_artist.textContent = track_list[track_index].artist;
             now_playing.textContent = 
-               "PLAYING " + (track_index + 1) + " OF " + track_list.length;
+               "PLAYING " + (track_list[track_index].index + 1) + " OF " + track_list.length;
         }
         
         function recolorPlaylist() {
           //recolor playlist so it is always alternating
-          console.log(playlistData.childNodes);
           for(i = 0; i < playlistData.childNodes.length; i++) {
             if (i %2 == 0)
                       playlistData.childNodes[i].style.color = 'white';
@@ -347,24 +428,20 @@
             }
           }
         }
+        
 
+        //updates track_list[i].index to new values after element is dropped
         function reorderPlaylist(draggingElementId, droppedElementId) {
-         const startPos = track_list[draggingElementId].index;
-         const endPos = track_list[droppedElementId].index;
-          if (startPos > endPos) { //moved up
-            for (i = startPos - 1; i >= endPos; i--) {
-              track_list.find(o => o.index === i).index = i+1;
-            }
-            track_list[draggingElementId].index = endPos;
-            track_index = endPos;                                     
-          } else {        //moved down
-            for (i = startPos + 1; i < endPos; i++) {
-              track_list.find(o => o.index === i).index = i-1;
-            }
-            track_list[draggingElementId].index = endPos-1;
-            if (track_index == startPos)
-              track_index = endPos-1;
-          }          
+          const now_playing = track_index;
+          //track_list[childNodes[i].id].index = i
+          let i = 0;
+          for (let child = playlistData.firstChild; child != null; child = child.nextSibling) {
+            track_list[child.id].index = i;
+            i++;
+          }
+          track_index = now_playing;
+        
+          
         }
 
 
@@ -390,7 +467,6 @@
         }
 
         var handleSongClick = function(event) {                     //update this with probably a global var that keeps track of editMode on/off
-          console.log(track_list[event.target.id].index);
           track_index = track_list[event.target.id].index;
           //track_index = event.target.id;        
           loadTrack(track_index);
@@ -398,11 +474,10 @@
         }
 
         function displaySongs(index) {
-          for (i = 0; i < track_list.length; i++) {
             while(playlistData.firstChild) {
               playlistData.removeChild(playlistData.lastChild);
             }
-          }
+
           track_list = datajson[index].data;
           for (i = 0; i < track_list.length; i++) {
             const elem = track_list.find(o => o.index === i);
@@ -419,22 +494,19 @@
           playlistData.addEventListener('click', handleSongClick, true);
         }
 
-        function track_id_finder(track_index) {
-          console.log(track_list);
-          console.log("track_finder index: " + track_index);
-          return track_list.find(o => o.index == track_index).id;
+        function track_id_finder(track_index_number) {
+          return track_list.find(o => o.index == track_index_number).id;
         }
 
         function toggleEditMode() {
             editMode = !editMode;
-            console.log(editMode);
             //addDrag();              //need remove drag and remove onclick
             if (editMode) {
               edit_playlist_button.textContent = "Edit Playlist ON";
               playlistData.addEventListener("dragover", initSortableList);
               playlistData.addEventListener("dragenter", e => e.preventDefault());
               playlistData.removeEventListener('click', handleSongClick, true);
-              
+              displaySettings();
             } else {
               edit_playlist_button.textContent = "Edit Playlist OFF";
               playlistData.removeEventListener("dragover", initSortableList);
@@ -442,6 +514,38 @@
               playlistData.addEventListener('click', handleSongClick, true);
             }
         }
+
+        function displaySettings() {
+            while(settings_list.firstChild) {
+              settings_list.removeChild(settings_list.lastChild);
+            }
+            var children = Array.from(playlistData.children);
+            for (i = 0; i < children.length; i++) {
+              //create <li> with <form> ts and te fields
+                var li = document.createElement('li');
+                li.className = "song-settings-item";
+                const inputName = document.createElement('input');
+                inputName.type = "text";
+                inputName.form = settings_form;
+                inputName.style.width = "2vw";
+                const input2 = document.createElement('input');
+                input2.type = "text";
+                input2.form = settings_form;
+                input2.style.width = "2vw";
+                li.appendChild(inputName);
+                li.appendChild(input2);
+                settings_list.appendChild(li);
+            }
+      }
+/*
+      function populateTrackListOrder() {
+        for (i = 0; i < track_list_order.length; i++) {
+          track_list_order[track_list[i].index] = track_list[i].id;
+        }
+        console.log(track_list_order);
+      }
+*/
+
 
 
 
