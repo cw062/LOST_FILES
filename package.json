@@ -4,7 +4,7 @@
   "description": "Music upload, player, and playlist editor",
   "main": "server.js",
   "scripts": {
-    "devStart": "postcss public/tailwind.css -o public/twstyles.css && nodemon server.js",
+    "devStart": "nodemon server.js",
     "build:css": "postcss public/tailwind.css -o public/twstyles.css"
   },
   "author": "Calder West",

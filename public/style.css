@@ -2,7 +2,9 @@ body {
     
     /* Smoothly transition the background color */
     transition: background-color .5s;
-    height: 100%;
+    height: 100vh;
+    /*overflow-y: hidden; */
+    /*background-image: linear-gradient(pink, black);*/
   }
     
   /* Using flex with the column direction to
@@ -60,7 +62,7 @@ body {
   .playpause-track,
   .prev-track,
   .next-track {
-    padding: 25px;
+    padding: 0px;
     opacity: 0.8;
     
     /* Smoothly transition the opacity */
@@ -79,7 +81,16 @@ body {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: center;
+    justify-content: start;
+    position: fixed;
+    top: 90vh;
+    left: 1vw;
+    width: 98vw;
+    background-color: black;
+    color: #F072A9;
+    border: 2px solid #F072A9;
+    border-radius: 10px;
+    padding: 0px;    
   } 
     
   /* Modify the appearance of the slider */
@@ -87,12 +98,13 @@ body {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    height: 5px;
-    background: black;
-    opacity: 0.7;
+    height: 1vh;
+    background: #F072A9;
+    opacity: .65;
     -webkit-transition: .2s;
     transition: opacity .2s;
-    width: 60%;
+    width: 90%;
+    border-radius: 10px;
   }
     
   /* Modify the appearance of the slider thumb */
@@ -117,12 +129,16 @@ body {
     
   .current-time,
   .total-duration {
-    padding: 10px;
+    font-size: 1vw;
+    padding-top: 1vh;
+    padding-bottom: 1vh;
+    padding-left: 1vw;
+    padding-right: 1vw;
   }
     
   i.fa-volume-down,
   i.fa-volume-up {
-    padding: 10px;
+    padding: 0px;
   }
     
   /* Change the mouse cursor to a pointer
@@ -131,7 +147,11 @@ body {
   i.fa-pause-circle,
   i.fa-step-forward,
   i.fa-step-backward {
+    display: flex;
+    font-size: 1vw;
     cursor: pointer;
+    padding-left: 1vw;
+    padding-right: 1vw;
   }
 
  
@@ -189,6 +209,34 @@ body {
   overflow: hidden;
   }
 
+  .edit-playlist-button-container {
+    position: absolute;
+    left: 88vw;
+    top: 1vh;
+    height: 6vh;
+    width: 10vw;
+    overflow: hidden;
+  }
+
+  .edit-playlist-button {
+  display: absolute;
+  top: 1vh;
+  height: 6vh;
+  left: 12vw;
+  width: 10vw;
+  justify-content: center;
+  background-color: black;
+  border: solid 2px;
+  color: #F072A9;
+  font-size: 1rem;
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+  border-radius: 10px;
+  font-family: "Quicksand", sans-serif;
+  padding: 0px;
+  overflow: hidden;
+  }
   .overlay {
     display: none;
     position: fixed;
@@ -203,11 +251,10 @@ body {
     display: none;
     border-radius: 10px;
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 300px;
-    height: 350px;
+    top: 8vh;
+    left: 35vw;
+    width: 30vw;
+    height: 60vh;
     background-color: black;
     z-index: 1;
   }
@@ -216,6 +263,7 @@ body {
     width: 100%;
     height: 100%;
     border: none;
+    overflow-y: hidden;
   }
   .main-container {
     display: grid;
@@ -252,8 +300,8 @@ body {
 
   .add-tracks-title {
     position: block;
-    padding-left: 10vw;
-    padding-right: 10vw;
+    padding-left: 2vw;
+    padding-right: 2vw; 
     color: #F072A9;
     font-weight: bold;
   }
@@ -263,7 +311,7 @@ body {
 .submit-button {
   width:100%;
   max-width: 100%;
-	height: 10vh;
+	height: 6vh;
 	padding-top: 6px;
   padding-bottom: 10px;
   display: flex;
@@ -294,11 +342,12 @@ body {
   width:100%;
   display: flex;
   justify-content: center;
+  height: 10vh;
 }
 
 .drop-zone {
 	max-width: 100%;
-	height: 20vh;
+	height: 10vh;
 	padding: 25px;
 	display: flex;
 	align-items: center;
@@ -361,7 +410,7 @@ body {
   padding: 0px;
   color: #F072A9;
   top: 8vh;
-  left: 11vw;
+  left: 88vw;
   width: 10vw;
   height: 80vh;
   overflow-x: hidden;
@@ -369,15 +418,19 @@ body {
   direction: rtl;
   border-radius: 10px;
   border: 2px solid #F072A9;
+  scrollbar-color: #F072A9 black;
+  scrollbar-width: none;
+
+}
+.playlist-songs-container::-webkit-scrollbar {
+  display: none;
 }
 
 .list {
   cursor: pointer;
-  list-style: none;
-  padding: 0px;
+  padding: 2vw;
   margin: 0px;
   direction: ltr;
-
 }
 
 .playlist-songs-item {
@@ -399,7 +452,14 @@ body {
   overflow-y: scroll;
   border-radius: 10px;
   border: 2px solid #F072A9;
+  scrollbar-color: #F072A9 black;
+  scrollbar-width: none;
 }
+
+.playlist-list-container::-webkit-scrollbar {
+  display: none;
+}
+
 .playlist-list {
   list-style: none;
   padding: 0px;
@@ -415,9 +475,153 @@ body {
   padding-left: 1vw;
   padding-right: 1vw;
   color: #F072A9;  
+}
 
+/* The container */
+.container {
+  display: block;
+  position: relative;
+  /*padding-left: 50vw;*/
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+  font-family: "Quicksand", sans-serif;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  color: #F072A9;
+}
+
+/* Hide the browser's default checkbox */
+.container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+  color: white;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 15vw;
+  height: 25px;
+  width: 25px;
+  background-color: #eee;
+}
+
+/* On mouse-over, add a grey background color */
+.container:hover input ~ .checkmark {
+  background-color: #ccc;
+}
+
+/* When the checkbox is checked, add a blue background */
+.container input:checked ~ .checkmark {
+  background-color: #F072A9;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+/* Show the checkmark when checked */
+.container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+/* Style the checkmark/indicator */
+.container .checkmark:after {
+  left: 9px;
+  top: 5px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+.checkboxes-container {
+  overflow-x: hidden;
+  overflow-y: scroll;
+  height: 200px;
+  background-color: black;
+}
+
+.playlist-songs-settings-container {
+  position: absolute;
+  background-color: black;
+  padding: 0px;
+  color: #F072A9;
+  top: 8vh;
+  left: 77vw;
+  width: 10vw;
+  height: 80vh;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  direction: rtl;
+  border-radius: 10px;
+  border: 2px solid #F072A9;
+  scrollbar-color: #F072A9 black;
+  scrollbar-width: none;
+}
+
+.song-settings-list {
+  cursor: pointer;
+  padding: 2vw;
+  margin: 0px;
+  direction: ltr;
+}
+
+.song-settings-item {
+  border: 1px solid #ccc;
+  padding-top: 1vh;
+  padding-bottom: 1vh;
+  padding-left: 1vw;
+  padding-right: 1vw;
+  width: 3vw;
+  display: inline-flex;
 
 }
+
+
+.save-button-container {
+  position: absolute;
+  left: 77vw;
+  top: 1vh;
+  height: 6vh;
+  width: 10vw;
+  overflow: hidden;
+}
+
+.save-button {
+  display: absolute;
+  top: 1vh;
+  height: 6vh;
+  left: 77vw;
+  width: 10vw;
+  justify-content: center;
+  background-color: black;
+  border: solid 2px;
+  color: #F072A9;
+  font-size: 1rem;
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+  border-radius: 10px;
+  font-family: "Quicksand", sans-serif;
+  padding: 0px;
+  overflow: hidden;
+}
+
 
 
 

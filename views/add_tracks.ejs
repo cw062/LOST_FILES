@@ -3,12 +3,9 @@
 <head>
     <title>ADD TRACKS</title>
 </head>
-<body stlye="overflow:hidden">
+<body style="overflow:hidden">
 <div class="form-style-3">
     <h1 class="add-tracks-title">ADD TRACKS</h1>
-    <!--<div class="browse-button">
-        <input type="file" id="file" name="file" accept=".wav, .mp3">
-        </div><br></br>-->
     <form action="/add_tracks" method="POST" enctype="multipart/form-data">
     <div class="text-input-container">
         <label for="field1"><span>Track Name</span><input type="text" class="input-field" name="nameData" value="" /></label>
@@ -16,6 +13,41 @@
     <div class="text-input-container">
         <label for="field2"><span>Artist    </span><input type="text" class="input-field" name="artistData" value="" /></label>
     </div>
+	<div class="checkboxes-container">
+		<label class="container">One
+			<input type="checkbox" checked="checked">
+			<span class="checkmark"></span>
+		</label>
+		<label class="container">Two
+			<input type="checkbox">
+			<span class="checkmark"></span>
+		</label>
+		<label class="container">Three
+			<input type="checkbox">
+			<span class="checkmark"></span>
+		</label>
+		<label class="container">Four
+			<input type="checkbox" class="checkk">
+			<span class="checkmark"></span>
+		</label>
+		<label class="container">five
+			<input type="checkbox" checked="checked">
+			<span class="checkmark"></span>
+		</label>
+		<label class="container">xis
+			<input type="checkbox">
+			<span class="checkmark"></span>
+		</label>
+		<label class="container">seven
+			<input type="checkbox">
+			<span class="checkmark"></span>
+		</label>
+		<label class="container">ate
+			<input type="checkbox">
+			<span class="checkmark"></span>
+		</label>
+		
+	  </div>
         
     <div class="drop-zone">
 		<span class="drop-zone__prompt">Drop file here or click to upload</span>
