@@ -94,11 +94,6 @@
             </div>
           </form>
 
-          <div class="playlist-songs-settings-container">
-            <ol class="song-settings-list">
-
-            </ol>
-          </div>
     </div>
 
 
@@ -287,7 +282,7 @@
             
           function prevTrack() {
             // Go back to the last track if the
-            // current one is the first in the track list                       //ADD TRACK_ID_FIDER THING
+            // current one is the first in the track list                      
            
             let track_index_helper = track_list[track_index].index;
 
@@ -350,7 +345,8 @@
             currentPlaylist = index;
             playlistDisplaying = true;
             addDrag();
-            //populateTrackListOrder();
+            createSettingsFeilds();
+            hideSettings();
           }
 
         const initSortableList = (e) => {
@@ -398,7 +394,6 @@
         playlistData.addEventListener("drop", (event) => {
           reorderPlaylist(draggingElementId, droppedElementId);
           track_list.forEach( item => {
-          console.log("id: "+item.id+" || "+item.index+" :item.index");
         });
           recolorPlaylist();
           reloadTrack();
@@ -512,39 +507,44 @@
               playlistData.removeEventListener("dragover", initSortableList);
               playlistData.removeEventListener("dragenter", e => e.preventDefault());
               playlistData.addEventListener('click', handleSongClick, true);
+              hideSettings();
             }
         }
 
-        function displaySettings() {
-            while(settings_list.firstChild) {
-              settings_list.removeChild(settings_list.lastChild);
-            }
-            var children = Array.from(playlistData.children);
-            for (i = 0; i < children.length; i++) {
-              //create <li> with <form> ts and te fields
-                var li = document.createElement('li');
-                li.className = "song-settings-item";
-                const inputName = document.createElement('input');
-                inputName.type = "text";
-                inputName.form = settings_form;
-                inputName.style.width = "2vw";
-                const input2 = document.createElement('input');
-                input2.type = "text";
-                input2.form = settings_form;
-                input2.style.width = "2vw";
-                li.appendChild(inputName);
-                li.appendChild(input2);
-                settings_list.appendChild(li);
-            }
-      }
-/*
-      function populateTrackListOrder() {
-        for (i = 0; i < track_list_order.length; i++) {
-          track_list_order[track_list[i].index] = track_list[i].id;
+        function displaySettings() {          
+          for (let i = 0; i < list_items.length; i++) {
+          list_items[i].childNodes[1].style.visibility = "visible";
+          list_items[i].childNodes[2].style.visibility = "visible";
         }
-        console.log(track_list_order);
+          
       }
-*/
+
+      function hideSettings() {
+        //visibility = "hidden" or display = "none"
+        for (let i = 0; i < list_items.length; i++) {
+          console.log(list_items[i]);
+          list_items[i].childNodes[1].style.visibility = "hidden";
+          list_items[i].childNodes[2].style.visibility = "hidden";
+        }
+      }
+
+      function createSettingsFeilds() {
+        for (let i = 0; i < list_items.length; i++) {
+            const inputName = document.createElement('input');
+            inputName.type = "text";
+            inputName.form = settings_form;
+            inputName.style.width = "2vw";
+            const input2 = document.createElement('input');
+            input2.type = "text";
+            input2.form = settings_form;
+            input2.style.width = "2vw";
+            list_items[i].appendChild(inputName);
+            list_items[i].appendChild(input2);
+            list_items[i].style.width = "300px";
+            //list_container.style.left = "80vw";
+            //list_container.style.width = "18vw";
+       }
+      }
 
 
 
