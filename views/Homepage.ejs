@@ -16,46 +16,21 @@
         <div class="popup">
           <div class="form-style-3">
             <h1 class="add-tracks-title">ADD TRACKS</h1>
-            <form action="/add_tracks" method="POST" enctype="multipart/form-data">
+            <form id="add_tracks_form" action="/" method="POST" enctype="multipart/form-data">
             <div class="text-input-container">
-                <label for="field1"><span>Track Name</span><input type="text" class="input-field" name="nameData" value="" /></label>
+                <label for="field1"><span>Track Name</span><input type="text" class="input-field" name="nameData" value="" id="track_name"/></label>
             </div>
             <div class="text-input-container">
-                <label for="field2"><span>Artist    </span><input type="text" class="input-field" name="artistData" value="" /></label>
+                <label for="field2"><span>Artist    </span><input type="text" class="input-field" name="artistData" value="" id="artist_name"/></label>
             </div>
           <div class="checkboxes-container">
-            <label class="container">One
-              <input type="checkbox" checked="checked">
-              <span class="checkmark"></span>
-            </label>
-            <label class="container">Two
-              <input type="checkbox">
-              <span class="checkmark"></span>
-            </label>
-            <label class="container">Three
-              <input type="checkbox">
-              <span class="checkmark"></span>
-            </label>
-            <label class="container">Four
-              <input type="checkbox" class="checkk">
-              <span class="checkmark"></span>
-            </label>
-            <label class="container">five
-              <input type="checkbox" checked="checked">
-              <span class="checkmark"></span>
-            </label>
-            <label class="container">xis
-              <input type="checkbox">
-              <span class="checkmark"></span>
-            </label>
-            <label class="container">seven
-              <input type="checkbox">
-              <span class="checkmark"></span>
-            </label>
-            <label class="container">ate
-              <input type="checkbox">
-              <span class="checkmark"></span>
-            </label>
+
+            <% data.json.forEach(function callback(element, index) { %>
+              <label class="container"> <%= element.name %>
+                <input type="checkbox" id ="checkbox_item" name="checkbox[]" value="<%=element.name%>" onclick="toggleCheckValue(<%=index%>)">
+                <span class="checkmark"></span>
+              </label>
+              <% }); %>
             
             </div>
                 
@@ -88,7 +63,7 @@
                 </ol>
           </div>
 
-          <form action="/settings" method="POST" id="settings-form">
+          <form id="settings_form" action="/settings" method="POST">
             <div class="save-button-container">
               <input class="save-button" type="submit" value="Save" name="Save">
             </div>
@@ -149,12 +124,16 @@
         const popup_button = document.querySelector(".popup-button");
         const overlay = document.querySelector(".overlay");
         const popup = document.querySelector(".popup"); 
+        const playlist_list = document.querySelector(".playlist-list");
         let list_items = document.querySelectorAll(".playlist-songs-item");
         const list_container = document.querySelector(".playlist-songs-container");
         let edit_playlist_button = document.querySelector(".edit-playlist-button");
         let settings_container = document.querySelector(".playlist-songs-settings-container");
         let settings_list = document.querySelector(".song-settings-list");
-        let settings_form = document.querySelector("#settings-form");
+        let save_button = document.querySelector(".save-button-container");
+        let checkbox_container = document.querySelector("checkboxes-container");
+        let settings_form = document.querySelector(".settings_form");
+        let add_tracks_form = document.querySelector(".add_tracks_form");
         let track_list = datajson[currentPlaylist].data; 
         let playlistDisplaying = false;
         let scrollAdder = 0;
@@ -166,21 +145,25 @@
         var dragStartPosition = 0;
         var dragEndPosition = 0;
         var editMode = false;
+        stylePlaylist();
 
         // Create the audio element for the player
         let curr_track = document.createElement('audio');
  
-        popup_button.addEventListener("click", function() {
-            overlay.style.display = "block";
-            popup.style.display = "block";
-        });
+        
 
         overlay.addEventListener("click", function() {
             overlay.style.display = "none";
             popup.style.display = "none";
-        });        
-        
 
+        });        
+
+
+      popup_button.addEventListener("click", function() {
+            overlay.style.display = "block";
+            popup.style.display = "block";
+            attachAddTracksFormListener();
+        });
         //Functions
 
         function loadTrack(track_index) {
@@ -349,6 +332,13 @@
             hideSettings();
           }
 
+          function stylePlaylist() {
+            for (i = 0; i < playlist_list.children.length; i++) {
+              if (i % 2 == 0) 
+                playlist_list.children[i].style.background = "#1e1e1e";
+            }
+          }
+
         const initSortableList = (e) => {
           e.preventDefault();
           const draggingItem = document.querySelector(".dragging");
@@ -461,7 +451,7 @@
 
         }
 
-        var handleSongClick = function(event) {                     //update this with probably a global var that keeps track of editMode on/off
+        var handleSongClick = function(event) {                     
           track_index = track_list[event.target.id].index;
           //track_index = event.target.id;        
           loadTrack(track_index);
@@ -481,9 +471,12 @@
             li.draggable = true;
             li.innerText = elem.name;
             li.id = i;
-            //li.addEventListener('click', (event) => handleSongClick(event));          //use this to make onclick for li
-            if (i %2 == 0)                                                                         //mainly remove event listeners
+      
+            if (i %2 == 0) {                                                                      
               li.style.color = 'white';
+             li.style.background = '#1e1e1e';
+              
+            }
             playlistData.appendChild(li);
           }
           playlistData.addEventListener('click', handleSongClick, true);
@@ -515,38 +508,124 @@
           for (let i = 0; i < list_items.length; i++) {
           list_items[i].childNodes[1].style.visibility = "visible";
           list_items[i].childNodes[2].style.visibility = "visible";
+          list_container.style.left = "77vw";
+          list_container.style.width = "21vw";
         }
+        save_button.style.visibility = "visible";
           
       }
 
       function hideSettings() {
         //visibility = "hidden" or display = "none"
         for (let i = 0; i < list_items.length; i++) {
-          console.log(list_items[i]);
           list_items[i].childNodes[1].style.visibility = "hidden";
           list_items[i].childNodes[2].style.visibility = "hidden";
+          list_container.style.left = "88vw";
+          list_container.style.width = "10vw";
         }
+        save_button.style.visibility = "hidden";
       }
 
       function createSettingsFeilds() {
         for (let i = 0; i < list_items.length; i++) {
             const inputName = document.createElement('input');
             inputName.type = "text";
+            inputName.classList ="textfield";
             inputName.form = settings_form;
+            inputName.value = track_list[track_id_finder(playlistData.childNodes[i].id)].ts;
             inputName.style.width = "2vw";
             const input2 = document.createElement('input');
             input2.type = "text";
             input2.form = settings_form;
+            input2.classList = "textfield2";
+            input2.value = track_list[track_id_finder(playlistData.childNodes[i].id)].te;
             input2.style.width = "2vw";
             list_items[i].appendChild(inputName);
             list_items[i].appendChild(input2);
             list_items[i].style.width = "300px";
-            //list_container.style.left = "80vw";
-            //list_container.style.width = "18vw";
        }
       }
 
 
+      document.querySelectorAll(".drop-zone__input").forEach((inputElement) => {
+	const dropZoneElement = inputElement.closest(".drop-zone");
+
+	dropZoneElement.addEventListener("click", (e) => {
+		inputElement.click();
+	});
+
+	inputElement.addEventListener("change", (e) => {
+		if (inputElement.files.length) {
+			updateThumbnail(dropZoneElement, inputElement.files[0]);
+		}
+	});
+
+	dropZoneElement.addEventListener("dragover", (e) => {
+		e.preventDefault();
+		dropZoneElement.classList.add("drop-zone--over");
+	});
+
+	["dragleave", "dragend"].forEach((type) => {
+		dropZoneElement.addEventListener(type, (e) => {
+			dropZoneElement.classList.remove("drop-zone--over");
+		});
+	});
+
+	dropZoneElement.addEventListener("drop", (e) => {
+		e.preventDefault();
+
+		if (e.dataTransfer.files.length) {
+			inputElement.files = e.dataTransfer.files;
+			updateThumbnail(dropZoneElement, e.dataTransfer.files[0]);
+		}
+
+		dropZoneElement.classList.remove("drop-zone--over");
+	});
+});
+
+/**
+ * Updates the thumbnail on a drop zone element.
+ *
+ * @param {HTMLElement} dropZoneElement
+ * @param {File} file
+ */
+function updateThumbnail(dropZoneElement, file) {
+	let thumbnailElement = dropZoneElement.querySelector(".drop-zone__thumb");
+
+	// First time - remove the prompt
+	if (dropZoneElement.querySelector(".drop-zone__prompt")) {
+		dropZoneElement.querySelector(".drop-zone__prompt").remove();
+	}
+
+	// First time - there is no thumbnail element, so lets create it
+	if (!thumbnailElement) {
+		thumbnailElement = document.createElement("div");
+		thumbnailElement.classList.add("drop-zone__thumb");
+		dropZoneElement.appendChild(thumbnailElement);
+	}
+
+	thumbnailElement.dataset.label = file.name;
+
+	// Show thumbnail for image files
+	if (file.type.startsWith("image/")) {
+		const reader = new FileReader();
+
+		reader.readAsDataURL(file);
+		reader.onload = () => {
+			thumbnailElement.style.backgroundImage = `url('${reader.result}')`;
+		};
+	} else {
+		thumbnailElement.style.backgroundImage = null;
+	}
+}
+  let checkValue = false;
+  let checkValueArray = Array.from({ length: playlist_list.children.length }, () => false);
+  function toggleCheckValue(index) {
+    checkValueArray[index] = !checkValueArray[index];
+  }
+
+
+      
 
 
         
