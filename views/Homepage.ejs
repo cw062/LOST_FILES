@@ -8,40 +8,19 @@
 </head>
 <body>
     <main class="main-container">
+      
+      <form id="settings_form"></form>
+      <div class="save-button-container">
+        <button class="save-button" onclick="postFunction()" value="Save" name="Save">Save</button>
+      </div>
 
     <div class="popup-button-container">
                 <button class="popup-button">ADD SONG</button>
     </div>
         <div class="overlay"></div>
         <div class="popup">
-          <div class="form-style-3">
-            <h1 class="add-tracks-title">ADD TRACKS</h1>
-            <form id="add_tracks_form" action="/" method="POST" enctype="multipart/form-data">
-            <div class="text-input-container">
-                <label for="field1"><span>Track Name</span><input type="text" class="input-field" name="nameData" value="" id="track_name"/></label>
-            </div>
-            <div class="text-input-container">
-                <label for="field2"><span>Artist    </span><input type="text" class="input-field" name="artistData" value="" id="artist_name"/></label>
-            </div>
-          <div class="checkboxes-container">
-
-            <% data.json.forEach(function callback(element, index) { %>
-              <label class="container"> <%= element.name %>
-                <input type="checkbox" id ="checkbox_item" name="checkbox[]" value="<%=element.name%>" onclick="toggleCheckValue(<%=index%>)">
-                <span class="checkmark"></span>
-              </label>
-              <% }); %>
-            
-            </div>
-                
-            <div class="drop-zone">
-            <span class="drop-zone__prompt">Drop file here or click to upload</span>
-            <input type="file" name="file" id="file" accept=".wav, .mp3" class="drop-zone__input">
-          </div>
-            <div class="submit-button-container">
-                <input class="submit-button" type="submit" value="Submit" name="submit">
-            </div>
-        </form>
+          <iframe class="popup-iframe" src="/add_tracks" title="ADDTRACKS" id="add_tracks_iframe"></iframe>
+          
         </div>
         </div>  
         <div class="edit-playlist-button-container">
@@ -63,11 +42,7 @@
                 </ol>
           </div>
 
-          <form id="settings_form" action="/settings" method="POST">
-            <div class="save-button-container">
-              <input class="save-button" type="submit" value="Save" name="Save">
-            </div>
-          </form>
+          
 
     </div>
 
@@ -106,7 +81,7 @@
     <script type="text/javascript">
         var playlist_songs = [];
         var currentPlaylist = 0;
-        var datajson = <%- JSON.stringify(data.json) %>;
+        let datajson = <%- JSON.stringify(data.json) %>;
         let now_playing = document.querySelector(".now-playing");
         let track_art = document.querySelector(".track-art");
         let track_name = document.querySelector(".track-name");
@@ -133,7 +108,7 @@
         let save_button = document.querySelector(".save-button-container");
         let checkbox_container = document.querySelector("checkboxes-container");
         let settings_form = document.querySelector(".settings_form");
-        let add_tracks_form = document.querySelector(".add_tracks_form");
+        let add_tracks_iframe = document.querySelector(".popup-iframe");
         let track_list = datajson[currentPlaylist].data; 
         let playlistDisplaying = false;
         let scrollAdder = 0;
@@ -145,11 +120,27 @@
         var dragStartPosition = 0;
         var dragEndPosition = 0;
         var editMode = false;
+        let iWindow = null;
+        let fd = new FormData();
+        //create data to send to iframe
+        
         stylePlaylist();
+
+        function postFunction() {
+          var ajax = new XMLHttpRequest();
+          var form_data = new FormData(document.getElementById("settings_form"));
+          ajax.open("POST", "/ajaxpost", true);
+         // ajax.setRequestHeader("Content-type", "application.json");
+          ajax.send(form_data);
+
+        }
 
         // Create the audio element for the player
         let curr_track = document.createElement('audio');
  
+
+        //pass data to iframe
+
         
 
         overlay.addEventListener("click", function() {
@@ -158,12 +149,41 @@
 
         });        
 
+      window.addEventListener("message", (event) => {
+        if (Object.values(event.data).length != 0) {
+            const dataObj = event.data;                                      // !!!!!!!!!! THIS IS THE DATA THAT WAS SUBMITTED >> event.data
+            dataObj.playlists.forEach(element => {
+              let tempIndex = datajson.findIndex(o => o.name == element);
+              const reformattedDataObj = {                                   //reformats data from add_tracks to add to page and data structure
+                id: datajson[tempIndex].data.length,
+                index: datajson[tempIndex].data.length,
+                name: dataObj.name,
+                artist: dataObj.artist,
+                image: "yeee.png",
+                path: dataObj.path,
+                ts: 0,
+                te: 0
+              };
+              
+              datajson[tempIndex].data.push(reformattedDataObj);
+            });
+      }
+        console.log(datajson);
+      })
 
       popup_button.addEventListener("click", function() {
             overlay.style.display = "block";
             popup.style.display = "block";
-            attachAddTracksFormListener();
+
+
+
         });
+       
+        add_tracks_iframe.addEventListener("load", () => {
+          iWindow = add_tracks_iframe.contentWindow;
+        });
+        
+        
         //Functions
 
         function loadTrack(track_index) {
@@ -531,18 +551,21 @@
             const inputName = document.createElement('input');
             inputName.type = "text";
             inputName.classList ="textfield";
-            inputName.form = settings_form;
             inputName.value = track_list[track_id_finder(playlistData.childNodes[i].id)].ts;
             inputName.style.width = "2vw";
+            inputName.name = "ts" + i;
+            inputName.setAttribute("Form", "settings_form");        //this one
             const input2 = document.createElement('input');
             input2.type = "text";
-            input2.form = settings_form;
+            input2.name = "te" + i;
+            input2.setAttribute("Form", "settings_form");
             input2.classList = "textfield2";
             input2.value = track_list[track_id_finder(playlistData.childNodes[i].id)].te;
             input2.style.width = "2vw";
-            list_items[i].appendChild(inputName);
+            list_items[i].appendChild(inputName);           
             list_items[i].appendChild(input2);
             list_items[i].style.width = "300px";
+
        }
       }
 
@@ -618,6 +641,8 @@ function updateThumbnail(dropZoneElement, file) {
 		thumbnailElement.style.backgroundImage = null;
 	}
 }
+
+  //get checked playlists -- might not need
   let checkValue = false;
   let checkValueArray = Array.from({ length: playlist_list.children.length }, () => false);
   function toggleCheckValue(index) {

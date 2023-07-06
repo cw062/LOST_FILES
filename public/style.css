@@ -254,7 +254,7 @@ body {
     top: 8vh;
     left: 35vw;
     width: 30vw;
-    height: 60vh;
+    height: 80vh;
     background-color: black;
     z-index: 1;
   }
@@ -507,7 +507,7 @@ body {
 .checkmark {
   position: absolute;
   top: 0;
-  left: 15vw;
+  left: 20vw;
   height: 25px;
   width: 25px;
   background-color: #eee;

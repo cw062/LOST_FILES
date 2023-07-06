@@ -16,9 +16,6 @@
   -figure out how im storing newly added files because i wont send them to the server and then request all of the data from the server again
   -finish db hookup (probably will take a while lots of server.js work needs to be done to parse the data into the json i want)
   -i also have no exception / error handling and no promises so see about that
-  -!!! refactor to use array to keep track of track position in list!!!
-  -add song needs to have the correct playlists to choose from
-  -turn the player into an iframe probably so it doesnt reload
   -create new playlist feature
   7
   
@@ -29,3 +26,17 @@
 
 //loops through a list (playlistData) and returns the object in order
 track_list[track_id_finder(playlistData.childNodes[i].id)].xxx
+
+
+<div class="checkboxes-container">
+
+            <% data.json.forEach(function callback(element, index) { %>
+              <label class="container"> <%= element.name %>
+                <input type="checkbox" id ="checkbox_item" name="checkbox[]" value="<%=element.name%>" onclick="toggleCheckValue(<%=index%>)">
+                <span class="checkmark"></span>
+              </label>
+              <% }); %>
+            
+            </div>
+
+res.render('Homepage', {data: {json: playlistData}});

@@ -14,39 +14,7 @@
         <label for="field2"><span>Artist    </span><input type="text" class="input-field" name="artistData" value="" /></label>
     </div>
 	<div class="checkboxes-container">
-		<label class="container">One
-			<input type="checkbox" checked="checked">
-			<span class="checkmark"></span>
-		</label>
-		<label class="container">Two
-			<input type="checkbox">
-			<span class="checkmark"></span>
-		</label>
-		<label class="container">Three
-			<input type="checkbox">
-			<span class="checkmark"></span>
-		</label>
-		<label class="container">Four
-			<input type="checkbox" class="checkk">
-			<span class="checkmark"></span>
-		</label>
-		<label class="container">five
-			<input type="checkbox" checked="checked">
-			<span class="checkmark"></span>
-		</label>
-		<label class="container">xis
-			<input type="checkbox">
-			<span class="checkmark"></span>
-		</label>
-		<label class="container">seven
-			<input type="checkbox">
-			<span class="checkmark"></span>
-		</label>
-		<label class="container">ate
-			<input type="checkbox">
-			<span class="checkmark"></span>
-		</label>
-		
+			
 	  </div>
         
     <div class="drop-zone">
@@ -59,6 +27,42 @@
 </form>
 </div>
 <script type="text/javascript">
+	let checkboxes_container = document.querySelector(".checkboxes-container");
+	let parent = null;
+	let playlist_names = <%- JSON.stringify(data.playlistNames) %>;
+	let dataForHomepage = <%- JSON.stringify(data.json) %>;
+	
+
+	window.addEventListener('DOMContentLoaded', (event) => {
+		window.parent.postMessage(dataForHomepage, "*");
+		createCheckboxes();		
+	});
+
+	window.addEventListener("message", ({data, source}) => {
+		if (parent == null)
+			parent = source;
+		//playlist_names = data;
+		parent.iFrameWin = window;
+	});
+
+	function createCheckboxes() {
+		playlist_names.forEach((element, index) => {
+			const label = document.createElement('label');
+			label.classList = "container"
+			label.textContent = element;
+			const check_box = document.createElement("input");
+			check_box.type = "checkbox";
+			check_box.name = "checkbox[]";
+			check_box.value = element;
+			check_box.onclick = "toggleCheckValue(index)";
+			const spanCheckmark = document.createElement("span");
+			spanCheckmark.classList = "checkmark";
+			label.appendChild(check_box);
+			label.appendChild(spanCheckmark);
+			checkboxes_container.appendChild(label);
+		});
+	}
+
     document.querySelectorAll(".drop-zone__input").forEach((inputElement) => {
 	const dropZoneElement = inputElement.closest(".drop-zone");
 
