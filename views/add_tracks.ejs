@@ -6,31 +6,33 @@
 <body style="overflow:hidden">
 <div class="form-style-3">
     <h1 class="add-tracks-title">ADD TRACKS</h1>
-    <form action="/add_tracks" method="POST" enctype="multipart/form-data">
-    <div class="text-input-container">
-        <label for="field1"><span>Track Name</span><input type="text" class="input-field" name="nameData" value="" /></label>
-    </div>
-    <div class="text-input-container">
-        <label for="field2"><span>Artist    </span><input type="text" class="input-field" name="artistData" value="" /></label>
-    </div>
-	<div class="checkboxes-container">
+	<form action="/add_tracks" id= "add_tracks_form" method="POST" enctype="multipart/form-data">
+		<div class="text-input-container">
+			<label for="field1"><span>Track Name</span><input type="text" class="input-field" name="nameData" value="" /></label>
+		</div>
+		<div class="text-input-container">
+			<label for="field2"><span>Artist    </span><input type="text" class="input-field" name="artistData" value="" /></label>
+		</div>
+		<input type="hidden" id="duration" value="0" name="duration"/>
+		<div class="checkboxes-container">
+				
+		</div>
 			
-	  </div>
-        
-    <div class="drop-zone">
-		<span class="drop-zone__prompt">Drop file here or click to upload</span>
-		<input type="file" name="file" id="file" accept=".wav, .mp3" class="drop-zone__input">
-	</div>
-    <div class="submit-button-container">
-        <input class="submit-button" type="submit" value="Submit" name="submit">
-    </div>
-</form>
+		<div class="drop-zone">
+			<span class="drop-zone__prompt">Drop file here or click to upload</span>
+			<input type="file" name="file" id="file" accept=".wav, .mp3" class="drop-zone__input">
+		</div>
+		<div class="submit-button-container">
+			<input class="submit-button" type="submit" value="Submit" name="submit">
+		</div>
+	</form>
 </div>
 <script type="text/javascript">
 	let checkboxes_container = document.querySelector(".checkboxes-container");
 	let parent = null;
 	let playlist_names = <%- JSON.stringify(data.playlistNames) %>;
 	let dataForHomepage = <%- JSON.stringify(data.json) %>;
+	let songLength = document.getElementById("duration");
 	
 
 	window.addEventListener('DOMContentLoaded', (event) => {
@@ -74,7 +76,35 @@
 		if (inputElement.files.length) {
 			updateThumbnail(dropZoneElement, inputElement.files[0]);
 		}
+		
+		computeLength(inputElement.files[0])
+			.then((result) => {
+				songLength.value = result.duration;					//-----duration of each track
+				console.log(songLength.value);
+			})
+			.catch ((error) => {
+				console.log(error);
+			});
+		
 	});
+
+	function computeLength(file) {
+		return new Promise((resolve) => {
+			var objectURL = URL.createObjectURL(file);
+			var mySound = new Audio([objectURL]);
+			mySound.addEventListener(
+			"canplaythrough",
+			() => {
+				URL.revokeObjectURL(objectURL);
+				resolve({
+				file,
+				duration: mySound.duration
+				});
+			},
+			false,
+			);
+		});  
+	}
 
 	dropZoneElement.addEventListener("dragover", (e) => {
 		e.preventDefault();
@@ -96,6 +126,7 @@
 		}
 
 		dropZoneElement.classList.remove("drop-zone--over");
+
 	});
 });
 

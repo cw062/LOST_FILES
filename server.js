@@ -27,7 +27,7 @@ let playlistData = [
         image: "yeee.png",
         path: "italy.wav",
         ts: 4,
-        te: 220
+        te: 150
       }, {
         id: 1,
         index: 1,
@@ -35,7 +35,7 @@ let playlistData = [
         artist: "Yeezy",
         image: "yeee.png",
         path: "Diamonds.wav",
-        ts: 3,
+        ts: 15,
         te: 260
       }, {
         id: 2,
@@ -692,18 +692,23 @@ app.post('/ajaxpost', upload.none(), (req,res) => {
 });
 
 app.post('/add_tracks', upload.single('file'), (req, res) => {
+        console.log(req.file);
+        console.log(req.body);
         let track = req.body.nameData;
         const artist = req.body.artistData;                           //add sending a list of playlist names in the render
         const playlistArray = req.body.checkbox;
         const pathToFile = req.file.path;
         const extension = path.extname(req.file.originalname);
+        const duration = req.body.duration;
         track = track + extension;
         const obj = {
           name: track,
           artist: artist,
           path: pathToFile,
+          duration: duration,
           playlists: playlistArray
         };
+        
         res.render('add_tracks', {data: {json: obj, playlistNames: playlistNames}});
           
 });

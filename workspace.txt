@@ -17,7 +17,7 @@
   -finish db hookup (probably will take a while lots of server.js work needs to be done to parse the data into the json i want)
   -i also have no exception / error handling and no promises so see about that
   -create new playlist feature
-  7
+  -get the length of each track when it is uploaded by creating a audio element setting the src and then getting the duration
   
   track_list.forEach( item => {
           console.log("id: "+item.id);
@@ -40,3 +40,6 @@ track_list[track_id_finder(playlistData.childNodes[i].id)].xxx
             </div>
 
 res.render('Homepage', {data: {json: playlistData}});
+
+
+

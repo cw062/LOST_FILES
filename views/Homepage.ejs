@@ -73,7 +73,7 @@
       <div class="playpause-track" onclick="playpauseTrack()">
           <i class="fa fa-play-circle fa-5x"></i>
       </div>
-      <div class="next-track" onclick="nextTrack()">
+      <div class="next-track" onclick="nextTrack(false)">
           <i class="fa fa-step-forward fa-2x"></i>
       </div>
     </div>
@@ -113,7 +113,11 @@
         let playlistDisplaying = false;
         let scrollAdder = 0;
         var track_index = 0;
-        let isPlaying = false;
+        let isPlaying = false;    //keeps track of if any audio is playing 
+        let currentAudio = true;                      //keeps track of which audio element is playing or paused true = current, false = other
+        let bothPlaying = false;  //keeps track of when to play both tracks or just 1
+        let next_track_index = 0;
+        let faderLength = 5;
         let updateTimer;
         var droppedElementId = 0;
         var draggingElementId = 0;
@@ -122,8 +126,11 @@
         var editMode = false;
         let iWindow = null;
         let fd = new FormData();
-        //create data to send to iframe
-        
+         // Create the audio element for the player
+         let curr_track = document.createElement('audio');
+         let other_track = document.createElement('audio');    
+
+
         stylePlaylist();
 
         function postFunction() {
@@ -135,8 +142,7 @@
 
         }
 
-        // Create the audio element for the player
-        let curr_track = document.createElement('audio');
+       
  
 
         //pass data to iframe
@@ -151,7 +157,8 @@
 
       window.addEventListener("message", (event) => {
         if (Object.values(event.data).length != 0) {
-            const dataObj = event.data;                                      // !!!!!!!!!! THIS IS THE DATA THAT WAS SUBMITTED >> event.data
+          console.log(event.data.duration);  
+          const dataObj = event.data;                                      // !!!!!!!!!! THIS IS THE DATA THAT WAS SUBMITTED >> event.data
             dataObj.playlists.forEach(element => {
               let tempIndex = datajson.findIndex(o => o.name == element);
               const reformattedDataObj = {                                   //reformats data from add_tracks to add to page and data structure
@@ -186,16 +193,14 @@
         
         //Functions
 
-        function loadTrack(track_index) {
+        function loadTrack(track_index, track) {
             // Clear the previous seek timer
             clearInterval(updateTimer);
             resetValues();
                                                                               //May be able to rework this using playlistdata.id
-            //let current_track = track_id_finder(track_index);
-
             // Load a new track
-            curr_track.src = track_list[track_index].path;
-            curr_track.load();
+            track.src = track_list[track_index].path;
+            track.load();
             // Update details of the track
             track_art.style.backgroundImage = 
                "url(" + track_list[track_index].image + ")";
@@ -206,32 +211,74 @@
             
             // Set an interval of 1000 milliseconds
             // for updating the seek slider
-            updateTimer = setInterval(seekUpdate, 1000);
+            updateTimer = setInterval(handleTime, 1000);
+
+            track.currentTime = track_list[track_index].ts;
             
             // Move to the next track if the current finishes playing
             // using the 'ended' event
-            curr_track.addEventListener("ended", nextTrack);
+            //track.addEventListener("ended", nextTrack(false));
             
             // Apply a random background color
             random_bg_color();
         }
+
+        function handleTime() {
+          seekUpdate(getCurrentTrack());
+
+          if (currentAudio) {
+            if (curr_track.currentTime > track_list[track_index].te) {
+              curr_track.pause();
+              currentAudio = false;
+              track_index = next_track_index;
+              bothPlaying = false;
+              
+            } else if (curr_track.currentTime > track_list[track_index].te - faderLength) {
+              curr_track.volume *= 0.7;
+              if(!bothPlaying) {
+                nextTrack(true);
+                other_track.volume = 0.4;
+                bothPlaying = true;
+              }
+              other_track.volume = Math.min(other_track.volume * 1.5, 1);
+            }
+            other_track.volume = 1;
+
+          } else {
+            //other is playing
+            if(other_track.currentTime > track_list[track_index].te) {
+              other_track.pause();
+              currentAudio = true;
+              track_index = next_track_index;
+              bothPlaying = false;
             
-          function random_bg_color() {
-            // Get a random number between 64 to 256
-            // (for getting lighter colors)
-            let red = Math.floor(Math.random() * 256) + 64;
-            let green = Math.floor(Math.random() * 256) + 64;
-            let blue = Math.floor(Math.random() * 256) + 64;
-            let red2 = Math.floor(Math.random() * 256) + 64;
-            let green2 = Math.floor(Math.random() * 256) + 64;
-            let blue2 = Math.floor(Math.random() * 256) + 64;
+            } else if (other_track.currentTime > track_list[track_index].te - faderLength) {
+              other_track.volume *= 0.7;
 
-            // Construct a color withe the given values
-            let bgColor = "rgb(" + red + ", " + green + ", " + blue + ")";
-            let bgColor2 = "rgb(" + red2 + ", " + green2 + ", " + blue2 + ")";
+              if(!bothPlaying) {
+                nextTrack(true);
+                curr_track.volume = 0.4;
+                bothPlaying = true;
+              }
+              curr_track.volume = Math.min(curr_track.volume * 1.5, 1);
+            }
+            curr_track.volume = 1;
+          }
 
-            // Set the background to the new color
-            document.body.style.background = "linear-gradient("+bgColor+","+bgColor2+")";
+        }
+            
+
+          function getCurrentTrack() {
+            if (currentAudio)
+              return curr_track;
+            else
+              return other_track;
+          }
+
+          function getOtherTrack() {
+            if (currentAudio)
+              return other_track;
+            return curr_track;         
           }
             
           // Function to reset all values to their default
@@ -244,13 +291,19 @@
           function playpauseTrack() {
             // Switch between playing and pausing
             // depending on the current state
-            if (!isPlaying) playTrack();
-            else pauseTrack();
+            if (!isPlaying) 
+              playTrack(false);
+            else 
+              pauseTrack();
           }
             
-          function playTrack() {
+          function playTrack(switchAudioElement) {
             // Play the loaded track
-            curr_track.play();
+            
+            if (switchAudioElement)
+              getOtherTrack().play();
+            else
+              getCurrentTrack().play();
             isPlaying = true;
             
             // Replace icon with the pause icon
@@ -259,16 +312,17 @@
             
           function pauseTrack() {
             // Pause the loaded track
-            curr_track.pause();
+            getCurrentTrack().pause();
             isPlaying = false;
             
             // Replace icon with the play icon
             playpause_btn.innerHTML = '<i class="fa fa-play-circle fa-5x"></i>';
           }
             
-          function nextTrack() {
+          function nextTrack(switchAudioElement) {
             // Go back to the first track if the
             // current one is the last in the track list
+            let temp = track_index;
           
             let track_index_helper = track_list[track_index].index;
             
@@ -277,10 +331,18 @@
             else track_index_helper = 0;
             
             track_index = track_id_finder(track_index_helper);
-        
+            next_track_index = track_index;
             // Load and play the new track
-            loadTrack(track_index);
-            playTrack();
+            if (switchAudioElement) {
+              loadTrack(track_index, getOtherTrack());
+              track_index = temp;
+              playTrack(true);
+            }
+            else {
+              loadTrack(track_index, getCurrentTrack());
+              playTrack(false);
+            }
+            
           }
             
           function prevTrack() {
@@ -292,22 +354,25 @@
             
             if (track_index_helper > 0)
               track_index_helper -= 1;
-            else track_index_helper = track_list.length - 1;
+            else 
+              track_index_helper = track_list.length - 1;
               
             track_index = track_id_finder(track_index_helper);
             // Load and play the new track
-            loadTrack(track_index);
-            playTrack();
+            loadTrack(track_index, getCurrentTrack());
+            playTrack(false);
           }
         
           function seekTo() {
             // Calculate the seek position by the
             // percentage of the seek slider 
             // and get the relative duration to the track
-            seekto = curr_track.duration * (seek_slider.value / 100);
+            track = getCurrentTrack();
+
+            seekto = track.duration * (seek_slider.value / 100);
             
             // Set the current track position to the calculated seek position
-            curr_track.currentTime = seekto;
+            track.currentTime = seekto;
           }
             
           function setVolume() {
@@ -316,19 +381,19 @@
             curr_track.volume = volume_slider.value / 100;
           }
             
-          function seekUpdate() {
+          function seekUpdate(track) {
             let seekPosition = 0;
             
             // Check if the current track duration is a legible number
             if (!isNaN(curr_track.duration)) {
-              seekPosition = curr_track.currentTime * (100 / curr_track.duration);
+              seekPosition = track.currentTime * (100 / track.duration);
               seek_slider.value = seekPosition;
             
               // Calculate the time left and the total duration
-              let currentMinutes = Math.floor(curr_track.currentTime / 60);
-              let currentSeconds = Math.floor(curr_track.currentTime - currentMinutes * 60);
-              let durationMinutes = Math.floor(curr_track.duration / 60);
-              let durationSeconds = Math.floor(curr_track.duration - durationMinutes * 60);
+              let currentMinutes = Math.floor(track.currentTime / 60);
+              let currentSeconds = Math.floor(track.currentTime - currentMinutes * 60);
+              let durationMinutes = Math.floor(track.duration / 60);
+              let durationSeconds = Math.floor(track.duration - durationMinutes * 60);
             
               // Add a zero to the single digit time values
               if (currentSeconds < 10) { currentSeconds = "0" + currentSeconds; }
@@ -350,6 +415,24 @@
             addDrag();
             createSettingsFeilds();
             hideSettings();
+          }
+
+          function random_bg_color() {
+            // Get a random number between 64 to 256
+            // (for getting lighter colors)
+            let red = Math.floor(Math.random() * 256) + 64;
+            let green = Math.floor(Math.random() * 256) + 64;
+            let blue = Math.floor(Math.random() * 256) + 64;
+            let red2 = Math.floor(Math.random() * 256) + 64;
+            let green2 = Math.floor(Math.random() * 256) + 64;
+            let blue2 = Math.floor(Math.random() * 256) + 64;
+
+            // Construct a color withe the given values
+            let bgColor = "rgb(" + red + ", " + green + ", " + blue + ")";
+            let bgColor2 = "rgb(" + red2 + ", " + green2 + ", " + blue2 + ")";
+
+            // Set the background to the new color
+            document.body.style.background = "linear-gradient("+bgColor+","+bgColor2+")";
           }
 
           function stylePlaylist() {
@@ -474,7 +557,10 @@
         var handleSongClick = function(event) {                     
           track_index = track_list[event.target.id].index;
           //track_index = event.target.id;        
-          loadTrack(track_index);
+          if (isPlaying)
+            loadTrack(track_index, curr_track);
+          else
+            loadTrack(track_index, other_track);
           
         }
 
@@ -659,7 +745,7 @@ function updateThumbnail(dropZoneElement, file) {
 
 
           // Load the first track in the tracklist
-        loadTrack(track_index);</script>
+        loadTrack(track_index, curr_track);</script>
     </main>
 </body>
 
