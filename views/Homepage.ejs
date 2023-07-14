@@ -7,77 +7,70 @@
 <link rel="stylesheet" type="text/css" href="/style.css">
 </head>
 <body>
-    <main class="main-container">
+  <div class="main-container">
+    <div class="library-header-container">
+        <div class="playlist-title">Library</div>
+        <button class="plus-button">
+          <div class="button-vertical-line"></div>
+          <div class="button-horizontal-line"></div>
+        </button>
+        <form id="new-playlist-form">
+          <input type="text" class="new-playlist" name="new_playlist_name" placeholder="New Playlist">
+        </form>
+      </div>
+    <div class="playlist-list-container">
+      <ul class="playlist-list">
+        <% data.json.forEach(function callback(element, index) { %>
+          <li class="playlist-list-item<%=index%>" onclick="handleListClick( <%= index %> )"><%= element.name %></li>
+        <% }); %>
+
+      </ul>
+    </div>
+    
+    <div class="slider_container">
+      <div class="prev-track" onclick="prevTrack()">
+        <i class="fa fa-step-backward fa-2x"></i>
+      </div>
+      <div class="playpause-track" onclick="playpauseTrack()">
+        <i class="fa fa-play-circle fa-5x"></i>
+      </div>
+      <div class="next-track" onclick="nextTrack(false)">
+        <i class="fa fa-step-forward fa-2x"></i>
+      </div>
+      <div class="current-time">00:00</div>
+      <input type="range" min="1" max="100" value="0" class="seek_slider" onchange="seekTo()">
+      <div class="total-duration">00:00</div>
+
+      <div class="details">
+        <div class="now-playing">Playing x of y</div>
+        <div class="track-name">Track Name</div>
+        <div class="track-artist">Track Artist</div>
+        </div>
+
+    </div>
+
+    <section class="top-div">
       
-      <form id="settings_form"></form>
+
+      <div class="playlist-songs-container">    
+        <ol class="list" id ="list"></ol>
+      </div>
+  
+    </section> 
+    <section class="bottom-div">
       <div class="save-button-container">
         <button class="save-button" onclick="postFunction()" value="Save" name="Save">Save</button>
       </div>
-
-    <div class="popup-button-container">
-                <button class="popup-button">ADD SONG</button>
-    </div>
-        <div class="overlay"></div>
-        <div class="popup">
-          <iframe class="popup-iframe" src="/add_tracks" title="ADDTRACKS" id="add_tracks_iframe"></iframe>
-          
-        </div>
-        </div>  
-        <div class="edit-playlist-button-container">
-          <button class="edit-playlist-button" onclick="toggleEditMode()">Edit Playlist OFF</button>
-
-        </div>
-        <div class="playlist-list-container">
-            <ul class="playlist-list">
-                <% data.json.forEach(function callback(element, index) { %>
-                    <li class="playlist-list-item<%=index%>" onclick="handleListClick( <%= index %> )"><%= element.name %> </li>
-                    <% }); %>
- 
-                </ul>
-        </div>
-          <div class="playlist-songs-container">
-            <ol class="list" id ="list">
-            
-                    
-                </ol>
-          </div>
-
-          
-
-    </div>
-
-
-    <div class="player">
-
-        <!--Section for displaying details-->
-        <div class="details">
-            <div class="now-playing">Playing x of y</div>
-            <div class="track-art"></div>
-            <div class="track-name">Track Name</div>
-            <div class="track-artist">Track Artist</div>
-        </div>
-    </div>
-    <div class="buttons">
-        
-    </div>
-
-    <!--Seek Slider-->
-    <div class="slider_container">
-        <div class="current-time">00:00</div>
-        <input type="range" min="1" max="100" value="0"
-            class="seek_slider" onchange="seekTo()">
-        <div class="total-duration">00:00</div>
-        <div class="prev-track" onclick="prevTrack()">
-          <i class="fa fa-step-backward fa-2x"></i>
+      <div class="overlay"></div> 
+      <div class="popup">
+        <iframe class="popup-iframe" src="/add_tracks" title="ADDTRACKS" id="add_tracks_iframe"></iframe> 
       </div>
-      <div class="playpause-track" onclick="playpauseTrack()">
-          <i class="fa fa-play-circle fa-5x"></i>
+      <div class="edit-playlist-songs-container">    
+        <ol class="edit-list" id ="edit-list"></ol>
       </div>
-      <div class="next-track" onclick="nextTrack(false)">
-          <i class="fa fa-step-forward fa-2x"></i>
-      </div>
-    </div>
-
+      <form id="settings_form"></form>
+    </section>
+  </div>
     <script type="text/javascript">
         var playlist_songs = [];
         var currentPlaylist = 0;
@@ -86,30 +79,38 @@
         let track_art = document.querySelector(".track-art");
         let track_name = document.querySelector(".track-name");
         let track_artist = document.querySelector(".track-artist");
-          
         let playpause_btn = document.querySelector(".playpause-track");
         let next_btn = document.querySelector(".next-track");
         let prev_btn = document.querySelector(".prev-track");
-          
         let seek_slider = document.querySelector(".seek_slider");
         let volume_slider = document.querySelector(".volume_slider");
         let curr_time = document.querySelector(".current-time");
         let total_duration = document.querySelector(".total-duration");
         let playlistData = document.querySelector(".list");
-        const popup_button = document.querySelector(".popup-button");
         const overlay = document.querySelector(".overlay");
         const popup = document.querySelector(".popup"); 
-        const playlist_list = document.querySelector(".playlist-list");
+        let playlist_list = document.querySelector(".playlist-list");
         let list_items = document.querySelectorAll(".playlist-songs-item");
         const list_container = document.querySelector(".playlist-songs-container");
         let edit_playlist_button = document.querySelector(".edit-playlist-button");
         let settings_container = document.querySelector(".playlist-songs-settings-container");
         let settings_list = document.querySelector(".song-settings-list");
         let save_button = document.querySelector(".save-button-container");
+        let save_bt = document.querySelector(".save-button");
         let checkbox_container = document.querySelector("checkboxes-container");
         let settings_form = document.querySelector(".settings_form");
         let add_tracks_iframe = document.querySelector(".popup-iframe");
+        let top_div = document.querySelector(".top-div");
+        let edit_list = document.querySelector(".edit-list");
+        let edit_list_items = document.querySelectorAll(".edit-songs-item");
+        let edit_container = document.querySelector(".edit-playlist-songs-container");
+        let slider_container = document.querySelector(".slider_container");
+        let add_playlist = document.querySelector(".plus-button");
         let track_list = datajson[currentPlaylist].data; 
+        let playlist_list_container = document.querySelector(".playlist-list-container");
+        let new_playlist = document.querySelector(".new-playlist");
+        let bvl = document.querySelector(".button-vertical-line");
+        let bhl = document.querySelector(".button-horizontal-line");
         let playlistDisplaying = false;
         let scrollAdder = 0;
         var track_index = 0;
@@ -125,24 +126,93 @@
         var dragEndPosition = 0;
         var editMode = false;
         let iWindow = null;
-        let fd = new FormData();
+        let activePlaylist = 0;
+        let add_button_clicked = false;
          // Create the audio element for the player
          let curr_track = document.createElement('audio');
          let other_track = document.createElement('audio');    
+         slider_container.style.top = (75 + window.scrollY / window.innerHeight * 27) + 'vh';
+
 
 
         stylePlaylist();
 
+      add_playlist.addEventListener("click", function () {
+        if (!add_button_clicked) {
+          playlist_list_container.style.top = '12.2vh';
+          add_playlist.style.transform = 'rotate(45deg)';
+          new_playlist.focus();
+          add_button_clicked = true
+          bvl.style.backgroundColor = '#ff9494';
+          bhl.style.backgroundColor = '#ff9494';
+          new_playlist.style.visibility = 'visible';
+          
+        } else {
+          add_button_clicked = false;
+          playlist_list_container.style.top = '8vh';
+          add_playlist.style.transform = 'rotate(90deg)';
+          bvl.style.backgroundColor = 'white';
+          bhl.style.backgroundColor = 'white';
+        }
+        //new_playlist.style.visibility = 'visible';
+
+      });
+
+        window.addEventListener("scroll", function () {
+          slider_container.style.top = (75 + window.scrollY / window.innerHeight * 27) + 'vh';
+        });
+
         function postFunction() {
-          var ajax = new XMLHttpRequest();
-          var form_data = new FormData(document.getElementById("settings_form"));
+          let ajax = new XMLHttpRequest();
+          console.log(settings_form);
+          let form_data = new FormData(document.getElementById("settings_form"));
           ajax.open("POST", "/ajaxpost", true);
+          console.log(form_data);
          // ajax.setRequestHeader("Content-type", "application.json");
           ajax.send(form_data);
 
         }
 
-       
+        
+        document.getElementById("new-playlist-form").addEventListener('submit', function(e) {
+          e.preventDefault();
+          let ajax = new XMLHttpRequest();
+          let form_data = new FormData(document.getElementById("new-playlist-form"));
+          console.log(form_data);
+          ajax.open("POST", "/ajaxpost", true);
+         // ajax.setRequestHeader("Content-type", "application.json");
+          ajax.send(form_data);
+          document.querySelector('.new-playlist').value = "";
+          add_button_clicked = false;
+          playlist_list_container.style.top = '8vh';
+          add_playlist.style.transform = 'rotate(90deg)';
+          bvl.style.backgroundColor = 'white';
+          bhl.style.backgroundColor = 'white';
+          
+          datajson.push({
+            name: form_data.get("new_playlist_name"),
+            data: []
+          });
+          let li = document.createElement("li");
+            let x = datajson.length-1;
+            li.className = "playlist-list-item" + x;
+            li.onclick = "handleListClick("+x+")";
+            li.textContent = form_data.get("new_playlist_name");
+            playlist_list.appendChild(li);
+            stylePlaylist();
+            document.getElementById('add_tracks_iframe').src = document.getElementById('add_tracks_iframe').src;
+        });
+        /*
+        function postNewPlaylist(e) {
+          let ajax = new XMLHttpRequest();
+          let form_data = new FormData(document.getElementById("new-playlist-form"));
+          ajax.open("POST", "/ajaxpost", true);
+         // ajax.setRequestHeader("Content-type", "application.json");
+          ajax.send(form_data);
+        }
+*/
+        playlistData.addEventListener('click', handleSongClick, true);
+
  
 
         //pass data to iframe
@@ -178,13 +248,6 @@
         console.log(datajson);
       })
 
-      popup_button.addEventListener("click", function() {
-            overlay.style.display = "block";
-            popup.style.display = "block";
-
-
-
-        });
        
         add_tracks_iframe.addEventListener("load", () => {
           iWindow = add_tracks_iframe.contentWindow;
@@ -192,7 +255,8 @@
         
         
         //Functions
-
+        
+        
         function loadTrack(track_index, track) {
             // Clear the previous seek timer
             clearInterval(updateTimer);
@@ -202,8 +266,6 @@
             track.src = track_list[track_index].path;
             track.load();
             // Update details of the track
-            track_art.style.backgroundImage = 
-               "url(" + track_list[track_index].image + ")";
             track_name.textContent = track_list[track_index].name;
             track_artist.textContent = track_list[track_index].artist;
             now_playing.textContent = 
@@ -220,7 +282,8 @@
             //track.addEventListener("ended", nextTrack(false));
             
             // Apply a random background color
-            random_bg_color();
+            //random_bg_color();
+            top_div.style.backgroundImage = "url(" + track_list[track_index].image + ")";
         }
 
         function handleTime() {
@@ -413,8 +476,11 @@
             currentPlaylist = index;
             playlistDisplaying = true;
             addDrag();
-            createSettingsFeilds();
-            hideSettings();
+            createSettingsFields();
+            console.log(document.querySelector(".playlist-list-item"+index).getBoundingClientRect().top);
+            save_bt.textContent = "Save " + datajson[index].name;
+            activePlaylist = index;
+
           }
 
           function random_bg_color() {
@@ -436,8 +502,8 @@
           }
 
           function stylePlaylist() {
-            for (i = 0; i < playlist_list.children.length; i++) {
-              if (i % 2 == 0) 
+            for (let i = 0; i < playlist_list.children.length; i++) {
+              if (i % 2 == 1 && i != activePlaylist) 
                 playlist_list.children[i].style.background = "#1e1e1e";
             }
           }
@@ -446,28 +512,26 @@
           e.preventDefault();
           const draggingItem = document.querySelector(".dragging");
           // Getting all items except currently dragging and making array of them
-          let siblings = [...list.querySelectorAll(".playlist-songs-item:not(.dragging)")];
-
+          let siblings = [...edit_list.querySelectorAll(".edit-songs-item:not(.dragging)")];
           let nextSibling = siblings.find(sibling => {
-          
 
             //Logic for scrolling
-            if ((e.clientY > (list_container.offsetHeight + list_container.offsetTop) * 0.8)) {
-              if (list_container.scrollTop < playlistData.clientHeight - list_container.offsetHeight) {
-                list_container.scrollTop += 1;
+            if ((e.clientY > (edit_container.offsetHeight + edit_container.offsetTop) * 0.8)) {
+              if (edit_container.scrollTop < edit_list.clientHeight - edit_container.offsetHeight) {
+                edit_container.scrollTop += 1;
               }
 
             } 
-            if ((e.clientY < (list_container.offsetHeight + list_container.offsetTop) / 2)) {
-              if (list_container.scrollTop >= 0) {
-              list_container.scrollTop -= .5;
+            if ((e.clientY < (edit_container.offsetHeight + edit_container.offsetTop) / 2)) {
+              if (edit_container.scrollTop >= 0) {
+                edit_container.scrollTop -= .5;
               }
 
             }
-
             
-
-            return e.clientY + list_container.scrollTop <= sibling.offsetTop + sibling.offsetHeight;
+            
+            
+            return e.clientY + edit_container.scrollTop <= sibling.offsetTop + sibling.offsetHeight + window.innerHeight / 100 * 28;
           });
 
           // Inserting the dragging item before the found sibling   
@@ -480,20 +544,20 @@
             }
             draggingElementId = draggingItem.id;
 
-            list.insertBefore(draggingItem, nextSibling);
+            edit_list.insertBefore(draggingItem, nextSibling);
 
         }
-        //event listeners for playlistdata
-        playlistData.addEventListener("drop", (event) => {
+        //event listeners for edit_list
+        edit_list.addEventListener("drop", (event) => {
           reorderPlaylist(draggingElementId, droppedElementId);
-          track_list.forEach( item => {
-        });
+          //track_list.forEach( item => {});                          //idk what this is or where it came from??????
           recolorPlaylist();
           reloadTrack();
-          displaySettings();
+          //displaySettings();
         });
 
-      
+        edit_list.addEventListener("dragover", initSortableList);
+        edit_list.addEventListener("dragenter", e => e.preventDefault());
 
         
 
@@ -508,11 +572,11 @@
         
         function recolorPlaylist() {
           //recolor playlist so it is always alternating
-          for(i = 0; i < playlistData.childNodes.length; i++) {
+          for(i = 0; i < edit_list.childNodes.length; i++) {
             if (i %2 == 0)
-                      playlistData.childNodes[i].style.color = 'white';
+              edit_list.childNodes[i].style.backgroundColor = 'black';
             else {
-              playlistData.childNodes[i].style.color = '#F072A9';
+              edit_list.childNodes[i].style.backgroundColor = '#1e1e1e';
             }
           }
         }
@@ -522,41 +586,68 @@
         function reorderPlaylist(draggingElementId, droppedElementId) {
           const now_playing = track_index;
           //track_list[childNodes[i].id].index = i
+               
           let i = 0;
-          for (let child = playlistData.firstChild; child != null; child = child.nextSibling) {
+          for (let child = edit_list.firstChild; child != null; child = child.nextSibling) {
             track_list[child.id].index = i;
             i++;
           }
           track_index = now_playing;
-        
+          
+          while(playlistData.firstChild) {
+            playlistData.removeChild(playlistData.lastChild);
+          }
+          for (let i = 0; i < track_list.length; i++) {
+            const elem = track_list.find(o => o.index === i);
+            let li = document.createElement('li');
+            li.className = "playlist-songs-item";
+            li.innerText = elem.name;
+            li.name = elem.id;
+            if (i %2 == 0) {                                                                     
+              li.style.color = 'white';
+              li.style.background = '#1e1e1e';
+            }
+            playlistData.appendChild(li);
+          }
+
+
           
         }
 
 
         function addDrag() {
-          list_items = document.querySelectorAll(".playlist-songs-item");
-          list_items.forEach(item => {
+          edit_list_items = document.querySelectorAll(".edit-songs-item");
+          edit_list_items.forEach(item => {
             item.addEventListener("dragstart", () => {
               setTimeout( () => item.classList.add("dragging"), 0);              
-            dragStartPosition = item.offsetTop;
+              dragStartPosition = item.offsetTop;
+              item.style.color = "pink";
             });
             item.addEventListener("dragend", () => {
               item.classList.remove("dragging");
               dragEndPosition = item.offsetTop;
+              item.style.color ="white";
             });
          });
         }
 
         function changeListTextColor(index) {
-          document.querySelector('.playlist-list-item' + currentPlaylist).style.color = '#F072A9';
-          const name = '.playlist-list-item' + index;
-          document.querySelector(name).style.color = 'white';
+          let active = document.querySelector(".playlist-list-item"+index);
+          let prev = document.querySelector(".playlist-list-item"+currentPlaylist);
+          prev.style.color = '#F072A9';
+          active.style.color = 'white';
+          prev.style.backgroundColor = 'black';
+          active.style.backgroundColor = '#F072A9';
+          prev.style.border = "none";
+          active.style.borderTop = "10px solid #F072A9";          
+          active.style.borderBottom = "10px solid #F072A9";
+
+
 
         }
 
         var handleSongClick = function(event) {                     
-          track_index = track_list[event.target.id].index;
-          //track_index = event.target.id;        
+          track_index = event.target.name;
           if (isPlaying)
             loadTrack(track_index, curr_track);
           else
@@ -566,23 +657,29 @@
 
         function displaySongs(index) {
             while(playlistData.firstChild) {
+              edit_list.removeChild(edit_list.lastChild);
               playlistData.removeChild(playlistData.lastChild);
             }
-
           track_list = datajson[index].data;
-          for (i = 0; i < track_list.length; i++) {
+          console.log(track_list);
+
+          for (let i = 0; i < track_list.length; i++) {
             const elem = track_list.find(o => o.index === i);
-            var li = document.createElement('li');
+            let li = document.createElement('li');
             li.className = "playlist-songs-item";
-            li.draggable = true;
             li.innerText = elem.name;
-            li.id = i;
-      
-            if (i %2 == 0) {                                                                      
+            li.name = i;
+            let editli = document.createElement("li");
+            editli.className = "edit-songs-item";
+            editli.draggable = true;
+            editli.innerText = elem.name;
+            editli.id = i;
+            if (i %2 == 0) {                                                                     
               li.style.color = 'white';
-             li.style.background = '#1e1e1e';
-              
+              li.style.background = '#1e1e1e';
+              editli.style.backgroundColor = '#1e1e1e';
             }
+            edit_list.appendChild(editli);
             playlistData.appendChild(li);
           }
           playlistData.addEventListener('click', handleSongClick, true);
@@ -592,23 +689,6 @@
           return track_list.find(o => o.index == track_index_number).id;
         }
 
-        function toggleEditMode() {
-            editMode = !editMode;
-            //addDrag();              //need remove drag and remove onclick
-            if (editMode) {
-              edit_playlist_button.textContent = "Edit Playlist ON";
-              playlistData.addEventListener("dragover", initSortableList);
-              playlistData.addEventListener("dragenter", e => e.preventDefault());
-              playlistData.removeEventListener('click', handleSongClick, true);
-              displaySettings();
-            } else {
-              edit_playlist_button.textContent = "Edit Playlist OFF";
-              playlistData.removeEventListener("dragover", initSortableList);
-              playlistData.removeEventListener("dragenter", e => e.preventDefault());
-              playlistData.addEventListener('click', handleSongClick, true);
-              hideSettings();
-            }
-        }
 
         function displaySettings() {          
           for (let i = 0; i < list_items.length; i++) {
@@ -621,38 +701,77 @@
           
       }
 
-      function hideSettings() {
-        //visibility = "hidden" or display = "none"
-        for (let i = 0; i < list_items.length; i++) {
-          list_items[i].childNodes[1].style.visibility = "hidden";
-          list_items[i].childNodes[2].style.visibility = "hidden";
-          list_container.style.left = "88vw";
-          list_container.style.width = "10vw";
-        }
-        save_button.style.visibility = "hidden";
+      function createSettingsFields() {
+        for (let i = 0; i < edit_list_items.length; i++) {
+            const tsInputMin = document.createElement('input');
+            tsInputMin.type = "text";
+            tsInputMin.classList ="tsmin";
+            tsInputMin.value = track_list[track_id_finder(playlistData.childNodes[i].id)].ts;
+            tsInputMin.name = "tsmin" + i;
+            tsInputMin.setAttribute("Form", "settings_form");        //this one
+            tsInputMin.maxLength = 2;
+            const tsInputSec = document.createElement('input');
+            tsInputSec.type = "text";
+            tsInputSec.classList ="tssec";
+            tsInputSec.value = track_list[track_id_finder(playlistData.childNodes[i].id)].ts;
+            tsInputSec.name = "tssec" + i;
+            tsInputSec.setAttribute("Form", "settings_form");        //this one
+            tsInputSec.maxLength = 2;
+            const teInputMin = document.createElement('input');
+            teInputMin.type = "text";
+            teInputMin.name = "temin" + i;
+            teInputMin.setAttribute("Form", "settings_form");
+            teInputMin.classList = "temin";
+            teInputMin.maxLength = 2; 
+            teInputMin.placeholder = track_list[track_id_finder(playlistData.childNodes[i].id)].duration;
+            teInputMin.value = track_list[track_id_finder(playlistData.childNodes[i].id)].te;
+            const teInputSec = document.createElement('input');
+            teInputSec.type = "text";
+            teInputSec.name = "tesec" + i;
+            teInputSec.setAttribute("Form", "settings_form");
+            teInputSec.classList = "tesec";
+            teInputSec.maxLength = 2;
+            
+            const colon = document.createElement("span");
+            colon.textContent = ":";
+            colon.classList = "tscolon";
+
+            const colon2 = document.createElement("span");
+            colon2.textContent = ":";
+            colon2.classList = "tecolon";
+          
+            let listSpan = document.createElement("span");
+            listSpan.classList = "list-span";
+            teInputSec.placeholder = track_list[track_id_finder(playlistData.childNodes[i].id)].duration;
+            teInputSec.value = track_list[track_id_finder(playlistData.childNodes[i].id)].te;
+            listSpan.appendChild(tsInputMin);
+            listSpan.appendChild(colon);
+            listSpan.appendChild(tsInputSec);
+            listSpan.appendChild(teInputMin);
+            listSpan.appendChild(colon2);
+            listSpan.appendChild(teInputSec);
+            edit_list_items[i].appendChild(listSpan);
+            tsInputMin.addEventListener('keyup', function(e) {
+              if(tsInputMin.value.length === 2) {
+                  tsInputSec.focus();
+              }
+            });
+            tsInputSec.addEventListener('keyup', function(e) {
+              if(tsInputSec.value.length === 2) {
+                  teInputMin.focus();
+              }
+            });
+            teInputMin.addEventListener('keyup', function() {
+              if(teInputMin.value.length === 2) {
+                  teInputSec.focus();
+              }
+            });
+            
+       }
       }
 
-      function createSettingsFeilds() {
-        for (let i = 0; i < list_items.length; i++) {
-            const inputName = document.createElement('input');
-            inputName.type = "text";
-            inputName.classList ="textfield";
-            inputName.value = track_list[track_id_finder(playlistData.childNodes[i].id)].ts;
-            inputName.style.width = "2vw";
-            inputName.name = "ts" + i;
-            inputName.setAttribute("Form", "settings_form");        //this one
-            const input2 = document.createElement('input');
-            input2.type = "text";
-            input2.name = "te" + i;
-            input2.setAttribute("Form", "settings_form");
-            input2.classList = "textfield2";
-            input2.value = track_list[track_id_finder(playlistData.childNodes[i].id)].te;
-            input2.style.width = "2vw";
-            list_items[i].appendChild(inputName);           
-            list_items[i].appendChild(input2);
-            list_items[i].style.width = "300px";
-
-       }
+      function formatTextbox(inputbox) {
+        console.log(inputbox.value);
       }
 
 
@@ -746,7 +865,6 @@ function updateThumbnail(dropZoneElement, file) {
 
           // Load the first track in the tracklist
         loadTrack(track_index, curr_track);</script>
-    </main>
-</body>
+  </body>
 
 </html>

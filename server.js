@@ -26,7 +26,7 @@ let playlistData = [
         artist: "Yeezy",
         image: "yeee.png",
         path: "italy.wav",
-        ts: 4,
+        tsmin: 4,
         te: 150
       }, {
         id: 1,
@@ -224,21 +224,32 @@ let playlistData = [
   name: "playlist2",
   data: [
     {
-      id: 2,
-      name: "Believe What I Say",
+      id: 0,
+      index: 0,
+      name: "Song0",
       artist: "Yeezy",
       image: "yeee.png",
-      path: "Believe.mp3",
+      path: "italy.wav",
       ts: 4,
-      te: 300
+      te: 150
     }, {
       id: 1,
-      name: "Diamonds",
+      index: 1,
+      name: "Song1",
       artist: "Yeezy",
       image: "yeee.png",
       path: "Diamonds.wav",
-      ts: 3,
+      ts: 15,
       te: 260
+    }, {
+      id: 2,
+      index: 2,
+      name:  "Song2",
+      artist: "Yeezy",
+      image: "yeee.png",
+      path: "italy.wav",
+      ts: 4,
+      te: 220
     }
   ]
 }, {
@@ -686,8 +697,14 @@ app.get('/add_tracks', (req, res) => {
     res.render('add_tracks', {data: {json: obj, playlistNames: playlistNames}});      
 });
 
-app.post('/ajaxpost', upload.none(), (req,res) => {
-  console.log(req.body);
+app.post('/ajaxpost', upload.none(), (req, res) => {
+  if (JSON.parse(JSON.stringify(req.body)).new_playlist_name != undefined) {
+    playlistNames.push(JSON.parse(JSON.stringify(req.body)).new_playlist_name);
+    console.log(playlistNames);
+
+  } else {
+    console.log(req.body);
+  }
   
 });
 
