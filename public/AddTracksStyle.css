@@ -168,6 +168,8 @@
     -ms-user-select: none;
     user-select: none;
     color: #F072A9;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   
   /* Hide the browser's default checkbox */
@@ -188,6 +190,8 @@
     height: 25px;
     width: 100%;
     background-color: #eee;
+    transition-duration: 500ms;
+    transition-property: background-color;
   }
   
   /* On mouse-over, add a grey background color */

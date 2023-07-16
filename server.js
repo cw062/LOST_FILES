@@ -14,10 +14,10 @@ app.use(cors());
 app.set('view engine', 'ejs');
 const public = path.join(__dirname, 'public');
 const port = 5000;
-let playlistNames = ["playlist1", "playlist2", "playlist3!", "Bingo", "Bongo", "Boop!", "shob", "chob", "bobb!", "at this point it dont think it matters"];
+let playlistNames = ["playlist1", "playlist2", "playlist3!", "Bingo", "Bongo", "Boop!", "shob", "chob", "bobb!", "at this point it dont think it matters but im gonna make this really long anyways"];
 let playlistData = [
   {
-    name: "playlist1",
+    name: "playlist1ThisIsareallylongname",
     data: [
       {
         id: 0,
@@ -26,7 +26,7 @@ let playlistData = [
         artist: "Yeezy",
         image: "yeee.png",
         path: "italy.wav",
-        tsmin: 4,
+        ts: 4,
         te: 150
       }, {
         id: 1,
@@ -689,8 +689,8 @@ app.get('/', (req, res) => {
 });
 
 
-app.get('/default_page', (req, res) => {
-  res.render('default_page', {root: __dirname});
+app.get('/Login', (req, res) => {
+  res.render('Login', {root: __dirname});
 });
 
 app.get('/add_tracks', (req, res) => {     

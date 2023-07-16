@@ -295,10 +295,11 @@ input[type="range"]::-ms-fill-upper {
     background-color: transparent;
     border: none;
     padding: none;
-    position: absolute;
+    position: relative;
     justify-content: center;
     cursor: pointer;
-    position: relative;
+    transition-duration: 500ms;
+    transition-property: transform;
   }
 
   .button-vertical-line {
@@ -398,7 +399,7 @@ input[type="range"]::-ms-fill-upper {
 
 .list {
   cursor: pointer;
-  padding: 2vw;
+  padding: 40px;
   margin: 0px;
   direction: ltr;
 }
@@ -408,6 +409,11 @@ input[type="range"]::-ms-fill-upper {
   padding-bottom: 1vh;
   padding-left: 1vw;
   padding-right: 1vw;
+}
+
+.artist-name-span {
+  opacity: .5;
+  display: block;
 }
 
 .edit-playlist-songs-container {
@@ -465,6 +471,8 @@ input[type="range"]::-ms-fill-upper {
   border-right: 2px solid #F072A9;
   scrollbar-color: #F072A9 black;
   scrollbar-width: none;
+  transition-duration: 500ms;
+  transition-property: top;
 }
 
 .playlist-list-container::-webkit-scrollbar {
@@ -486,6 +494,11 @@ input[type="range"]::-ms-fill-upper {
   padding-right: 1vw;
   color: #F072A9;  
   display: flex;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  transition-duration: 500ms;
+  transition-property: border;
 }
 
 .edit-playlist-button {
@@ -532,19 +545,19 @@ input[type="range"]::-ms-fill-upper {
 
 .save-button-container {
   position: relative;
-  left: 40vw;
-  top: 21vh;
+  left: 63vw;
+  top: 15vh;
   height: 6vh;
-  width: 30vw;
+  width: 10vw;
   overflow: hidden;
 }
 
 .save-button {
-  display: absolute;
+  display: relative;
   top: 1vh;
   height: 6vh;
-  left: 77vw;
-  width: 30vw;
+  left: 0vw;
+  width: 10vw;
   justify-content: center;
   background-color: black;
   border: solid 2px;
@@ -557,6 +570,8 @@ input[type="range"]::-ms-fill-upper {
   font-family: "Quicksand", sans-serif;
   padding: 0px;
   overflow: hidden;
+  transition-duration: 500ms;
+  transition-property: background-color;
 }
 
 .tsmin {
@@ -572,14 +587,22 @@ input[type="range"]::-ms-fill-upper {
   display: block;
   color: #F072A9;
   left: 11.5vw;
-
+  font-weight: bold;
 }
 
 .tecolon {
   display: block;
   color: #F072A9;
   left: 29vw;
+  font-weight: bold;
 }
+
+.hyphen {
+  display: block;
+  margin-right: 1vw;
+  font-weight: bold;
+}
+
 
 .tssec {
   background-color: black;
@@ -588,7 +611,7 @@ input[type="range"]::-ms-fill-upper {
   left: 14vw;
   display: block;
   width: 15px; 
-  margin-right: 2vw;
+  margin-right: 1vw;
 }
 
 .temin {
@@ -630,10 +653,76 @@ input[type="range"]::-ms-fill-upper {
 }
 
 .list-span {
-  position: absolute;
+  position: relative;
   left: 16vw;
   display: inline-flex;
   width: 100%;
+  top: -2.5vh;
+}
+
+.ts-label {
+  position: relative;
+  left: 15vw;
+  top: -2.5vh;
+}
+
+.edit-playlist-title-container {
+  position: relative;
+  left: 35vw;
+  top: 21vh;
+  height: 6vh;
+  width: 27vw;
+  overflow: hidden;
+  background-color: black;
+  border: 2px solid #F072A9;
+  border-radius: 10px;
+  color: #F072A9;
+  justify-content: space-evenly;
+  display: flex;
+  align-items: center;
+}
+
+.settings-title {
+  position: relative;
+  font-size: 1.5rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  margin-right: 2vw;
+  margin-left: 2vw;
+  color: white;
+  transition-duration: 500ms;
+  
+}
+
+.question-button {
+  background-color: black;
+  color: #F072A9;
+  border: none;
+  position: relative;
+  cursor: pointer;
+  margin-right: 6px;
+}
+
+.edit-title {
+  position: relative;
+  font-size: 1.5rem;
+  margin-left: 6px;
+}
+
+.info {
+  position: absolute;
+  background-color: black;
+  border: 2px solid #F072A9;
+  border-radius: 10px;
+  color: #F072A9;
+  left: 63vw;
+  top: 2vh;
+  height: 17vh;
+  width: 9vw;
+  opacity: 0;
+  visibility: hidden;
+  transition-duration: 750ms;
 }
 
 /*

@@ -58,6 +58,16 @@
   
     </section> 
     <section class="bottom-div">
+      <div class="edit-playlist-title-container">
+        <span class="edit-title">Edit</span>
+        <span class="settings-title"></span>
+        <button class="question-button">
+          <i class="far fa-question-circle fa-lg"></i>
+        </button>
+      </div>
+      <div class="info">
+        <span>Change playlist order by dragging and dropping tracks. Numbers on the left specify the start and end times of each track</span>
+      </div>
       <div class="save-button-container">
         <button class="save-button" onclick="postFunction()" value="Save" name="Save">Save</button>
       </div>
@@ -96,7 +106,7 @@
         let settings_container = document.querySelector(".playlist-songs-settings-container");
         let settings_list = document.querySelector(".song-settings-list");
         let save_button = document.querySelector(".save-button-container");
-        let save_bt = document.querySelector(".save-button");
+        let settings_title = document.querySelector(".settings-title");
         let checkbox_container = document.querySelector("checkboxes-container");
         let settings_form = document.querySelector(".settings_form");
         let add_tracks_iframe = document.querySelector(".popup-iframe");
@@ -111,6 +121,8 @@
         let new_playlist = document.querySelector(".new-playlist");
         let bvl = document.querySelector(".button-vertical-line");
         let bhl = document.querySelector(".button-horizontal-line");
+        let question_button = document.querySelector(".question-button");
+        let info = document.querySelector(".info");
         let playlistDisplaying = false;
         let scrollAdder = 0;
         var track_index = 0;
@@ -164,7 +176,6 @@
 
         function postFunction() {
           let ajax = new XMLHttpRequest();
-          console.log(settings_form);
           let form_data = new FormData(document.getElementById("settings_form"));
           ajax.open("POST", "/ajaxpost", true);
           console.log(form_data);
@@ -254,6 +265,19 @@
         });
         
         
+
+        question_button.addEventListener('mouseover', function() {
+          info.style.visibility ='visible';
+          info.style.opacity = 1;
+          
+        });
+        
+        question_button.addEventListener('mouseleave', function() {
+          info.style.opacity = 0;
+          info.style.visibility = 'hidden';
+        });
+
+        
         //Functions
         
         
@@ -291,6 +315,7 @@
 
           if (currentAudio) {
             if (curr_track.currentTime > track_list[track_index].te) {
+              console.log("1");
               curr_track.pause();
               currentAudio = false;
               track_index = next_track_index;
@@ -299,6 +324,7 @@
             } else if (curr_track.currentTime > track_list[track_index].te - faderLength) {
               curr_track.volume *= 0.7;
               if(!bothPlaying) {
+                console.log("2");
                 nextTrack(true);
                 other_track.volume = 0.4;
                 bothPlaying = true;
@@ -310,6 +336,7 @@
           } else {
             //other is playing
             if(other_track.currentTime > track_list[track_index].te) {
+              console.log("3");
               other_track.pause();
               currentAudio = true;
               track_index = next_track_index;
@@ -319,6 +346,7 @@
               other_track.volume *= 0.7;
 
               if(!bothPlaying) {
+                console.log("1");
                 nextTrack(true);
                 curr_track.volume = 0.4;
                 bothPlaying = true;
@@ -477,10 +505,8 @@
             playlistDisplaying = true;
             addDrag();
             createSettingsFields();
-            console.log(document.querySelector(".playlist-list-item"+index).getBoundingClientRect().top);
-            save_bt.textContent = "Save " + datajson[index].name;
+            settings_title.textContent = datajson[index].name;
             activePlaylist = index;
-
           }
 
           function random_bg_color() {
@@ -522,7 +548,7 @@
               }
 
             } 
-            if ((e.clientY < (edit_container.offsetHeight + edit_container.offsetTop) / 2)) {
+            if ((e.clientY < (edit_container.offsetHeight + edit_container.offsetTop) / 3)) {
               if (edit_container.scrollTop >= 0) {
                 edit_container.scrollTop -= .5;
               }
@@ -652,6 +678,8 @@
             loadTrack(track_index, curr_track);
           else
             loadTrack(track_index, other_track);
+
+          playTrack(false);
           
         }
 
@@ -661,7 +689,6 @@
               playlistData.removeChild(playlistData.lastChild);
             }
           track_list = datajson[index].data;
-          console.log(track_list);
 
           for (let i = 0; i < track_list.length; i++) {
             const elem = track_list.find(o => o.index === i);
@@ -669,16 +696,27 @@
             li.className = "playlist-songs-item";
             li.innerText = elem.name;
             li.name = i;
+            let list_span = document.createElement("span");
+            list_span.textContent = elem.artist;
+            list_span.className = "artist-name-span";
+            li.appendChild(list_span);
             let editli = document.createElement("li");
             editli.className = "edit-songs-item";
             editli.draggable = true;
             editli.innerText = elem.name;
             editli.id = i;
+            
+            
+            let edit_list_span = document.createElement("span");
+            edit_list_span.textContent = elem.artist;
+            edit_list_span.className = "artist-name-span";
+            editli.appendChild(edit_list_span);
             if (i %2 == 0) {                                                                     
               li.style.color = 'white';
               li.style.background = '#1e1e1e';
               editli.style.backgroundColor = '#1e1e1e';
             }
+            //editli.appendChild(list_span);
             edit_list.appendChild(editli);
             playlistData.appendChild(li);
           }
@@ -739,7 +777,9 @@
             const colon2 = document.createElement("span");
             colon2.textContent = ":";
             colon2.classList = "tecolon";
-          
+            const hyphen = document.createElement("span");
+            hyphen.textContent = "-";
+            hyphen.classList = "hyphen";
             let listSpan = document.createElement("span");
             listSpan.classList = "list-span";
             teInputSec.placeholder = track_list[track_id_finder(playlistData.childNodes[i].id)].duration;
@@ -747,10 +787,33 @@
             listSpan.appendChild(tsInputMin);
             listSpan.appendChild(colon);
             listSpan.appendChild(tsInputSec);
+            listSpan.appendChild(hyphen);
             listSpan.appendChild(teInputMin);
             listSpan.appendChild(colon2);
             listSpan.appendChild(teInputSec);
             edit_list_items[i].appendChild(listSpan);
+            const regex = new RegExp("^[0-9]*$");
+
+            tsInputMin.addEventListener("beforeinput", (event) => {
+              if (event.data != null && !regex.test(event.data)) 
+                event.preventDefault();
+            });
+
+            tsInputSec.addEventListener("beforeinput", (event) => {
+              if (event.data != null && !regex.test(event.data)) 
+                event.preventDefault();
+            });
+
+            teInputMin.addEventListener("beforeinput", (event) => {
+              if (event.data != null && !regex.test(event.data)) 
+                event.preventDefault();
+            });
+
+            teInputSec.addEventListener("beforeinput", (event) => {
+              if (event.data != null && !regex.test(event.data)) 
+                event.preventDefault();
+            });
+
             tsInputMin.addEventListener('keyup', function(e) {
               if(tsInputMin.value.length === 2) {
                   tsInputSec.focus();
@@ -766,93 +829,8 @@
                   teInputSec.focus();
               }
             });
-            
        }
       }
-
-      function formatTextbox(inputbox) {
-        console.log(inputbox.value);
-      }
-
-
-      document.querySelectorAll(".drop-zone__input").forEach((inputElement) => {
-	const dropZoneElement = inputElement.closest(".drop-zone");
-
-	dropZoneElement.addEventListener("click", (e) => {
-		inputElement.click();
-	});
-
-	inputElement.addEventListener("change", (e) => {
-		if (inputElement.files.length) {
-			updateThumbnail(dropZoneElement, inputElement.files[0]);
-		}
-	});
-
-	dropZoneElement.addEventListener("dragover", (e) => {
-		e.preventDefault();
-		dropZoneElement.classList.add("drop-zone--over");
-	});
-
-	["dragleave", "dragend"].forEach((type) => {
-		dropZoneElement.addEventListener(type, (e) => {
-			dropZoneElement.classList.remove("drop-zone--over");
-		});
-	});
-
-	dropZoneElement.addEventListener("drop", (e) => {
-		e.preventDefault();
-
-		if (e.dataTransfer.files.length) {
-			inputElement.files = e.dataTransfer.files;
-			updateThumbnail(dropZoneElement, e.dataTransfer.files[0]);
-		}
-
-		dropZoneElement.classList.remove("drop-zone--over");
-	});
-});
-
-/**
- * Updates the thumbnail on a drop zone element.
- *
- * @param {HTMLElement} dropZoneElement
- * @param {File} file
- */
-function updateThumbnail(dropZoneElement, file) {
-	let thumbnailElement = dropZoneElement.querySelector(".drop-zone__thumb");
-
-	// First time - remove the prompt
-	if (dropZoneElement.querySelector(".drop-zone__prompt")) {
-		dropZoneElement.querySelector(".drop-zone__prompt").remove();
-	}
-
-	// First time - there is no thumbnail element, so lets create it
-	if (!thumbnailElement) {
-		thumbnailElement = document.createElement("div");
-		thumbnailElement.classList.add("drop-zone__thumb");
-		dropZoneElement.appendChild(thumbnailElement);
-	}
-
-	thumbnailElement.dataset.label = file.name;
-
-	// Show thumbnail for image files
-	if (file.type.startsWith("image/")) {
-		const reader = new FileReader();
-
-		reader.readAsDataURL(file);
-		reader.onload = () => {
-			thumbnailElement.style.backgroundImage = `url('${reader.result}')`;
-		};
-	} else {
-		thumbnailElement.style.backgroundImage = null;
-	}
-}
-
-  //get checked playlists -- might not need
-  let checkValue = false;
-  let checkValueArray = Array.from({ length: playlist_list.children.length }, () => false);
-  function toggleCheckValue(index) {
-    checkValueArray[index] = !checkValueArray[index];
-  }
 
 
       

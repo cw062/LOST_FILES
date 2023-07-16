@@ -65,3 +65,8 @@ Artist
 <% data.json.forEach(function callback(element, index) { %>
           <li class="playlist-list-item<%=index%>" onclick="handleListClick( <%= index %> )"><%= element.name %></li>
         <% }); %>
+
+
+        02 30
+        02*60 + 30 = 150
+        

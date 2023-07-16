@@ -47,11 +47,27 @@
 		parent.iFrameWin = window;
 	});
 
+	/*window.addEventListener("resize", (event) => {
+		let nameList = document.querySelectorAll(".container");
+		nameList.forEach((element, index) => {
+			console.log(element.textContent);
+			if (playlist_names[index].length * 15 > window.innerWidth) {
+				element.textContent = playlist_names[index].substring(0, Math.floor(window.innerWidth / 14));
+			} else {
+				element.textContent = playlist_names[index];
+			}
+		});
+	});*/
+
 	function createCheckboxes() {
 		playlist_names.forEach((element, index) => {
 			const label = document.createElement('label');
 			label.classList = "container"
-			label.textContent = element;
+			if (element.length * 15 > window.innerWidth) {
+				label.textContent = element.substring(0, Math.floor(window.innerWidth / 14));
+			} else {
+				label.textContent = element;
+			}
 			const check_box = document.createElement("input");
 			check_box.type = "checkbox";
 			check_box.name = "checkbox[]";
@@ -62,6 +78,8 @@
 			label.appendChild(check_box);
 			label.appendChild(spanCheckmark);
 			checkboxes_container.appendChild(label);
+			console.log(window.innerWidth);
+			
 		});
 	}
 
