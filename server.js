@@ -7,6 +7,7 @@ const fs = require('fs');
 const mysql = require('mysql');
 const { timeLog } = require('console');
 const { connection } = require('mongoose');
+const crypto = require('crypto');
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -667,6 +668,37 @@ pool.getConnection(function(err, connection) {
 
 connection.release();
 */
+
+let isLoggedin = false;
+const uname = "mickey";
+const pass = "mouse";
+let salt = "";
+let iterations = 10000;
+let hash = "";
+hashPassword(pass);
+
+//use when i first collect password for storage
+function hashPassword(password) {
+  salt = crypto.randomBytes(128).toString('base64');
+  crypto.pbkdf2(password, salt, iterations, 64, 'sha512', (err, derivedKey) => {
+    if (err) throw err;
+    hash = derivedKey.toString('hex'); 
+  });
+}
+
+//use when validating login attempts
+function isPasswordCorrect(savedHash, savedSalt, savedIterations, passwordAttempt) {
+  newhash = "";
+  return new Promise(resolve => {
+    crypto.pbkdf2(passwordAttempt, savedSalt, savedIterations, 64, 'sha512', (err, derivedKey) => {
+      if (err) throw err;
+      newhash = derivedKey.toString('hex'); 
+      resolve(hash == newhash);
+    });
+  });
+  //return false;
+}
+
 let storage = multer.diskStorage({
     destination: function (req, file, cb) {
       cb(null, 'uploads/')
@@ -674,7 +706,7 @@ let storage = multer.diskStorage({
     filename: function (req, file, cb) {
       cb(null, file.originalname)
     }
-  })
+  });
   
   const upload = multer({ storage: storage });
 
@@ -684,9 +716,28 @@ app.use(express.static(path.join(__dirname)));
 
 
 app.get('/', (req, res) => {        
-
-  res.render('Homepage', {data: {json: playlistData}});     
+  console.log(isLoggedin);
+  if (isLoggedin) {
+    res.render('Homepage', {data: {json: playlistData}});  
+  } else {
+    res.render('Login', {root: __dirname});
+  }   
 });
+
+let newuser = "";
+let newpass = "";
+
+app.post('/', (req, res) => {
+  console.log(req.body);
+    console.log('here');
+    async function getPassCorrect() {
+      isLoggedin = await isPasswordCorrect(hash, salt, iterations, req.body.pass);
+      res.redirect('/');
+    }
+    getPassCorrect();
+});
+
+
 
 
 app.get('/Login', (req, res) => {
@@ -694,6 +745,7 @@ app.get('/Login', (req, res) => {
 });
 
 app.get('/add_tracks', (req, res) => {     
+
     res.render('add_tracks', {data: {json: obj, playlistNames: playlistNames}});      
 });
 

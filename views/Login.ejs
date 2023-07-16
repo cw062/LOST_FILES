@@ -8,12 +8,12 @@
             <div class="login-title">
                 <span>Login</span>
             </div>
-            <form id="login-form" class="login-form"></form>
+            <form action="/" method="POST" id="login-form" name="login_form"></form>
             <label for="username" class="username-label">Username</label>
-            <input type="text" id="username" class="username" name="pass"  form="login-form">
+            <input type="text" id="username" class="username" name="username"  form="login-form">
             <label for="password" class="password-label">Password</label>
             <input type="password" class="pass" id="pass" name="pass" form="login-form">
-            <button class="submit-button">Submit</button>
+            <button class="submit-button">ENTER</button>
             <span class="bottom-elements">
                 <a href="SignUp" class="signup">Sign Up</a>
                 <a href="ForgotPassword" class="forgotpass">Forgot Password?</a>
@@ -105,6 +105,10 @@
                     submit_button.style.opacity = 0;
                     bottom_elements.style.top = '10vh';
                 }
+            });
+
+            submit_button.addEventListener('click', () => {
+                document.login_form.submit();
             });
         </script>
     </body>
