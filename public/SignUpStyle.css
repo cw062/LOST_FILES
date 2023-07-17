@@ -15,7 +15,7 @@
     flex-direction: column;
 }
 
-.login-title {
+.signup-title {
     position: relative;
     align-items: center;
     display: flex;
@@ -119,7 +119,7 @@
     transition:         all .4s cubic-bezier(0.645, 0.045, 0.355, 1);
   }
   
-  .submit-button::after{
+  .submit-button::after {
       width: 30px;
       height: 1px;
       background: #549c30;
@@ -127,7 +127,7 @@
       margin-top: 0px;
   }
   
-  .submit-button::before{
+  .submit-button::before {
       content: "";
       transform: rotate(-135deg) translateX(50%);
       width: 11px;
@@ -140,7 +140,7 @@
   
   
   .submit-button:hover,
-  .submit-button:focus {
+  .submit-button:focus{
     padding: 15px 60px 15px 20px;
     color: #549c30;
   }
@@ -153,20 +153,17 @@
     right: 15px;
   }
 
-.signup {
+.login {
     position: relative;
 
-    margin-left: 1vw;
     text-decoration: none;
     color: black;
     opacity: .5;
     transition-duration: 500ms;
     transition-property: opacity;
-    width: 50%;
-    display: flex;
 }
 
-.signup:hover {
+.login:hover {
     opacity: 1;
 }
 
@@ -194,5 +191,6 @@
     top: 10vh;
     transition-duration: 500ms;
     transition-property: top;
+    justify-content: center;
 }
 

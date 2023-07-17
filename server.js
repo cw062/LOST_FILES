@@ -724,8 +724,6 @@ app.get('/', (req, res) => {
   }   
 });
 
-let newuser = "";
-let newpass = "";
 
 app.post('/', (req, res) => {
   console.log(req.body);
@@ -738,7 +736,9 @@ app.post('/', (req, res) => {
 });
 
 
-
+app.get('/Signup', (req, res) => {
+  res.render('SignUp', {root: __dirname});
+});
 
 app.get('/Login', (req, res) => {
   res.render('Login', {root: __dirname});
@@ -780,6 +780,13 @@ app.post('/add_tracks', upload.single('file'), (req, res) => {
         
         res.render('add_tracks', {data: {json: obj, playlistNames: playlistNames}});
           
+});
+
+
+app.post('/Signup', (req, res) => {
+  console.log(req.body);
+  isLoggedin = true;
+  res.redirect('/');
 });
 //server starts listening for any attempts from a client to connect at port: {port}
 app.listen(port, () => {
