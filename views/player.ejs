@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+    <head>
+        <title>Player</title>
+    </head>
+    
+    <body>
+        <div class="player">
+
+            <!--Section for displaying details-->
+            <div class="details">
+                <div class="now-playing">Playing x of y</div>
+                <div class="track-art"></div>
+                <div class="track-name">Track Name</div>
+                <div class="track-artist">Track Artist</div>
+            </div>
+        </div>
+        <div class="buttons">
+            
+        </div>
+    
+        <!--Seek Slider-->
+        <div class="slider_container">
+            <div class="current-time">00:00</div>
+            <input type="range" min="1" max="100" value="0"
+                class="seek_slider" onchange="seekTo()">
+            <div class="total-duration">00:00</div>
+            <div class="prev-track" onclick="prevTrack()">
+              <i class="fa fa-step-backward fa-2x"></i>
+          </div>
+          <div class="playpause-track" onclick="playpauseTrack()">
+              <i class="fa fa-play-circle fa-5x"></i>
+          </div>
+          <div class="next-track" onclick="nextTrack()">
+              <i class="fa fa-step-forward fa-2x"></i>
+          </div>
+        </div>
+        <script type="text/javascript">
+            let now_playing = document.querySelector(".now-playing");
+            let track_art = document.querySelector(".track-art");
+            let track_name = document.querySelector(".track-name");
+            let track_artist = document.querySelector(".track-artist");
+            
+            let playpause_btn = document.querySelector(".playpause-track");
+            let next_btn = document.querySelector(".next-track");
+            let prev_btn = document.querySelector(".prev-track");
+            
+            let seek_slider = document.querySelector(".seek_slider");
+            let volume_slider = document.querySelector(".volume_slider");
+            let curr_time = document.querySelector(".current-time");
+            let total_duration = document.querySelector(".total-duration");
+        
+        
+        </script>
+    </body>
+
+
+</html>

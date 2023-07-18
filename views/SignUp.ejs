@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+    <head>
+        <title>Sign Up</title>
+        <link rel="stylesheet" type="text/css" href="/SignupStyle.css">
+    </head>
+    <body>
+        <div class="main-container">
+            <div class="signup-title">
+                <span>Sign Up</span>
+            </div>
+            <form action="/Signup" method="POST" id="signup-form" name="signup_form"></form>
+            <label for="username" class="username-label" >Username</label>
+            <input type="text" id="username" class="username" name="username"  form="signup-form">
+            <label for="password" class="password-label">Password</label>
+            <input type="password" class="pass" id="pass" name="pass" form="signup-form">
+            <button class="submit-button">Sign Up</button>
+            <span class="bottom-elements">
+                <a href="Login" class="login">Back to Login</a>
+            </span>
+            
+        </div>
+
+        <script type="text/javascript">
+            user_label = document.querySelector(".username-label");
+            user_field = document.querySelector(".username");
+            pass_label = document.querySelector(".password-label");
+            pass_field = document.querySelector(".pass");
+            submit_button = document.querySelector('.submit-button');
+            bottom_elements = document.querySelector(".bottom-elements");
+
+
+            function postFunction() {
+                let ajax = new XMLHttpRequest();
+                let form_data = new FormData(document.getElementById("signup-form"));
+                ajax.open("POST", "/usernamePost", true);
+                ajax.onreadystatechange = function() {
+                    if (ajax.readyState === XMLHttpRequest.DONE) {
+                        if (ajax.status === 200) {
+                            // Successful response from the server
+                            var response = JSON.parse(ajax.responseText);
+                            displayUsernameMessage(response.status);
+                            // Here, you can access the response data and perform further actions
+                        } else {
+                            // Error occurred while making the request
+                            console.error('Error:', ajax.status);
+                        }
+                    }
+                };
+                ajax.send(form_data);
+                
+            }
+
+            function displayUsernameMessage(response) {
+                if (response === true) {
+                    user_label.textContent = "Username already taken";
+                    user_label.style.color = "rgb(255, 106, 106)";
+                    user_field.style.borderBottom = '2px solid rgba(255, 106, 106)';
+                    submit_button.style.visibility = 'hidden';
+                    submit_button.style.opacity = 0;
+                    bottom_elements.style.top = '10vh';
+
+                } else {
+                    user_label.textContent = "Username";
+                    user_label.style.color = "rgb(84, 156, 48)";
+                    user_field.style.borderBottom = '2px solid rgba(84, 156, 48, 1)';
+                }
+            }
+
+
+            window.addEventListener('DOMContentLoaded', (event) => {
+                if (user_field.value.length > 0) {
+                    user_field.style.borderBottom = '2px solid rgba(84, 156, 48, 1)';
+                    user_label.style.top = '4vh';
+                    user_label.style.opacity = 1;
+                }
+            });
+            user_field.addEventListener('focusin', function () {
+                user_label.style.top = '4vh';
+                if (user_field.value.length == 0) {   
+                    user_field.style.borderBottom = '2px solid rgba(255, 0, 0,1)';
+                    user_label.style.opacity = 1;
+                }
+            });
+            user_field.addEventListener('focusout', function () {
+                if (user_field.value.length == 0) {
+                    user_label.style.top = '6.5vh';
+                    user_label.style.opacity = .5;
+                    user_field.style.borderBottom = '2px solid rgba(255, 0, 0,.2)';
+                    
+                }     
+            });
+            pass_field.addEventListener('focusin', function () {
+                pass_label.style.top = '9vh';
+                if (pass_field.value.length == 0) {
+                    pass_field.style.borderBottom = '2px solid rgba(255, 0, 0,1)';
+                    pass_label.style.opacity = 1;
+                }
+            });
+            pass_field.addEventListener('focusout', function () {
+                if (pass_field.value.length == 0) {
+                    pass_label.style.top = '11.5vh';
+                    pass_field.style.borderBottom = '2px solid rgba(255, 0, 0,.2)';
+                    pass_label.style.opacity = .5;
+                } 
+            });
+
+            user_field.addEventListener('input', function () {
+                if (user_field.value.length > 0) {
+                    postFunction();
+                    user_field.style.borderBottom = '2px solid rgba(84, 156, 48, 1)';
+                    if (pass_field.value.length > 0 ) {
+                        submit_button.style.visibility = 'visible';
+                        submit_button.style.opacity = 1;
+                        bottom_elements.style.top = '14vh';
+                    }
+                } else {
+                    user_label.textContent = "Username";
+                    user_label.style.color = 'black';
+                    user_field.style.borderBottom = '2px solid rgba(255, 0, 0,1)';
+                }
+                if (pass_field.value.length == 0 || user_field.value.length == 0) {
+                    submit_button.style.visibility = 'hidden';
+                    submit_button.style.opacity = 0;
+                    bottom_elements.style.top = '10vh';
+                }
+            });
+            pass_field.addEventListener('input', function () {
+                if (pass_field.value.length > 0) {
+                    pass_field.style.borderBottom = '2px solid rgba(84, 156, 48, 1)';
+                    if (user_label.textContent == 'Username') {
+                        submit_button.style.visibility = 'visible';
+                        submit_button.style.opacity = 1;
+                        bottom_elements.style.top = '14vh';
+                    }
+                } else {
+                    pass_field.style.borderBottom = '2px solid rgba(255, 0, 0,1)';
+                }
+                if (pass_field.value.length == 0 || user_field.value.length == 0) {
+                    submit_button.style.visibility = 'hidden';
+                    submit_button.style.opacity = 0;
+                    bottom_elements.style.top = '10vh';
+                }
+            });
+
+            submit_button.addEventListener('click', () => {
+                document.signup_form.submit();
+            });
+
+            submit_button.addEventListener('keypress', function(event) {
+                if (event.key === "Enter")
+                    document.signup_form.submit();
+            });
+        </script>
+    </body>
+
+</html>
