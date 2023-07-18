@@ -645,7 +645,7 @@ te: 30
 }
 ];
 let obj = {};
-/*
+
 const pool = mysql.createPool({
   host: "database-1.ceoemktliflj.us-east-1.rds.amazonaws.com",
   user: "admin",
@@ -654,24 +654,33 @@ const pool = mysql.createPool({
   port: 3306
 });
 
-pool.getConnection(function(err, connection) {
-  if(err) {
-    console.error("Database connection failed" + err.stack);
-    return;
-  }
-  connection.query("CREATE TABLE IF NOT EXISTS Users(uid VARCHAR(50), username VARCHAR(100), password VARCHAR(100)", function (err, result) {
-    
-});
+function queryDB(username, hash, salt) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let sqlstring = 'INSERT INTO Users (username, password, salt) VALUES (?)';
+      let values = [username, hash, salt];
+      connection.query(sqlstring, [values], function (err, result) {
+        if(err) {
+          //console.log(err);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    connection.release();
+    });
+  });
+}
 
-  console.log("connected to db");
-});
 
-connection.release();
-*/
 
 let isLoggedin = false;
 const uname = "mickey";
-const pass = "mouse";
+const pass = "d";
 let salt = "";
 let iterations = 10000;
 let hash = "";
@@ -679,16 +688,23 @@ hashPassword(pass);
 
 //use when i first collect password for storage
 function hashPassword(password) {
-  salt = crypto.randomBytes(128).toString('base64');
-  crypto.pbkdf2(password, salt, iterations, 64, 'sha512', (err, derivedKey) => {
-    if (err) throw err;
-    hash = derivedKey.toString('hex'); 
-  });
+  let returnobj = {
+    hash: "",
+    salt: ""
+  };
+  return new Promise(resolve => {
+    returnobj.salt = crypto.randomBytes(128).toString('base64');
+    crypto.pbkdf2(password, returnobj.salt, iterations, 64, 'sha512', (err, derivedKey) => {
+      if (err) throw err;
+      returnobj.hash = derivedKey.toString('hex'); 
+      resolve(returnobj);
+    });
+});
 }
 
 //use when validating login attempts
 function isPasswordCorrect(savedHash, savedSalt, savedIterations, passwordAttempt) {
-  newhash = "";
+  let newhash = "";
   return new Promise(resolve => {
     crypto.pbkdf2(passwordAttempt, savedSalt, savedIterations, 64, 'sha512', (err, derivedKey) => {
       if (err) throw err;
@@ -696,7 +712,26 @@ function isPasswordCorrect(savedHash, savedSalt, savedIterations, passwordAttemp
       resolve(hash == newhash);
     });
   });
-  //return false;
+}
+
+function checkDatabaseForUsername(username) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [username];
+      connection.query('SELECT COUNT(*) AS count FROM Users WHERE username = ?', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          resolve(result[0].count);
+        }
+      });
+    connection.release();
+    });
+  });
 }
 
 let storage = multer.diskStorage({
@@ -716,7 +751,7 @@ app.use(express.static(path.join(__dirname)));
 
 
 app.get('/', (req, res) => {        
-  console.log(isLoggedin);
+  //console.log(isLoggedin);
   if (isLoggedin) {
     res.render('Homepage', {data: {json: playlistData}});  
   } else {
@@ -725,19 +760,11 @@ app.get('/', (req, res) => {
 });
 
 
-app.post('/', (req, res) => {
-  console.log(req.body);
-    console.log('here');
-    async function getPassCorrect() {
-      isLoggedin = await isPasswordCorrect(hash, salt, iterations, req.body.pass);
-      res.redirect('/');
-    }
-    getPassCorrect();
-});
+
 
 
 app.get('/Signup', (req, res) => {
-  res.render('SignUp', {root: __dirname});
+  res.render('Signup', {root: __dirname});
 });
 
 app.get('/Login', (req, res) => {
@@ -758,6 +785,17 @@ app.post('/ajaxpost', upload.none(), (req, res) => {
     console.log(req.body);
   }
   
+});
+
+app.post('/usernamePost', upload.none(), (req, res) => {
+  async function checkUsername() {
+    let result = await checkDatabaseForUsername(JSON.parse(JSON.stringify(req.body)).username);    //true for succcess, false for fail
+    if (result == 0)
+      res.json({status: false});
+    else
+      res.json({status: true});
+  }
+  checkUsername();
 });
 
 app.post('/add_tracks', upload.single('file'), (req, res) => {
@@ -782,11 +820,29 @@ app.post('/add_tracks', upload.single('file'), (req, res) => {
           
 });
 
+app.post('/', (req, res) => {
+  console.log(req.body);
+    console.log('here');
+    async function getPassCorrect() {
+      isLoggedin = await isPasswordCorrect(hash, salt, iterations, req.body.pass);
+      res.redirect('/');
+    }
+    getPassCorrect();
+});
 
 app.post('/Signup', (req, res) => {
-  console.log(req.body);
-  isLoggedin = true;
-  res.redirect('/');
+  async function createHashandSalt () {
+    let returnedobj = await hashPassword(req.body.pass);
+    let result = await queryDB(req.body.username, returnedobj.hash, returnedobj.salt);    //true for succcess, false for fail
+    if (result) {
+      isLoggedin = result;
+      res.redirect('/');
+    } else {
+      res.render('Signup', {root: __dirname});
+    }
+  }
+  createHashandSalt();
+
 });
 //server starts listening for any attempts from a client to connect at port: {port}
 app.listen(port, () => {

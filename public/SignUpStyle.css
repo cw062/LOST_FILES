@@ -31,9 +31,9 @@
     top: 6.5vh;
     height: 0vh;
     z-index: 99;
-    width: 0vw;
+    width: 100%;
     transition-duration: 750ms;
-    transition-property: top, opacity;
+    transition-property: top, opacity, textContent;
     opacity: .5;
     margin-left: 1vw;
     margin-right: 1vw;
@@ -193,4 +193,6 @@
     transition-property: top;
     justify-content: center;
 }
+
+
 
