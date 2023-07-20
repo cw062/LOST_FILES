@@ -15,635 +15,8 @@ app.use(cors());
 app.set('view engine', 'ejs');
 const public = path.join(__dirname, 'public');
 const port = 5000;
-let playlistNames = ["playlist1", "playlist2", "playlist3!", "Bingo", "Bongo", "Boop!", "shob", "chob", "bobb!", "at this point it dont think it matters but im gonna make this really long anyways"];
-let playlistData = [
-  {
-    name: "playlist1ThisIsareallylongname",
-    data: [
-      {
-        id: 0,
-        index: 0,
-        name: "Song0",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "italy.wav",
-        ts: 4,
-        te: 150
-      }, {
-        id: 1,
-        index: 1,
-        name: "Song1",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "Diamonds.wav",
-        ts: 15,
-        te: 260
-      }, {
-        id: 2,
-        index: 2,
-        name:  "Song2",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "italy.wav",
-        ts: 4,
-        te: 220
-      }, {
-        id: 3,
-        index: 3,
-        name: "Song3",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "Diamonds.wav",
-        ts: 3,
-        te: 260
-      }, {
-        id: 4,
-        index: 4,
-        name: "Song4",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "italy.wav",
-        ts: 4,
-        te: 220
-      }, {
-        id: 5,
-        index: 5,
-        name: "Song5",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "Diamonds.wav",
-        ts: 3,
-        te: 260
-      }, {
-        id: 6,
-        index: 6,
-        name: "Song6",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "italy.wav",
-        ts: 4,
-        te: 220
-      }, {
-        id: 7,
-        index: 7,
-        name: "Song7",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "Diamonds.wav",
-        ts: 3,
-        te: 260
-      }, {
-        id: 8,
-        index: 8,
-        name: "Song8",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "italy.wav",
-        ts: 4,
-        te: 220
-      }, {
-        id: 9,
-        index: 9,
-        name: "Song9",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "Diamonds.wav",
-        ts: 3,
-        te: 260
-      }, {
-        id: 10,
-        index: 10,
-        name: "Song10",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "italy.wav",
-        ts: 4,
-        te: 220
-      }, {
-        id: 11,
-        index: 11,
-        name: "Song11",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "Diamonds.wav",
-        ts: 3,
-        te: 260
-      }, {
-        id: 12,
-        index: 12,
-        name: "Song12",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "italy.wav",
-        ts: 4,
-        te: 220
-      }, {
-        id: 13,
-        index: 13,
-        name: "Song13",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "Diamonds.wav",
-        ts: 3,
-        te: 260
-      }, {
-        id: 14,
-        index: 14,
-        name: "Song14",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "italy.wav",
-        ts: 4,
-        te: 220
-      }, {
-        id: 15,
-        index: 15,
-        name: "Song15",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "Diamonds.wav",
-        ts: 3,
-        te: 260
-      }, {
-        id: 16,
-        index: 16,
-        name: "Song16",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "italy.wav",
-        ts: 4,
-        te: 220
-      }, {
-        id: 17,
-        index: 17,
-        name: "Song17",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "Diamonds.wav",
-        ts: 3,
-        te: 260
-      }, {
-        id: 18,
-        index: 18,
-        name: "Song18",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "italy.wav",
-        ts: 4,
-        te: 220
-      }, {
-        id: 19,
-        index: 19,
-        name: "Song19",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "Diamonds.wav",
-        ts: 3,
-        te: 260
-      }, {
-        id: 20,
-        index: 20,
-        name: "Song20",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "italy.wav",
-        ts: 4,
-        te: 220
-      }, {
-        id: 21,
-        index: 21,
-        name: "Song21",
-        artist: "Yeezy",
-        image: "yeee.png",
-        path: "Diamonds.wav",
-        ts: 3,
-        te: 260
-      }
-
-    ]
-}, {
-  name: "playlist2",
-  data: [
-    {
-      id: 0,
-      index: 0,
-      name: "Song0",
-      artist: "Yeezy",
-      image: "yeee.png",
-      path: "italy.wav",
-      ts: 4,
-      te: 150
-    }, {
-      id: 1,
-      index: 1,
-      name: "Song1",
-      artist: "Yeezy",
-      image: "yeee.png",
-      path: "Diamonds.wav",
-      ts: 15,
-      te: 260
-    }, {
-      id: 2,
-      index: 2,
-      name:  "Song2",
-      artist: "Yeezy",
-      image: "yeee.png",
-      path: "italy.wav",
-      ts: 4,
-      te: 220
-    }
-  ]
-}, {
-  name: "playlist3!",
-  data: [
-    {
-      id: 1,
-      name: "Diamonds",
-      artist: "Yeezy",
-      image: "yeee.png",
-      path: "Diamonds.wav",
-      ts: 4,
-      te: 220
-    }, {
-      id: 0,
-      name: "Italy",
-      artist: "Yeezy",
-      image: "yeee.png",
-      path: "italy.wav",
-      ts: 3,
-      te: 260
-    }, {
-      id: 2,
-      name: "Believe What I Say",
-      artist: "Yeezy",
-      image: "yeee.png",
-      path: "Believe.mp3",
-      ts: 1,
-      te: 30
-    }
-  ]
-},  {
-  name: "Bingo",
-  data: [
-    {
-      id: 0,
-      name: "Italy",
-      artist: "Yeezy",
-      image: "yeee.png",
-      path: "italy.wav",
-      ts: 4,
-      te: 220
-    }, {
-      id: 1,
-      name: "Diamonds",
-      artist: "Yeezy",
-      image: "yeee.png",
-      path: "Diamonds.wav",
-      ts: 3,
-      te: 260
-    }
-
-  ]
-}, {
-name: "Bongo",
-data: [
-  {
-    id: 2,
-    name: "Believe What I Say",
-    artist: "Yeezy",
-    image: "yeee.png",
-    path: "Believe.mp3",
-    ts: 4,
-    te: 300
-  }, {
-    id: 1,
-    name: "Diamonds",
-    artist: "Yeezy",
-    image: "yeee.png",
-    path: "Diamonds.wav",
-    ts: 3,
-    te: 260
-  }
-]
-}, {
-name: "Boop!",
-data: [
-  {
-    id: 1,
-    name: "Diamonds",
-    artist: "Yeezy",
-    image: "yeee.png",
-    path: "Diamonds.wav",
-    ts: 4,
-    te: 220
-  }, {
-    id: 0,
-    name: "Italy",
-    artist: "Yeezy",
-    image: "yeee.png",
-    path: "italy.wav",
-    ts: 3,
-    te: 260
-  }, {
-    id: 2,
-    name: "Believe What I Say",
-    artist: "Yeezy",
-    image: "yeee.png",
-    path: "Believe.mp3",
-    ts: 1,
-    te: 30
-  }
-]
-},  {
-name: "shob",
-data: [
-  {
-    id: 0,
-    name: "Italy",
-    artist: "Yeezy",
-    image: "yeee.png",
-    path: "italy.wav",
-    ts: 4,
-    te: 220
-  }, {
-    id: 1,
-    name: "Diamonds",
-    artist: "Yeezy",
-    image: "yeee.png",
-    path: "Diamonds.wav",
-    ts: 3,
-    te: 260
-  }
-
-]
-}, {
-name: "chob",
-data: [
-{
-  id: 2,
-  name: "Believe What I Say",
-  artist: "Yeezy",
-  image: "yeee.png",
-  path: "Believe.mp3",
-  ts: 4,
-  te: 300
-}, {
-  id: 1,
-  name: "Diamonds",
-  artist: "Yeezy",
-  image: "yeee.png",
-  path: "Diamonds.wav",
-  ts: 3,
-  te: 260
-}
-]
-}, {
-name: "bobb!",
-data: [
-{
-  id: 1,
-  name: "Diamonds",
-  artist: "Yeezy",
-  image: "yeee.png",
-  path: "Diamonds.wav",
-  ts: 4,
-  te: 220
-}, {
-  id: 0,
-  name: "Italy",
-  artist: "Yeezy",
-  image: "yeee.png",
-  path: "italy.wav",
-  ts: 3,
-  te: 260
-}, {
-  id: 2,
-  name: "Believe What I Say",
-  artist: "Yeezy",
-  image: "yeee.png",
-  path: "Believe.mp3",
-  ts: 1,
-  te: 30
-}
-]
-}, {
-name: "playlist1",
-data: [
-  {
-    id: 0,
-    name: "Italy",
-    artist: "Yeezy",
-    image: "yeee.png",
-    path: "italy.wav",
-    ts: 4,
-    te: 220
-  }, {
-    id: 1,
-    name: "Diamonds",
-    artist: "Yeezy",
-    image: "yeee.png",
-    path: "Diamonds.wav",
-    ts: 3,
-    te: 260
-  }
-
-]
-}, {
-name: "playlist2",
-data: [
-{
-  id: 2,
-  name: "Believe What I Say",
-  artist: "Yeezy",
-  image: "yeee.png",
-  path: "Believe.mp3",
-  ts: 4,
-  te: 300
-}, {
-  id: 1,
-  name: "Diamonds",
-  artist: "Yeezy",
-  image: "yeee.png",
-  path: "Diamonds.wav",
-  ts: 3,
-  te: 260
-}
-]
-}, {
-name: "playlist3!",
-data: [
-{
-  id: 1,
-  name: "Diamonds",
-  artist: "Yeezy",
-  image: "yeee.png",
-  path: "Diamonds.wav",
-  ts: 4,
-  te: 220
-}, {
-  id: 0,
-  name: "Italy",
-  artist: "Yeezy",
-  image: "yeee.png",
-  path: "italy.wav",
-  ts: 3,
-  te: 260
-}, {
-  id: 2,
-  name: "Believe What I Say",
-  artist: "Yeezy",
-  image: "yeee.png",
-  path: "Believe.mp3",
-  ts: 1,
-  te: 30
-}
-]
-},  {
-name: "Bingo",
-data: [
-{
-  id: 0,
-  name: "Italy",
-  artist: "Yeezy",
-  image: "yeee.png",
-  path: "italy.wav",
-  ts: 4,
-  te: 220
-}, {
-  id: 1,
-  name: "Diamonds",
-  artist: "Yeezy",
-  image: "yeee.png",
-  path: "Diamonds.wav",
-  ts: 3,
-  te: 260
-}
-
-]
-}, {
-name: "Bongo",
-data: [
-{
-id: 2,
-name: "Believe What I Say",
-artist: "Yeezy",
-image: "yeee.png",
-path: "Believe.mp3",
-ts: 4,
-te: 300
-}, {
-id: 1,
-name: "Diamonds",
-artist: "Yeezy",
-image: "yeee.png",
-path: "Diamonds.wav",
-ts: 3,
-te: 260
-}
-]
-}, {
-name: "Boop!",
-data: [
-{
-id: 1,
-name: "Diamonds",
-artist: "Yeezy",
-image: "yeee.png",
-path: "Diamonds.wav",
-ts: 4,
-te: 220
-}, {
-id: 0,
-name: "Italy",
-artist: "Yeezy",
-image: "yeee.png",
-path: "italy.wav",
-ts: 3,
-te: 260
-}, {
-id: 2,
-name: "Believe What I Say",
-artist: "Yeezy",
-image: "yeee.png",
-path: "Believe.mp3",
-ts: 1,
-te: 30
-}
-]
-},  {
-name: "shob",
-data: [
-{
-id: 0,
-name: "Italy",
-artist: "Yeezy",
-image: "yeee.png",
-path: "italy.wav",
-ts: 4,
-te: 220
-}, {
-id: 1,
-name: "Diamonds",
-artist: "Yeezy",
-image: "yeee.png",
-path: "Diamonds.wav",
-ts: 3,
-te: 260
-}
-
-]
-}, {
-name: "chob",
-data: [
-{
-id: 2,
-name: "Believe What I Say",
-artist: "Yeezy",
-image: "yeee.png",
-path: "Believe.mp3",
-ts: 4,
-te: 300
-}, {
-id: 1,
-name: "Diamonds",
-artist: "Yeezy",
-image: "yeee.png",
-path: "Diamonds.wav",
-ts: 3,
-te: 260
-}
-]
-}, {
-name: "bobb!",
-data: [
-{
-id: 1,
-name: "Diamonds",
-artist: "Yeezy",
-image: "yeee.png",
-path: "Diamonds.wav",
-ts: 4,
-te: 220
-}, {
-id: 0,
-name: "Italy",
-artist: "Yeezy",
-image: "yeee.png",
-path: "italy.wav",
-ts: 3,
-te: 260
-}, {
-id: 2,
-name: "Believe What I Say",
-artist: "Yeezy",
-image: "yeee.png",
-path: "Believe.mp3",
-ts: 1,
-te: 30
-}
-]
-}
-];
+let playlistNames = [];
+let playlistData = [];
 let obj = {};
 
 const pool = mysql.createPool({
@@ -654,7 +27,7 @@ const pool = mysql.createPool({
   port: 3306
 });
 
-function queryDB(username, hash, salt) {
+function storeUserInfo(username, hash, salt) {
   return new Promise( resolve => {
     pool.getConnection(function(err, connection) {
       if(err) {
@@ -665,7 +38,6 @@ function queryDB(username, hash, salt) {
       let values = [username, hash, salt];
       connection.query(sqlstring, [values], function (err, result) {
         if(err) {
-          //console.log(err);
           resolve(false);
         } else {
           resolve(true);
@@ -676,17 +48,159 @@ function queryDB(username, hash, salt) {
   });
 }
 
+function checkDatabaseForUsername(username) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [username];
+      connection.query('SELECT * FROM Users WHERE username = ?', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+/*
+function queryUserData(uid) {
+  return new Promise (resolve => {
+    resolve()
+  })
+}
+*/
+
+function insertPlaylistIntoDB(uid, name) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let sqlstring = 'INSERT INTO Playlist (name, uid) VALUES (?)';
+      let values = [name, uid];
+      connection.query(sqlstring, [values], function (err, result) {
+        if(err) {
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+
+function insertTrackIntoDbHelper(dataobj) {
+  let song_index = 0;
+  dataobj.playlists.forEach(element => {
+    async function doWork() {
+      let sid = await insertTrackData(dataobj.name, dataobj.artist, dataobj.path); //insert metadata, need to return SELECT LAST_INSERT_ID()
+      let pid = await findPlaylistInDb(element, activeUid); //returns pid
+      let findIndexResult = await findIndex(pid, activeUid);  //returns row with highest song_index RowDataPacket { pid: 18,sid: 1, uid: 28, song_index: 1, ts: 0,te: 0 }
+      if (findIndexResult != 0)
+        song_index = Number(findIndexResult[0].song_index) + 1;
+      let result = await insertIntoPlaylistDataDb(pid, sid, activeUid, song_index, 0, dataobj.duration);
+    }
+    doWork();
+  });
+}
+
+function insertIntoPlaylistDataDb(pid, sid, uid, index, ts, te) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let sqlstring = 'INSERT INTO Playlist_Data (pid, sid, uid, song_index, ts, te) VALUES (?)';
+      let values = [pid, sid, uid, index, ts, te];
+      connection.query(sqlstring, [values], function (err, result) {
+        if(err) {
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+
+function findIndex(pid, uid) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [pid, uid];
+      connection.query('SELECT * FROM Playlist_Data WHERE (pid, uid) = (?) ORDER BY song_index DESC LIMIT 1;', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+
+function findPlaylistInDb(name, uid) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [name, uid];
+      connection.query('SELECT * FROM Playlist WHERE (name, uid) = (?)', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          resolve(result[0].pid);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+
+//inserts song data into track table and returns the unique song id
+function insertTrackData(name, artist, path) {
+  return new Promise(resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let sqlstring = 'INSERT INTO Tracks (title, artist, path, fk_tracks_users) VALUES (?)';
+      let values = [name, artist, path, activeUid];
+      connection.query(sqlstring, [values], function (err, result) {
+        if(err) {
+          console.log(err);
+          resolve(-1);
+        } else {
+          resolve(result.insertId);
+        }
+      });
+    connection.release();
+    });
+  });
+}
 
 
-let isLoggedin = false;
-const uname = "mickey";
-const pass = "d";
-let salt = "";
+
 let iterations = 10000;
-let hash = "";
-hashPassword(pass);
-
-//use when i first collect password for storage
+let isLoggedin = false;
+let activeUid = -1;
+//takes a password and returns a hash and salt
 function hashPassword(password) {
   let returnobj = {
     hash: "",
@@ -702,37 +216,19 @@ function hashPassword(password) {
 });
 }
 
-//use when validating login attempts
 function isPasswordCorrect(savedHash, savedSalt, savedIterations, passwordAttempt) {
+  //retreive row from db --probably rename these parameters
   let newhash = "";
   return new Promise(resolve => {
     crypto.pbkdf2(passwordAttempt, savedSalt, savedIterations, 64, 'sha512', (err, derivedKey) => {
       if (err) throw err;
       newhash = derivedKey.toString('hex'); 
-      resolve(hash == newhash);
+      resolve(savedHash == newhash);
     });
   });
 }
 
-function checkDatabaseForUsername(username) {
-  return new Promise( resolve => {
-    pool.getConnection(function(err, connection) {
-      if(err) {
-        console.error("Database connection failed" + err.stack);
-        return;
-      }
-      let values = [username];
-      connection.query('SELECT COUNT(*) AS count FROM Users WHERE username = ?', [values], function (err, result) {
-        if(err) {
-          console.log(err);
-        } else {
-          resolve(result[0].count);
-        }
-      });
-    connection.release();
-    });
-  });
-}
+
 
 let storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -749,27 +245,124 @@ let storage = multer.diskStorage({
 app.use('/', express.static(public));
 app.use(express.static(path.join(__dirname)));
 
-
+//after signup is successful, we will have no data to give to client
+//after login is successful, need to query all data that has the same uid and pass it here and to the addtracks path
 app.get('/', (req, res) => {        
-  //console.log(isLoggedin);
+  playlistData = [];
+  playlistNames = [];
   if (isLoggedin) {
-    res.render('Homepage', {data: {json: playlistData}});  
+    async function loginHelper() {
+      await getDataFromDbHelper(activeUid);
+      res.render('Homepage', {data: {json: playlistData}});  
+    }
+    loginHelper();
   } else {
-    res.render('Login', {root: __dirname});
+    res.render('Login', {data: false});
   }   
 });
 
+function getDataFromDbHelper(uid) {
+  return new Promise(resolve => {
+  async function helper() {
+
+    let obj = await getPlaylistListFromDb(uid);   //list of all playlists for user (gets the name of playlist)
+    for(let i = 0; i < obj.length; i++) {
+      playlistNames.push(obj[i].name);
+      playlistData.push({
+        name: obj[i].name,
+        data: []
+      });
+      let playlist_dataobj = await getPlaylistSongList(obj[i].pid, uid);   //list of songs for a single playlist from playlist_data
+      for (let j = 0; j < playlist_dataobj.length; j++) {
+        let trackRow = await selectFromTracks(playlist_dataobj[j].sid);     //song data from Tracks
+        
+        playlistData[i].data.push({
+          id: trackRow[0].track_id,
+          index: playlist_dataobj[j].song_index,
+          name: trackRow[0].title,
+          artist: trackRow[0].artist,
+          path: trackRow[0].path,
+          ts: playlist_dataobj[j].ts,
+          te: playlist_dataobj[j].te
+        });
+
+      }
+    }
+    resolve(true);
+  }
+  helper();
+  });
+}
+
+function selectFromTracks(track_id) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [track_id];
+      connection.query('SELECT * FROM Tracks WHERE track_id = ?', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+
+function getPlaylistSongList(pid, uid) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [pid, uid];
+      connection.query('SELECT * FROM Playlist_Data WHERE (pid, uid) = (?)', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+
+function getPlaylistListFromDb(uid) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [uid];
+      connection.query('SELECT * FROM Playlist WHERE uid = ?', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
 
 
-
+app.get('/Login', (req, res) => {
+  res.render('Login', {data: false});
+});
 
 app.get('/Signup', (req, res) => {
   res.render('Signup', {root: __dirname});
 });
 
-app.get('/Login', (req, res) => {
-  res.render('Login', {root: __dirname});
-});
 
 app.get('/add_tracks', (req, res) => {     
 
@@ -779,13 +372,68 @@ app.get('/add_tracks', (req, res) => {
 app.post('/ajaxpost', upload.none(), (req, res) => {
   if (JSON.parse(JSON.stringify(req.body)).new_playlist_name != undefined) {
     playlistNames.push(JSON.parse(JSON.stringify(req.body)).new_playlist_name);
-    console.log(playlistNames);
+    async function insertPlaylist() {
+      insertPlaylistIntoDB(activeUid, JSON.parse(JSON.stringify(req.body)).new_playlist_name);
+    }
+    insertPlaylist();
 
   } else {
+    //access the database and update the ts and te fields
     console.log(req.body);
+    insertTimeValuesIntoDbHelper(req.body);
   }
   
 });
+
+function formatNumber(x) {
+  if (x.length == 1) {
+    return Number(x);
+  } else {
+    if (x[0] == '0') {
+      return Number(x[1]);
+    }
+    else
+      return Number(x);
+  }
+}
+
+function insertTimeValuesIntoDbHelper(formobj) {
+  console.log(Object.keys(formobj)[0]);
+  for (let i = 0; i < (Object.keys(formobj).length-1);) {
+    let tsmin = formatNumber(Object.values(formobj)[i]);
+    let tssec = formatNumber(Object.values(formobj)[++i]);
+    let temin = formatNumber(Object.values(formobj)[++i]);
+    let tesec = formatNumber(Object.values(formobj)[++i]);
+    i++;
+    let timestart = (tsmin * 60) + tssec;
+    let timeend = (temin * 60 ) + tesec;
+    async function callUpdateDb() {
+      let result = await updateTimeValues(timestart, timeend, i/4);
+    }
+    callUpdateDb();
+  }
+}
+
+function updateTimeValues(ts, te, song_index) {
+  return new Promise(resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [ts, te];
+      connection.query('UPDATE Playlist_Data SET ts = '+ts+', te = '+te+' WHERE song_index = ' + song_index +';', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          console.log(result);
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
 
 app.post('/usernamePost', upload.none(), (req, res) => {
   async function checkUsername() {
@@ -799,8 +447,6 @@ app.post('/usernamePost', upload.none(), (req, res) => {
 });
 
 app.post('/add_tracks', upload.single('file'), (req, res) => {
-        console.log(req.file);
-        console.log(req.body);
         let track = req.body.nameData;
         const artist = req.body.artistData;                           //add sending a list of playlist names in the render
         const playlistArray = req.body.checkbox;
@@ -815,27 +461,48 @@ app.post('/add_tracks', upload.single('file'), (req, res) => {
           duration: duration,
           playlists: playlistArray
         };
+        //might need to wrap this in async
+        insertTrackIntoDbHelper(obj); //inserts track into database after submitting add_tracks
+      
         
         res.render('add_tracks', {data: {json: obj, playlistNames: playlistNames}});
           
 });
 
-app.post('/', (req, res) => {
-  console.log(req.body);
-    console.log('here');
+app.post('/Login', (req, res) => {
     async function getPassCorrect() {
-      isLoggedin = await isPasswordCorrect(hash, salt, iterations, req.body.pass);
-      res.redirect('/');
+      //get row from db that matches username
+      let dbrow = await checkDatabaseForUsername(req.body.username);
+      if (dbrow == 0)
+        res.render('Login', {data: true});
+      else {
+        let result = await isPasswordCorrect(dbrow[0].password, dbrow[0].salt, iterations, req.body.pass);
+        isLoggedin = result;
+        if (isLoggedin == false)
+          res.render('Login', {data: true});
+        else {
+          activeUid = dbrow[0].uid;
+          //might need to use another async/promise
+          //playlistData = await queryUserData(dbrow[0].uid);
+          res.redirect('/');
+        }
+      }
+
     }
     getPassCorrect();
+
 });
+
 
 app.post('/Signup', (req, res) => {
   async function createHashandSalt () {
     let returnedobj = await hashPassword(req.body.pass);
-    let result = await queryDB(req.body.username, returnedobj.hash, returnedobj.salt);    //true for succcess, false for fail
+    let result = await storeUserInfo(req.body.username, returnedobj.hash, returnedobj.salt);    //true for succcess, false for fail
     if (result) {
       isLoggedin = result;
+      //need to get created uid and assign it to activeuid
+      let dbrow = await checkDatabaseForUsername(req.body.username);
+      activeUid = dbrow[0].uid;
       res.redirect('/');
     } else {
       res.render('Signup', {root: __dirname});

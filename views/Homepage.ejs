@@ -85,6 +85,7 @@
         var playlist_songs = [];
         var currentPlaylist = 0;
         let datajson = <%- JSON.stringify(data.json) %>;
+        console.log(datajson);
         let now_playing = document.querySelector(".now-playing");
         let track_art = document.querySelector(".track-art");
         let track_name = document.querySelector(".track-name");
@@ -140,6 +141,11 @@
         let iWindow = null;
         let activePlaylist = 0;
         let add_button_clicked = false;
+        let playlistIdentifier = document.createElement('input');
+        playlistIdentifier.type = "hidden";
+        playlistIdentifier.value = "";
+        playlistIdentifier.name = "playlistIdentifier";
+        document.getElementById("settings_form").appendChild(playlistIdentifier);
          // Create the audio element for the player
          let curr_track = document.createElement('audio');
          let other_track = document.createElement('audio');    
@@ -179,7 +185,6 @@
           let form_data = new FormData(document.getElementById("settings_form"));
           ajax.open("POST", "/ajaxpost", true);
           console.log(form_data);
-         // ajax.setRequestHeader("Content-type", "application.json");
           ajax.send(form_data);
 
         }
@@ -238,13 +243,12 @@
 
       window.addEventListener("message", (event) => {
         if (Object.values(event.data).length != 0) {
-          console.log(event.data.duration);  
           const dataObj = event.data;                                      // !!!!!!!!!! THIS IS THE DATA THAT WAS SUBMITTED >> event.data
             dataObj.playlists.forEach(element => {
               let tempIndex = datajson.findIndex(o => o.name == element);
               const reformattedDataObj = {                                   //reformats data from add_tracks to add to page and data structure
                 id: datajson[tempIndex].data.length,
-                index: datajson[tempIndex].data.length,
+                index: datajson[tempIndex].data.length,                      //NEEEDS TO BE CHANGED IM PRETTY SURE
                 name: dataObj.name,
                 artist: dataObj.artist,
                 image: "yeee.png",
@@ -504,7 +508,7 @@
             currentPlaylist = index;
             playlistDisplaying = true;
             addDrag();
-            createSettingsFields();
+            createSettingsFields(datajson[index].name);
             settings_title.textContent = datajson[index].name;
             activePlaylist = index;
           }
@@ -724,7 +728,8 @@
         }
 
         function track_id_finder(track_index_number) {
-          return track_list.find(o => o.index == track_index_number).id;
+          console.log(track_list.findIndex(o => o.index == track_index_number));
+          return track_list.findIndex(o => o.index == track_index_number);
         }
 
 
@@ -739,19 +744,26 @@
           
       }
 
-      function createSettingsFields() {
+      function createSettingsFields(playlistName) {
         for (let i = 0; i < edit_list_items.length; i++) {
+            let timestart = track_list[track_id_finder(i)].ts;
+            let timeend = track_list[track_id_finder(i)].te;
+
             const tsInputMin = document.createElement('input');
             tsInputMin.type = "text";
             tsInputMin.classList ="tsmin";
-            tsInputMin.value = track_list[track_id_finder(playlistData.childNodes[i].id)].ts;
+            tsInputMin.value = Math.floor(timestart / 60);
+            if (tsInputMin.value < 10)
+              tsInputMin.value = "0" + tsInputMin.value;
             tsInputMin.name = "tsmin" + i;
             tsInputMin.setAttribute("Form", "settings_form");        //this one
             tsInputMin.maxLength = 2;
             const tsInputSec = document.createElement('input');
             tsInputSec.type = "text";
             tsInputSec.classList ="tssec";
-            tsInputSec.value = track_list[track_id_finder(playlistData.childNodes[i].id)].ts;
+            tsInputSec.value = Math.floor(timestart % 60);
+            if (tsInputSec.value < 10)
+              tsInputSec.value = "0" + tsInputSec.value;
             tsInputSec.name = "tssec" + i;
             tsInputSec.setAttribute("Form", "settings_form");        //this one
             tsInputSec.maxLength = 2;
@@ -761,8 +773,9 @@
             teInputMin.setAttribute("Form", "settings_form");
             teInputMin.classList = "temin";
             teInputMin.maxLength = 2; 
-            teInputMin.placeholder = track_list[track_id_finder(playlistData.childNodes[i].id)].duration;
-            teInputMin.value = track_list[track_id_finder(playlistData.childNodes[i].id)].te;
+            teInputMin.value = Math.floor(timeend / 60);
+            if (teInputMin.value < 10)
+              teInputMin.value = "0" + teInputMin.value;
             const teInputSec = document.createElement('input');
             teInputSec.type = "text";
             teInputSec.name = "tesec" + i;
@@ -782,8 +795,10 @@
             hyphen.classList = "hyphen";
             let listSpan = document.createElement("span");
             listSpan.classList = "list-span";
-            teInputSec.placeholder = track_list[track_id_finder(playlistData.childNodes[i].id)].duration;
-            teInputSec.value = track_list[track_id_finder(playlistData.childNodes[i].id)].te;
+            teInputSec.value = Math.floor(timeend % 60);
+            if (teInputSec.value < 10)
+              teInputSec.value = "0" + teInputSec.value;
+            
             listSpan.appendChild(tsInputMin);
             listSpan.appendChild(colon);
             listSpan.appendChild(tsInputSec);
@@ -830,6 +845,9 @@
               }
             });
        }
+            playlistIdentifier.value = playlistName;
+
+
       }
 
 

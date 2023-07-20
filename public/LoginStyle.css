@@ -196,3 +196,21 @@
     transition-property: top;
 }
 
+.error-message-container {
+  position: relative;
+  top: 0vh;
+  left: 1vw;
+  width: 94%;
+  height: 4vh;
+  background-color: #ffcdd9;
+  border-radius: 10px;
+  justify-content: center;
+  display: flex;
+  align-items: center;
+  color: #770000;
+  border: 1px solid #770000;
+  visibility: hidden;
+}
+
+.error-message {
+}

@@ -70,3 +70,50 @@ Artist
         02 30
         02*60 + 30 = 150
         
+
+        function isPasswordCorrect(savedHash, savedSalt, savedIterations, passwordAttempt) {
+  //retreive row from db --probably rename these parameters
+  let newhash = "";
+  return new Promise(resolve => {
+    crypto.pbkdf2(passwordAttempt, savedSalt, savedIterations, 64, 'sha512', (err, derivedKey) => {
+      if (err) throw err;
+      newhash = derivedKey.toString('hex'); 
+      resolve(hash == newhash);
+    });
+  });
+}
+
+async function helper() {
+
+    let obj = await getPlaylistListFromDb(uid);   //list of all playlists for user (gets the name of playlist)
+    obj.forEach((element, index) => {
+      playlistNames.push(element.name);
+      playlistData.push({
+        name: element.name,
+        data: []
+      });
+      async function playlistSongHelper() {
+        let playlist_dataobj = await getPlaylistSongList(element.pid, uid);   //list of songs for a single playlist from playlist_data
+        playlist_dataobj.forEach(elem => {
+          async function doSomething() {
+            let trackRow = await selectFromTracks(elem.sid);     //song data from Tracks
+            console.log(trackRow);                              //assign this and playlist_dataobj data to obj and add it to playlist data obj in array
+            playlistData[index].data.push({
+              id: trackRow[0].track_id,
+              index: elem.song_index,
+              name: trackRow[0].title,
+              artist: trackRow[0].artist,
+              path: trackRow[0].path,
+              ts: elem.ts,
+              te: elem.te
+            });
+          }
+          doSomething();
+        });
+      }
+      playlistSongHelper();
+      
+    });
+
+  }
+  helper();

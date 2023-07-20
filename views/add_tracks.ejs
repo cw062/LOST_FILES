@@ -78,7 +78,6 @@
 			label.appendChild(check_box);
 			label.appendChild(spanCheckmark);
 			checkboxes_container.appendChild(label);
-			console.log(window.innerWidth);
 			
 		});
 	}
@@ -98,7 +97,6 @@
 		computeLength(inputElement.files[0])
 			.then((result) => {
 				songLength.value = result.duration;					//-----duration of each track
-				console.log(songLength.value);
 			})
 			.catch ((error) => {
 				console.log(error);
