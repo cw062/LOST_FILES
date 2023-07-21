@@ -117,3 +117,7 @@ async function helper() {
 
   }
   helper();
+
+  take edit_list
+  iterate through and find the id in track_list that matches
+  set that objects index to i

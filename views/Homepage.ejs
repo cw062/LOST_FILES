@@ -291,6 +291,8 @@
             resetValues();
                                                                               //May be able to rework this using playlistdata.id
             // Load a new track
+            console.log(track_list);
+            console.log(track_index);
             track.src = track_list[track_index].path;
             track.load();
             // Update details of the track
@@ -579,21 +581,41 @@
         }
         //event listeners for edit_list
         edit_list.addEventListener("drop", (event) => {
-          reorderPlaylist(draggingElementId, droppedElementId);
-          //track_list.forEach( item => {});                          //idk what this is or where it came from??????
+          console.log(track_list);
+          reorderPlaylist();
+          console.log(track_list);
+
           recolorPlaylist();
+
           reloadTrack();
           //displaySettings();
+          sendNewPlaylistOrder(track_list);
+          
         });
 
         edit_list.addEventListener("dragover", initSortableList);
         edit_list.addEventListener("dragenter", e => e.preventDefault());
 
         
+        function sendNewPlaylistOrder(track_list) {
+          let ajax = new XMLHttpRequest();
+          ajax.open("POST", "/postNewTrackList", true);
+          ajax.contentType = 'application/json'
+          
+          const formData = new FormData();
+          track_list.forEach((object) => {
+            Object.entries(object).forEach(([key, value]) => {
+              formData.append(key, value);
+            });
+          });
+          console.log(formData);
+          ajax.send(formData);
+        }
+
 
         function reloadTrack() {
-          track_art.style.backgroundImage = 
-               "url(" + track_list[track_index].image + ")";
+          //track_art.style.backgroundImage = 
+          //     "url(" + track_list[track_index].image + ")";
             track_name.textContent = track_list[track_index].name;
             track_artist.textContent = track_list[track_index].artist;
             now_playing.textContent = 
@@ -613,26 +635,36 @@
         
 
         //updates track_list[i].index to new values after element is dropped
-        function reorderPlaylist(draggingElementId, droppedElementId) {
+        function reorderPlaylist() {
+          console.log(track_list);
+          console.log(edit_list);
           const now_playing = track_index;
           //track_list[childNodes[i].id].index = i
                
           let i = 0;
+          /*
           for (let child = edit_list.firstChild; child != null; child = child.nextSibling) {
             track_list[child.id].index = i;
             i++;
           }
+          */
           track_index = now_playing;
           
           while(playlistData.firstChild) {
             playlistData.removeChild(playlistData.lastChild);
           }
           for (let i = 0; i < track_list.length; i++) {
-            const elem = track_list.find(o => o.index === i);
+            const elem = track_list.find(o => o.id == edit_list.childNodes[i].id);
+            track_list[track_list.findIndex(o => o.id == edit_list.childNodes[i].id)].index = i;
             let li = document.createElement('li');
             li.className = "playlist-songs-item";
             li.innerText = elem.name;
             li.name = elem.id;
+            let list_span = document.createElement("span");
+            list_span.textContent = elem.artist;
+            list_span.className = "artist-name-span";
+            list_span.name = elem.id;
+            li.appendChild(list_span);
             if (i %2 == 0) {                                                                     
               li.style.color = 'white';
               li.style.background = '#1e1e1e';
@@ -640,8 +672,6 @@
             playlistData.appendChild(li);
           }
 
-
-          
         }
 
 
@@ -676,8 +706,9 @@
 
         }
 
-        var handleSongClick = function(event) {                     
-          track_index = event.target.name;
+        var handleSongClick = function(event) {     
+          console.log(event);                
+          track_index = track_index_finder(event.target.name);
           if (isPlaying)
             loadTrack(track_index, curr_track);
           else
@@ -699,16 +730,17 @@
             let li = document.createElement('li');
             li.className = "playlist-songs-item";
             li.innerText = elem.name;
-            li.name = i;
+            li.name = elem.id;
             let list_span = document.createElement("span");
             list_span.textContent = elem.artist;
             list_span.className = "artist-name-span";
+            list_span.name = elem.id;
             li.appendChild(list_span);
             let editli = document.createElement("li");
             editli.className = "edit-songs-item";
             editli.draggable = true;
             editli.innerText = elem.name;
-            editli.id = i;
+            editli.id = elem.id;
             
             
             let edit_list_span = document.createElement("span");
@@ -732,6 +764,10 @@
           return track_list.findIndex(o => o.index == track_index_number);
         }
 
+        function track_index_finder(track_id_number) {
+          return track_list.findIndex(o => o.id == track_id_number);
+        }
+
 
         function displaySettings() {          
           for (let i = 0; i < list_items.length; i++) {
@@ -746,8 +782,10 @@
 
       function createSettingsFields(playlistName) {
         for (let i = 0; i < edit_list_items.length; i++) {
-            let timestart = track_list[track_id_finder(i)].ts;
-            let timeend = track_list[track_id_finder(i)].te;
+            let songobj = track_list[track_id_finder(i)]
+            let timestart = songobj.ts;
+            let timeend = songobj.te;
+            let songid = songobj.id;
 
             const tsInputMin = document.createElement('input');
             tsInputMin.type = "text";
@@ -755,7 +793,7 @@
             tsInputMin.value = Math.floor(timestart / 60);
             if (tsInputMin.value < 10)
               tsInputMin.value = "0" + tsInputMin.value;
-            tsInputMin.name = "tsmin" + i;
+            tsInputMin.name = "tsmin" + songid;
             tsInputMin.setAttribute("Form", "settings_form");        //this one
             tsInputMin.maxLength = 2;
             const tsInputSec = document.createElement('input');
@@ -764,12 +802,12 @@
             tsInputSec.value = Math.floor(timestart % 60);
             if (tsInputSec.value < 10)
               tsInputSec.value = "0" + tsInputSec.value;
-            tsInputSec.name = "tssec" + i;
+            tsInputSec.name = "tssec" + songid;
             tsInputSec.setAttribute("Form", "settings_form");        //this one
             tsInputSec.maxLength = 2;
             const teInputMin = document.createElement('input');
             teInputMin.type = "text";
-            teInputMin.name = "temin" + i;
+            teInputMin.name = "temin" + songid;
             teInputMin.setAttribute("Form", "settings_form");
             teInputMin.classList = "temin";
             teInputMin.maxLength = 2; 
@@ -778,7 +816,7 @@
               teInputMin.value = "0" + teInputMin.value;
             const teInputSec = document.createElement('input');
             teInputSec.type = "text";
-            teInputSec.name = "tesec" + i;
+            teInputSec.name = "tesec" + songid;
             teInputSec.setAttribute("Form", "settings_form");
             teInputSec.classList = "tesec";
             teInputSec.maxLength = 2;
@@ -829,28 +867,71 @@
                 event.preventDefault();
             });
 
-            tsInputMin.addEventListener('keyup', function(e) {
-              if(tsInputMin.value.length === 2) {
-                  tsInputSec.focus();
+            tsInputMin.addEventListener('focusout', function(e) {       
+              let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
+              let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
+              if (start > end) {
+                tsInputMin.value = "00";
+                tsInputSec.value = "00";
               }
             });
-            tsInputSec.addEventListener('keyup', function(e) {
-              if(tsInputSec.value.length === 2) {
-                  teInputMin.focus();
+
+            tsInputSec.addEventListener('focusout', function(e) {
+              let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
+              let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
+              if (start > end) {
+                tsInputMin.value = "00";
+                tsInputSec.value = "00";
               }
             });
-            teInputMin.addEventListener('keyup', function() {
-              if(teInputMin.value.length === 2) {
-                  teInputSec.focus();
+            teInputMin.addEventListener('focusout', function() {
+              
+              let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
+              let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
+              if (start > end || end > songobj.duration) {
+                teInputMin.value = reverseFormatNumber(Math.floor(songobj.duration / 60));
+                teInputSec.value = reverseFormatNumber(Math.floor(songobj.duration % 60));
               }
+            
+            });
+            teInputSec.addEventListener('focusout', function() {
+              
+              
+              let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
+              let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
+              if (start > end || end > songobj.duration) {
+                teInputMin.value = reverseFormatNumber(Math.floor(songobj.duration / 60));
+                teInputSec.value = reverseFormatNumber(Math.floor(songobj.duration % 60));
+      
+            }
             });
        }
             playlistIdentifier.value = playlistName;
-
-
       }
 
+      function formatNumber(x) {
+        if (x.length == 1) {
+          return Number(x);
+        } else {
+          if (x[0] == '0') {
+            return Number(x[1]);
+          }
+          else
+            return Number(x);
+        }
+      }
 
+      function reverseFormatNumber(x) {
+        let y = x.toString();
+        if (y.length == 1)
+          return "0" + y;
+        else
+          return y;
+      }
+
+      function convertToSeconds(min, sec) {
+        return min * 60 + sec;
+      }
       
 
 

@@ -583,6 +583,10 @@ input[type="range"]::-ms-fill-upper {
   width: 15px; 
 }
 
+.tsmin:focus {
+  outline: solid 1px #F072A9;
+}
+
 .tscolon {
   display: block;
   color: #F072A9;
@@ -614,6 +618,10 @@ input[type="range"]::-ms-fill-upper {
   margin-right: 1vw;
 }
 
+.tssec:focus {
+  outline: solid 1px #F072A9;
+}
+
 .temin {
   background-color: black;
   color: #F072A9;
@@ -624,6 +632,10 @@ input[type="range"]::-ms-fill-upper {
 
 }
 
+.temin:focus {
+  outline: solid 1px #F072A9;
+}
+
 .tesec {
   background-color: black;
   color: #F072A9;
@@ -631,6 +643,10 @@ input[type="range"]::-ms-fill-upper {
   left: 30vw;
   display: block;
   width: 15px;
+}
+
+.tesec:focus {
+  outline: solid 1px #F072A9;
 }
 
 .new-playlist {
@@ -724,6 +740,8 @@ input[type="range"]::-ms-fill-upper {
   visibility: hidden;
   transition-duration: 750ms;
 }
+
+
 
 /*
 * :focus {

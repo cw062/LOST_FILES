@@ -235,3 +235,10 @@
     height: 200px;
     background-color: black;
   }
+
+  .input-field:focus {
+
+    outline: solid 1px #F072A9;
+    -moz-outline-radius: 10px;
+    border-radius: 10px;
+  }
