@@ -119,5 +119,23 @@ async function helper() {
   helper();
 
   take edit_list
-  iterate through and find the id in track_list that matches
+  iterate through and find the id in track_list that matches the id of editlist item
   set that objects index to i
+
+  1.BUG FIXES
+  2.DELETE PLAYLISTS, SONGS
+  3.TOUCH UP 
+
+make sure reload track isnt fucked up
+remove the playing x of y and change it to the current playing playlist
+
+ SET FOREIGN_KEY_CHECKS = 1;
+TRUNCATE `mydb`.`Tracks`;
+
+curr is playing,
+if curr > end time - faderLength
+play other track and switch all of the info
+
+
+issue with track_id not starting at 0
+

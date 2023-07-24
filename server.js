@@ -98,9 +98,14 @@ function insertPlaylistIntoDB(uid, name) {
 
 function insertTrackIntoDbHelper(dataobj) {
   let song_index = 0;
+  let sid = -1;
+  async function insertTrackOnce() {
+    sid = await insertTrackData(dataobj.name, dataobj.artist, dataobj.path, dataobj.duration); //insert metadata, need to return SELECT LAST_INSERT_ID()
+  }
+  insertTrackOnce();
+
   dataobj.playlists.forEach(element => {
     async function doWork() {
-      let sid = await insertTrackData(dataobj.name, dataobj.artist, dataobj.path, dataobj.duration); //insert metadata, need to return SELECT LAST_INSERT_ID()
       let pid = await findPlaylistInDb(element, activeUid); //returns pid
       let findIndexResult = await findIndex(pid, activeUid);  //returns row with highest song_index RowDataPacket { pid: 18,sid: 1, uid: 28, song_index: 1, ts: 0,te: 0 }
       if (findIndexResult != 0)
@@ -160,6 +165,7 @@ function findPlaylistInDb(name, uid) {
         return;
       }
       let values = [name, uid];
+      console.log(values);
       connection.query('SELECT * FROM Playlist WHERE (name, uid) = (?)', [values], function (err, result) {
         if(err) {
           console.log(err);
@@ -273,12 +279,13 @@ function getDataFromDbHelper(uid) {
         data: []
       });
       let playlist_dataobj = await getPlaylistSongList(obj[i].pid, uid);   //list of songs for a single playlist from playlist_data
+      console.log(playlist_dataobj);
       for (let j = 0; j < playlist_dataobj.length; j++) {
         let trackRow = await selectFromTracks(playlist_dataobj[j].sid);     //song data from Tracks
-        
+        console.log(trackRow);
         playlistData[i].data.push({
           id: trackRow[0].track_id,
-          index: playlist_dataobj[j].song_index,
+          index: playlist_dataobj[j].song_index,      //why did i do this
           name: trackRow[0].title,
           artist: trackRow[0].artist,
           path: trackRow[0].path,
@@ -399,35 +406,32 @@ function formatNumber(x) {
 }
 
 function insertTimeValuesIntoDbHelper(formobj) {
-  console.log(Object.keys(formobj)[0].substring(4));
   for (let i = 0; i < (Object.keys(formobj).length-1);) {
     let tsmin = formatNumber(Object.values(formobj)[i]);
     let tssec = formatNumber(Object.values(formobj)[++i]);
     let temin = formatNumber(Object.values(formobj)[++i]);
     let tesec = formatNumber(Object.values(formobj)[++i]);
-    let songid = Object.keys(formobj)[i].substring(5);
-
     i++;
-
+    let song_index = i / 4 -1;
     let timestart = (tsmin * 60) + tssec;
     let timeend = (temin * 60 ) + tesec;
     async function callUpdateDb() {
       let pid = await findPlaylistInDb(formobj.playlistIdentifier, activeUid);
-      let result = await updateTimeValues(timestart, timeend, songid, pid);
+      let result = await updateTimeValues(timestart, timeend, song_index, pid);
     }
     callUpdateDb();
   }
 }
 
-function updateTimeValues(ts, te, sid, pid) {
+function updateTimeValues(ts, te, song_index, pid) {
   return new Promise(resolve => {
     pool.getConnection(function(err, connection) {
       if(err) {
         console.error("Database connection failed" + err.stack);
         return;
       }
-      let values = [ts, te];
-      connection.query('UPDATE Playlist_Data SET ts = '+ts+', te = '+te+' WHERE sid = ' + sid+ ' and pid = ' + pid + ';', [values], function (err, result) {
+      console.log('UPDATE Playlist_Data SET ts = '+ts+', te = '+te+' WHERE song_index = ' + song_index+ ' and pid = ' + pid + ';');
+      connection.query('UPDATE Playlist_Data SET ts = '+ts+', te = '+te+' WHERE song_index = ' + song_index+ ' and pid = ' + pid + ';', function (err, result) {
         if(err) {
           console.log(err);
         } else {
@@ -452,28 +456,31 @@ app.post('/usernamePost', upload.none(), (req, res) => {
 });
 
 app.post('/postNewTrackList', upload.none(), (req, res) => {
-  console.log(JSON.parse(JSON.stringify(req.body)));
-  reorderTrackListHelper(JSON.parse(JSON.stringify(req.body)).id, JSON.parse(JSON.stringify(req.body)).index);
+  console.log(JSON.parse(JSON.stringify(req.body)).id);
+  console.log(JSON.parse(JSON.stringify(req.body)).index);
+  console.log(JSON.parse(JSON.stringify(req.body)).playlistIdentifier);
+  reorderTrackListHelper(JSON.parse(JSON.stringify(req.body)).id, JSON.parse(JSON.stringify(req.body)).index, JSON.parse(JSON.stringify(req.body)).playlistIdentifier);
     
 });
 
-function reorderTrackListHelper(idArray, indexArray) {
+function reorderTrackListHelper(idArray, indexArray, playlistName) {
   async function doSomething() {
-    for(let i = 0; i < idArray.length; i++) {
-      await updateOrderInDB(idArray[i], indexArray[i]);
+    let pid = await findPlaylistInDb(playlistName, activeUid);
+    for(let i = 0; i < idArray.length; i++) {    
+      await updateOrderInDB(idArray[i], indexArray[i], pid);
     }
   }
   doSomething();
 }
 
-function updateOrderInDB(id, index) {
+function updateOrderInDB(id, index, pid) {
   return new Promise(resolve => {
     pool.getConnection(function(err, connection) {
       if(err) {
         console.error("Database connection failed" + err.stack);
         return;
       }
-      connection.query('UPDATE Playlist_Data SET song_index = '+index+' WHERE sid = ' + id+ ';', function (err, result) {
+      connection.query('UPDATE Playlist_Data SET song_index = '+index+' WHERE sid = ' + id+ ' and pid = '+pid+';', function (err, result) {
         if(err) {
           console.log(err);
         } else {
@@ -493,6 +500,7 @@ app.post('/add_tracks', upload.single('file'), (req, res) => {
         const pathToFile = req.file.path;
         const extension = path.extname(req.file.originalname);
         const duration = req.body.duration;
+        console.log(req.body);
         track = track + extension;
         const obj = {
           name: track,

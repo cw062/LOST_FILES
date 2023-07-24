@@ -34,7 +34,7 @@
       <div class="playpause-track" onclick="playpauseTrack()">
         <i class="fa fa-play-circle fa-5x"></i>
       </div>
-      <div class="next-track" onclick="nextTrack(false)">
+      <div class="next-track" onclick="nextTrack()">
         <i class="fa fa-step-forward fa-2x"></i>
       </div>
       <div class="current-time">00:00</div>
@@ -69,7 +69,7 @@
         <span>Change playlist order by dragging and dropping tracks. Numbers on the left specify the start and end times of each track</span>
       </div>
       <div class="save-button-container">
-        <button class="save-button" onclick="postFunction()" value="Save" name="Save">Save</button>
+        <button class="save-button" value="Save" name="Save">Save</button>
       </div>
       <div class="overlay"></div> 
       <div class="popup">
@@ -85,7 +85,9 @@
         var playlist_songs = [];
         var currentPlaylist = 0;
         let datajson = <%- JSON.stringify(data.json) %>;
-        console.log(datajson);
+        let track_list = [];
+        if(datajson.length > 0)
+          track_list = datajson[currentPlaylist].data; 
         let now_playing = document.querySelector(".now-playing");
         let track_art = document.querySelector(".track-art");
         let track_name = document.querySelector(".track-name");
@@ -117,7 +119,6 @@
         let edit_container = document.querySelector(".edit-playlist-songs-container");
         let slider_container = document.querySelector(".slider_container");
         let add_playlist = document.querySelector(".plus-button");
-        let track_list = datajson[currentPlaylist].data; 
         let playlist_list_container = document.querySelector(".playlist-list-container");
         let new_playlist = document.querySelector(".new-playlist");
         let bvl = document.querySelector(".button-vertical-line");
@@ -132,6 +133,8 @@
         let bothPlaying = false;  //keeps track of when to play both tracks or just 1
         let next_track_index = 0;
         let faderLength = 5;
+        let fading = false;
+        let fadingTrackTe = 0;
         let updateTimer;
         var droppedElementId = 0;
         var draggingElementId = 0;
@@ -139,7 +142,7 @@
         var dragEndPosition = 0;
         var editMode = false;
         let iWindow = null;
-        let activePlaylist = 0;
+        let viewPlaylistIndex = 0;
         let add_button_clicked = false;
         let playlistIdentifier = document.createElement('input');
         playlistIdentifier.type = "hidden";
@@ -155,7 +158,9 @@
 
         stylePlaylist();
 
-      add_playlist.addEventListener("click", function () {
+      save_button.addEventListener('click', function () {handleSaveButton(viewPlaylistIndex);});
+      
+        add_playlist.addEventListener("click", function () {
         if (!add_button_clicked) {
           playlist_list_container.style.top = '12.2vh';
           add_playlist.style.transform = 'rotate(45deg)';
@@ -184,7 +189,6 @@
           let ajax = new XMLHttpRequest();
           let form_data = new FormData(document.getElementById("settings_form"));
           ajax.open("POST", "/ajaxpost", true);
-          console.log(form_data);
           ajax.send(form_data);
 
         }
@@ -194,7 +198,6 @@
           e.preventDefault();
           let ajax = new XMLHttpRequest();
           let form_data = new FormData(document.getElementById("new-playlist-form"));
-          console.log(form_data);
           ajax.open("POST", "/ajaxpost", true);
          // ajax.setRequestHeader("Content-type", "application.json");
           ajax.send(form_data);
@@ -218,22 +221,9 @@
             stylePlaylist();
             document.getElementById('add_tracks_iframe').src = document.getElementById('add_tracks_iframe').src;
         });
-        /*
-        function postNewPlaylist(e) {
-          let ajax = new XMLHttpRequest();
-          let form_data = new FormData(document.getElementById("new-playlist-form"));
-          ajax.open("POST", "/ajaxpost", true);
-         // ajax.setRequestHeader("Content-type", "application.json");
-          ajax.send(form_data);
-        }
-*/
-        playlistData.addEventListener('click', handleSongClick, true);
 
- 
+        playlistData.addEventListener('click', function () { handleSongClick(); }, true);
 
-        //pass data to iframe
-
-        
 
         overlay.addEventListener("click", function() {
             overlay.style.display = "none";
@@ -254,14 +244,51 @@
                 image: "yeee.png",
                 path: dataObj.path,
                 ts: 0,
-                te: 0
+                te: Math.floor(dataObj.duration)
               };
               
               datajson[tempIndex].data.push(reformattedDataObj);
+              if (tempIndex == viewPlaylistIndex) {
+                displaySongs(tempIndex);
+                changeListTextColor(tempIndex);
+                addDrag();
+                createSettingsFields(datajson[tempIndex].name);
+              }
             });
+        }
+      });
+
+      function addSongToPlaylist(object) {
+        displaySongs();
+        /*
+        let li = document.createElement('li');
+        li.className = "playlist-songs-item";
+        li.innerText = object.name;
+        li.name = object.id;
+        let list_span = document.createElement("span");
+        list_span.textContent = object.artist;
+        list_span.className = "artist-name-span";
+        list_span.name = object.id;
+        li.appendChild(list_span);
+        playlistData.appendChild(li);
+        //playlistData.addEventListener('click', handleSongClick, true);
+        */
       }
-        console.log(datajson);
-      })
+
+      function addSongToEditList(object) {
+        createSettingsFields();
+        /*
+        let editli = document.createElement("li");
+        editli.className = "edit-songs-item";
+        editli.draggable = true;
+        editli.innerText = object.name;
+        editli.id = object.id;    
+        let edit_list_span = document.createElement("span");
+        edit_list_span.textContent = object.artist;
+        edit_list_span.className = "artist-name-span";
+        editli.appendChild(edit_list_span);
+        */
+      }
 
        
         add_tracks_iframe.addEventListener("load", () => {
@@ -287,19 +314,18 @@
         
         function loadTrack(track_index, track) {
             // Clear the previous seek timer
+            console.log(track);
+            
             clearInterval(updateTimer);
             resetValues();
-                                                                              //May be able to rework this using playlistdata.id
             // Load a new track
-            console.log(track_list);
-            console.log(track_index);
             track.src = track_list[track_index].path;
             track.load();
             // Update details of the track
             track_name.textContent = track_list[track_index].name;
             track_artist.textContent = track_list[track_index].artist;
-            now_playing.textContent = 
-               "PLAYING " + (Number(track_list[track_index].index) + 1) + " OF " + track_list.length;
+            now_playing.textContent = datajson[currentPlaylist].name;
+               //"PLAYING " + (Number(track_list[track_index].index) + 1) + " OF " + track_list.length;
             
             // Set an interval of 1000 milliseconds
             // for updating the seek slider
@@ -316,9 +342,47 @@
             top_div.style.backgroundImage = "url(" + track_list[track_index].image + ")";
         }
 
-        function handleTime() {
-          seekUpdate(getCurrentTrack());
+        function getFadingTrack() {
+          if (currentAudio)
+            return other_track;
+          else
+            return curr_track;
+        }
 
+        function getTrackNotInUse() {
+          if(currentAudio)
+            return other_track;
+          else
+            return curr_track;
+        }
+
+        function handleTime() {
+          console.log(track_list[track_index].name);
+          seekUpdate(getCurrentTrack());
+          
+          
+          if (fading) {
+            console.log("1");
+            getFadingTrack().volume *= 0.7;
+            getCurrentTrack().volume = Math.min(getCurrentTrack().volume * 1.5, 1)
+            if (fading && getFadingTrack().currentTime >= fadingTrackTe) {
+              console.log("2");
+              getFadingTrack().pause();
+              getFadingTrack().currentTime = 0;
+              fading = false;
+              getCurrentTrack().volume = 1;
+            }
+          } else if (getCurrentTrack().currentTime >= track_list[track_index].te - faderLength) {
+            console.log("3");
+            fading = true;
+            fadingTrackTe = track_list[track_index].te;
+            currentAudio = !currentAudio;  //switches which track will be used
+            getFadingTrack().volume *= 0.7;
+            nextTrack();
+            getCurrentTrack().volume = 0.2;
+          }
+          
+          /*
           if (currentAudio) {
             if (curr_track.currentTime > track_list[track_index].te) {
               console.log("1");
@@ -361,21 +425,42 @@
             }
             curr_track.volume = 1;
           }
-
+          */
         }
+
+        function seekUpdate(track) {
+            let seekPosition = 0;
+            console.log(track_list[track_index].name);
+
+            // Check if the current track duration is a legible number
+            if (!isNaN(curr_track.duration)) {
+              seekPosition = track.currentTime * (100 /  track_list[track_index].te); //track.duration);
+              seek_slider.value = seekPosition;
+            
+              // Calculate the time left and the total duration
+              let currentMinutes = Math.floor(track.currentTime / 60);
+              let currentSeconds = Math.floor(track.currentTime - currentMinutes * 60);
+              let durationMinutes = Math.floor(track_list[track_index].te / 60);   //track.duration / 60);
+              let durationSeconds = Math.floor(track_list[track_index].te - durationMinutes * 60);
+            
+              // Add a zero to the single digit time values
+              if (currentSeconds < 10) { currentSeconds = "0" + currentSeconds; }
+              if (durationSeconds < 10) { durationSeconds = "0" + durationSeconds; }
+              if (currentMinutes < 10) { currentMinutes = "0" + currentMinutes; }
+              if (durationMinutes < 10) { durationMinutes = "0" + durationMinutes; }
+            
+              // Display the updated duration
+              curr_time.textContent = currentMinutes + ":" + currentSeconds;
+              total_duration.textContent = durationMinutes + ":" + durationSeconds;
+            }
+          }
             
 
           function getCurrentTrack() {
-            if (currentAudio)
+            if (currentAudio == true)
               return curr_track;
             else
               return other_track;
-          }
-
-          function getOtherTrack() {
-            if (currentAudio)
-              return other_track;
-            return curr_track;         
           }
             
           // Function to reset all values to their default
@@ -389,18 +474,15 @@
             // Switch between playing and pausing
             // depending on the current state
             if (!isPlaying) 
-              playTrack(false);
+              playTrack(getCurrentTrack());
             else 
               pauseTrack();
           }
             
-          function playTrack(switchAudioElement) {
+          function playTrack(trackToUse) {
             // Play the loaded track
-            
-            if (switchAudioElement)
-              getOtherTrack().play();
-            else
-              getCurrentTrack().play();
+
+            trackToUse.play();
             isPlaying = true;
             
             // Replace icon with the pause icon
@@ -416,29 +498,20 @@
             playpause_btn.innerHTML = '<i class="fa fa-play-circle fa-5x"></i>';
           }
             
-          function nextTrack(switchAudioElement) {
+          function nextTrack() {
+            trackToUse = getCurrentTrack();
             // Go back to the first track if the
-            // current one is the last in the track list
-            let temp = track_index;
-          
+            // current one is the last in the track list          
             let track_index_helper = track_list[track_index].index;
-            
+            console.log(trackToUse);
             if (track_index_helper < track_list.length - 1)
               track_index_helper += 1;
             else track_index_helper = 0;
             
             track_index = track_id_finder(track_index_helper);
-            next_track_index = track_index;
             // Load and play the new track
-            if (switchAudioElement) {
-              loadTrack(track_index, getOtherTrack());
-              track_index = temp;
-              playTrack(true);
-            }
-            else {
-              loadTrack(track_index, getCurrentTrack());
-              playTrack(false);
-            }
+              loadTrack(track_index, trackToUse);
+              playTrack(trackToUse);
             
           }
             
@@ -456,8 +529,8 @@
               
             track_index = track_id_finder(track_index_helper);
             // Load and play the new track
-            loadTrack(track_index, getCurrentTrack());
-            playTrack(false);
+            loadTrack(track_index, curr_track);
+            playTrack(curr_track);
           }
         
           function seekTo() {
@@ -466,7 +539,7 @@
             // and get the relative duration to the track
             track = getCurrentTrack();
 
-            seekto = track.duration * (seek_slider.value / 100);
+            seekto = track_list[track_index].te * (seek_slider.value / 100);
             
             // Set the current track position to the calculated seek position
             track.currentTime = seekto;
@@ -478,41 +551,17 @@
             curr_track.volume = volume_slider.value / 100;
           }
             
-          function seekUpdate(track) {
-            let seekPosition = 0;
-            
-            // Check if the current track duration is a legible number
-            if (!isNaN(curr_track.duration)) {
-              seekPosition = track.currentTime * (100 / track.duration);
-              seek_slider.value = seekPosition;
-            
-              // Calculate the time left and the total duration
-              let currentMinutes = Math.floor(track.currentTime / 60);
-              let currentSeconds = Math.floor(track.currentTime - currentMinutes * 60);
-              let durationMinutes = Math.floor(track.duration / 60);
-              let durationSeconds = Math.floor(track.duration - durationMinutes * 60);
-            
-              // Add a zero to the single digit time values
-              if (currentSeconds < 10) { currentSeconds = "0" + currentSeconds; }
-              if (durationSeconds < 10) { durationSeconds = "0" + durationSeconds; }
-              if (currentMinutes < 10) { currentMinutes = "0" + currentMinutes; }
-              if (durationMinutes < 10) { durationMinutes = "0" + durationMinutes; }
-            
-              // Display the updated duration
-              curr_time.textContent = currentMinutes + ":" + currentSeconds;
-              total_duration.textContent = durationMinutes + ":" + durationSeconds;
-            }
-          }
 
           function handleListClick(index) {
+            if (index >= 0) {
             displaySongs(index);
             changeListTextColor(index);
-            currentPlaylist = index;
             playlistDisplaying = true;
             addDrag();
-            createSettingsFields(datajson[index].name);
+            createSettingsFields(index);
             settings_title.textContent = datajson[index].name;
-            activePlaylist = index;
+            viewPlaylistIndex = index;
+            }
           }
 
           function random_bg_color() {
@@ -535,7 +584,7 @@
 
           function stylePlaylist() {
             for (let i = 0; i < playlist_list.children.length; i++) {
-              if (i % 2 == 1 && i != activePlaylist) 
+              if (i % 2 == 1 && i != viewPlaylistIndex) 
                 playlist_list.children[i].style.background = "#1e1e1e";
             }
           }
@@ -581,12 +630,8 @@
         }
         //event listeners for edit_list
         edit_list.addEventListener("drop", (event) => {
-          console.log(track_list);
           reorderPlaylist();
-          console.log(track_list);
-
           recolorPlaylist();
-
           reloadTrack();
           //displaySettings();
           sendNewPlaylistOrder(track_list);
@@ -597,6 +642,33 @@
         edit_list.addEventListener("dragenter", e => e.preventDefault());
 
         
+        function handleSaveButton(playlistIndex) {
+          postFunction();
+          let formobj = new FormData(document.getElementById("settings_form"));
+          for (let i = 0; i < datajson[playlistIndex].data.length; i++) {
+            let tsmin = formatNumber(formobj.get('tsmin' + datajson[playlistIndex].data[i].id));
+            let tssec = formatNumber(formobj.get('tssec' + datajson[playlistIndex].data[i].id));
+            let temin = formatNumber(formobj.get('temin' + datajson[playlistIndex].data[i].id));
+            let tesec = formatNumber(formobj.get('tesec' + datajson[playlistIndex].data[i].id));
+            let timestart = (tsmin * 60) + tssec;
+            let timeend = (temin * 60 ) + tesec;
+            datajson[playlistIndex].data[i].ts = timestart;
+            datajson[playlistIndex].data[i].te = timeend;
+          }
+        }
+
+        function formatNumber(x) {
+          if (x.length == 1) {
+            return Number(x);
+          } else {
+            if (x[0] == '0') {
+              return Number(x[1]);
+            }
+            else
+              return Number(x);
+          }
+        }
+        
         function sendNewPlaylistOrder(track_list) {
           let ajax = new XMLHttpRequest();
           ajax.open("POST", "/postNewTrackList", true);
@@ -605,10 +677,10 @@
           const formData = new FormData();
           track_list.forEach((object) => {
             Object.entries(object).forEach(([key, value]) => {
-              formData.append(key, value);
+            formData.append(key, value);
             });
           });
-          console.log(formData);
+          formData.append('playlistIdentifier', datajson[viewPlaylistIndex].name);
           ajax.send(formData);
         }
 
@@ -618,8 +690,8 @@
           //     "url(" + track_list[track_index].image + ")";
             track_name.textContent = track_list[track_index].name;
             track_artist.textContent = track_list[track_index].artist;
-            now_playing.textContent = 
-               "PLAYING " + (track_list[track_index].index + 1) + " OF " + track_list.length;
+            now_playing.textContent = datajson[currentPlaylist].name;
+               //"PLAYING " + (track_list[track_index].index + 1) + " OF " + track_list.length;
         }
         
         function recolorPlaylist() {
@@ -635,27 +707,14 @@
         
 
         //updates track_list[i].index to new values after element is dropped
-        function reorderPlaylist() {
-          console.log(track_list);
-          console.log(edit_list);
-          const now_playing = track_index;
-          //track_list[childNodes[i].id].index = i
-               
-          let i = 0;
-          /*
-          for (let child = edit_list.firstChild; child != null; child = child.nextSibling) {
-            track_list[child.id].index = i;
-            i++;
-          }
-          */
-          track_index = now_playing;
+        function reorderPlaylist() {    //need to be reodering datajson not the tracklist, and if the tl is the same index then repaint
           
           while(playlistData.firstChild) {
             playlistData.removeChild(playlistData.lastChild);
           }
-          for (let i = 0; i < track_list.length; i++) {
-            const elem = track_list.find(o => o.id == edit_list.childNodes[i].id);
-            track_list[track_list.findIndex(o => o.id == edit_list.childNodes[i].id)].index = i;
+          for (let i = 0; i < datajson[viewPlaylistIndex].data.length; i++) {
+            const elem = datajson[viewPlaylistIndex].data.find(o => o.id == edit_list.childNodes[i].id);
+            datajson[viewPlaylistIndex].data[datajson[viewPlaylistIndex].data.findIndex(o => o.id == edit_list.childNodes[i].id)].index = i;
             let li = document.createElement('li');
             li.className = "playlist-songs-item";
             li.innerText = elem.name;
@@ -671,6 +730,7 @@
             }
             playlistData.appendChild(li);
           }
+          track_list = datajson[viewPlaylistIndex].data;
 
         }
 
@@ -693,7 +753,7 @@
 
         function changeListTextColor(index) {
           let active = document.querySelector(".playlist-list-item"+index);
-          let prev = document.querySelector(".playlist-list-item"+currentPlaylist);
+          let prev = document.querySelector(".playlist-list-item"+viewPlaylistIndex);
           prev.style.color = '#F072A9';
           active.style.color = 'white';
           prev.style.backgroundColor = 'black';
@@ -707,14 +767,17 @@
         }
 
         var handleSongClick = function(event) {     
-          console.log(event);                
-          track_index = track_index_finder(event.target.name);
-          if (isPlaying)
+          if (event != undefined) {
+            track_list = datajson[viewPlaylistIndex].data;
+            currentPlaylist = viewPlaylistIndex;
+            if (event.target.name >= 0) {                
+            track_index = track_index_finder(event.target.name);
+            curr_track.pause();
+            other_track.pause();
             loadTrack(track_index, curr_track);
-          else
-            loadTrack(track_index, other_track);
-
-          playTrack(false);
+            playTrack(curr_track);
+            }
+          }
           
         }
 
@@ -723,10 +786,10 @@
               edit_list.removeChild(edit_list.lastChild);
               playlistData.removeChild(playlistData.lastChild);
             }
-          track_list = datajson[index].data;
-
-          for (let i = 0; i < track_list.length; i++) {
-            const elem = track_list.find(o => o.index === i);
+          //track_list = datajson[index].data;
+          let displayingList = datajson[index].data;
+          for (let i = 0; i < displayingList.length; i++) {
+            const elem = displayingList.find(o => o.index === i);
             let li = document.createElement('li');
             li.className = "playlist-songs-item";
             li.innerText = elem.name;
@@ -760,7 +823,6 @@
         }
 
         function track_id_finder(track_index_number) {
-          console.log(track_list.findIndex(o => o.index == track_index_number));
           return track_list.findIndex(o => o.index == track_index_number);
         }
 
@@ -780,9 +842,11 @@
           
       }
 
-      function createSettingsFields(playlistName) {
+      function createSettingsFields(index) {
+        
+
         for (let i = 0; i < edit_list_items.length; i++) {
-            let songobj = track_list[track_id_finder(i)]
+            let songobj = datajson[index].data.find(o => o.index == i);
             let timestart = songobj.ts;
             let timeend = songobj.te;
             let songid = songobj.id;
@@ -906,7 +970,7 @@
             }
             });
        }
-            playlistIdentifier.value = playlistName;
+            playlistIdentifier.value = datajson[index].name;
       }
 
       function formatNumber(x) {
@@ -932,6 +996,8 @@
       function convertToSeconds(min, sec) {
         return min * 60 + sec;
       }
+
+  
       
 
 
@@ -941,7 +1007,9 @@
 
 
           // Load the first track in the tracklist
-        loadTrack(track_index, curr_track);</script>
+        if (track_list.length > 0)
+          loadTrack(track_index, curr_track);
+          </script>
   </body>
 
 </html>
