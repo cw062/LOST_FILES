@@ -1,3 +1,6 @@
+if (process.env.NODE_ENV != 'production') {
+  require('dotenv').config();
+}
 //Define dependencies
 const express = require('express');
 const path = require('path');
@@ -5,6 +8,8 @@ const multer = require('multer');
 const cors = require('cors');
 const fs = require('fs');
 const mysql = require('mysql');
+const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 const { timeLog } = require('console');
 const { connection } = require('mongoose');
 const crypto = require('crypto');
@@ -12,19 +17,48 @@ const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
+const IN_PROD = process.env.NODE_ENV === 'production';
+const TWO_HOURS = 1000 * 60 * 60 * 2;
+const options = {
+  connectionLimit: 10,
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.MYSQL_DB,
+  createDatabaseTable: true
+};
+const sessionStore = new MySQLStore(options);
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      maxAge: TWO_HOURS,
+      sameSite: true,
+      secure: IN_PROD
+    }
+  })
+);
 app.set('view engine', 'ejs');
 const public = path.join(__dirname, 'public');
 const port = 5000;
 let playlistNames = [];
 let playlistData = [];
 let obj = {};
+let songid = {
+  id: null
+};
 
 const pool = mysql.createPool({
-  host: "database-1.ceoemktliflj.us-east-1.rds.amazonaws.com",
-  user: "admin",
-  password: "Quatroquatro",
-  database: "mydb",
-  port: 3306
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.MYSQL_DB,
+  port: process.env.DB_PORT
 });
 
 function storeUserInfo(username, hash, salt) {
@@ -96,11 +130,12 @@ function insertPlaylistIntoDB(uid, name) {
   });
 }
 
-function insertTrackIntoDbHelper(dataobj) {
+function insertTrackIntoDbHelper(dataobj, activeUid) {
   let song_index = 0;
   let sid = -1;
   async function insertTrackOnce() {
-    sid = await insertTrackData(dataobj.name, dataobj.artist, dataobj.path, dataobj.duration); //insert metadata, need to return SELECT LAST_INSERT_ID()
+    sid = await insertTrackData(dataobj.name, dataobj.artist, dataobj.path, dataobj.duration, activeUid); //insert metadata, need to return SELECT LAST_INSERT_ID()
+    songid.id = sid;
   }
   insertTrackOnce();
 
@@ -108,8 +143,10 @@ function insertTrackIntoDbHelper(dataobj) {
     async function doWork() {
       let pid = await findPlaylistInDb(element, activeUid); //returns pid
       let findIndexResult = await findIndex(pid, activeUid);  //returns row with highest song_index RowDataPacket { pid: 18,sid: 1, uid: 28, song_index: 1, ts: 0,te: 0 }
+      console.log(findIndexResult);
       if (findIndexResult != 0)
         song_index = Number(findIndexResult[0].song_index) + 1;
+      console.log(element + " , pid: "+pid+" index: "+song_index);
       let result = await insertIntoPlaylistDataDb(pid, sid, activeUid, song_index, 0, dataobj.duration);
     }
     doWork();
@@ -165,7 +202,6 @@ function findPlaylistInDb(name, uid) {
         return;
       }
       let values = [name, uid];
-      console.log(values);
       connection.query('SELECT * FROM Playlist WHERE (name, uid) = (?)', [values], function (err, result) {
         if(err) {
           console.log(err);
@@ -179,7 +215,7 @@ function findPlaylistInDb(name, uid) {
 }
 
 //inserts song data into track table and returns the unique song id
-function insertTrackData(name, artist, path, duration) {
+function insertTrackData(name, artist, path, duration, activeUid) {
   return new Promise(resolve => {
     pool.getConnection(function(err, connection) {
       if(err) {
@@ -193,6 +229,7 @@ function insertTrackData(name, artist, path, duration) {
           console.log(err);
           resolve(-1);
         } else {
+          console.log('insertId: ' + result.insertId);
           resolve(result.insertId);
         }
       });
@@ -205,7 +242,6 @@ function insertTrackData(name, artist, path, duration) {
 
 let iterations = 10000;
 let isLoggedin = false;
-let activeUid = -1;
 //takes a password and returns a hash and salt
 function hashPassword(password) {
   let returnobj = {
@@ -253,18 +289,23 @@ app.use(express.static(path.join(__dirname)));
 
 //after signup is successful, we will have no data to give to client
 //after login is successful, need to query all data that has the same uid and pass it here and to the addtracks path
-app.get('/', (req, res) => {        
+app.get('/', (req, res) => {      
   playlistData = [];
   playlistNames = [];
-  if (isLoggedin) {
+  if (req.session.user != null) {
     async function loginHelper() {
-      await getDataFromDbHelper(activeUid);
+      await getDataFromDbHelper(req.session.user);
       res.render('Homepage', {data: {json: playlistData}});  
     }
     loginHelper();
   } else {
     res.render('Login', {data: false});
   }   
+});
+
+app.get('/sendSongId', (req, res) => {
+  console.log(songid.id + 'in.get');
+  res.send(songid);
 });
 
 function getDataFromDbHelper(uid) {
@@ -279,10 +320,8 @@ function getDataFromDbHelper(uid) {
         data: []
       });
       let playlist_dataobj = await getPlaylistSongList(obj[i].pid, uid);   //list of songs for a single playlist from playlist_data
-      console.log(playlist_dataobj);
       for (let j = 0; j < playlist_dataobj.length; j++) {
         let trackRow = await selectFromTracks(playlist_dataobj[j].sid);     //song data from Tracks
-        console.log(trackRow);
         playlistData[i].data.push({
           id: trackRow[0].track_id,
           index: playlist_dataobj[j].song_index,      //why did i do this
@@ -365,6 +404,7 @@ function getPlaylistListFromDb(uid) {
 
 app.get('/Login', (req, res) => {
   res.render('Login', {data: false});
+  console.log(req.session);
 });
 
 app.get('/Signup', (req, res) => {
@@ -381,13 +421,12 @@ app.post('/ajaxpost', upload.none(), (req, res) => {
   if (JSON.parse(JSON.stringify(req.body)).new_playlist_name != undefined) {
     playlistNames.push(JSON.parse(JSON.stringify(req.body)).new_playlist_name);
     async function insertPlaylist() {
-      insertPlaylistIntoDB(activeUid, JSON.parse(JSON.stringify(req.body)).new_playlist_name);
+      insertPlaylistIntoDB(req.session.user, JSON.parse(JSON.stringify(req.body)).new_playlist_name);
     }
     insertPlaylist();
 
   } else {
     //access the database and update the ts and te fields
-    console.log(req.body);
     insertTimeValuesIntoDbHelper(req.body);
   }
   
@@ -430,7 +469,6 @@ function updateTimeValues(ts, te, song_index, pid) {
         console.error("Database connection failed" + err.stack);
         return;
       }
-      console.log('UPDATE Playlist_Data SET ts = '+ts+', te = '+te+' WHERE song_index = ' + song_index+ ' and pid = ' + pid + ';');
       connection.query('UPDATE Playlist_Data SET ts = '+ts+', te = '+te+' WHERE song_index = ' + song_index+ ' and pid = ' + pid + ';', function (err, result) {
         if(err) {
           console.log(err);
@@ -456,14 +494,12 @@ app.post('/usernamePost', upload.none(), (req, res) => {
 });
 
 app.post('/postNewTrackList', upload.none(), (req, res) => {
-  console.log(JSON.parse(JSON.stringify(req.body)).id);
-  console.log(JSON.parse(JSON.stringify(req.body)).index);
-  console.log(JSON.parse(JSON.stringify(req.body)).playlistIdentifier);
-  reorderTrackListHelper(JSON.parse(JSON.stringify(req.body)).id, JSON.parse(JSON.stringify(req.body)).index, JSON.parse(JSON.stringify(req.body)).playlistIdentifier);
-    
+  reorderTrackListHelper(req.session.user, JSON.parse(JSON.stringify(req.body)).id, JSON.parse(JSON.stringify(req.body)).index, JSON.parse(JSON.stringify(req.body)).playlistIdentifier);   
 });
 
-function reorderTrackListHelper(idArray, indexArray, playlistName) {
+function reorderTrackListHelper(activeUid, idArray, indexArray, playlistName) {
+  console.log(idArray);
+  console.log(indexArray);
   async function doSomething() {
     let pid = await findPlaylistInDb(playlistName, activeUid);
     for(let i = 0; i < idArray.length; i++) {    
@@ -480,11 +516,11 @@ function updateOrderInDB(id, index, pid) {
         console.error("Database connection failed" + err.stack);
         return;
       }
+      console.log('UPDATE Playlist_Data SET song_index = '+index+' WHERE sid = ' + id+ ' and pid = '+pid);
       connection.query('UPDATE Playlist_Data SET song_index = '+index+' WHERE sid = ' + id+ ' and pid = '+pid+';', function (err, result) {
         if(err) {
           console.log(err);
         } else {
-          console.log(result);
           resolve(result);
         }
       });
@@ -500,7 +536,6 @@ app.post('/add_tracks', upload.single('file'), (req, res) => {
         const pathToFile = req.file.path;
         const extension = path.extname(req.file.originalname);
         const duration = req.body.duration;
-        console.log(req.body);
         track = track + extension;
         const obj = {
           name: track,
@@ -510,7 +545,7 @@ app.post('/add_tracks', upload.single('file'), (req, res) => {
           playlists: playlistArray
         };
         //might need to wrap this in async
-        insertTrackIntoDbHelper(obj); //inserts track into database after submitting add_tracks
+        insertTrackIntoDbHelper(obj, req.session.user); //inserts track into database after submitting add_tracks
       
         
         res.render('add_tracks', {data: {json: obj, playlistNames: playlistNames}});
@@ -525,11 +560,16 @@ app.post('/Login', (req, res) => {
         res.render('Login', {data: true});
       else {
         let result = await isPasswordCorrect(dbrow[0].password, dbrow[0].salt, iterations, req.body.pass);
-        isLoggedin = result;
-        if (isLoggedin == false)
+        //isLoggedin = result;
+        if (result == false)
           res.render('Login', {data: true});
         else {
-          activeUid = dbrow[0].uid;
+          console.log('here');
+          req.session.user = dbrow[0].uid;
+          req.session.save(function (err) {
+            if (err)
+              return next(err)
+          });
           //might need to use another async/promise
           //playlistData = await queryUserData(dbrow[0].uid);
           res.redirect('/');
@@ -550,7 +590,7 @@ app.post('/Signup', (req, res) => {
       isLoggedin = result;
       //need to get created uid and assign it to activeuid
       let dbrow = await checkDatabaseForUsername(req.body.username);
-      activeUid = dbrow[0].uid;
+      req.session.user = dbrow[0].uid;
       res.redirect('/');
     } else {
       res.render('Signup', {root: __dirname});

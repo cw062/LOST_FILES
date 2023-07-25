@@ -132,10 +132,21 @@ remove the playing x of y and change it to the current playing playlist
  SET FOREIGN_KEY_CHECKS = 1;
 TRUNCATE `mydb`.`Tracks`;
 
+have to account for 
+  -next track   use curr_track
+  -prev track   use curr`
+  -next track during fade -use curr_track
+  -prev track during fade  -use curr_track
+  -song click               -use curr_track
+  -song click during fade     -use curr_track
+  -song switch at the end of duration   -use the track not in use
+
 curr is playing,
 if curr > end time - faderLength
 play other track and switch all of the info
 
 
-issue with track_id not starting at 0
-
+i have to have 2 audio elements
+i will start with the same one every time
+only when i am fading tracks should i switch the audio element //probably
+when i click a song to play it should keep the same audio element

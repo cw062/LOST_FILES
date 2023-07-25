@@ -212,10 +212,11 @@
             name: form_data.get("new_playlist_name"),
             data: []
           });
-          let li = document.createElement("li");
+          
+            let li = document.createElement("li");
             let x = datajson.length-1;
             li.className = "playlist-list-item" + x;
-            li.onclick = "handleListClick("+x+")";
+            li.onclick = function () { handleListClick(x); };
             li.textContent = form_data.get("new_playlist_name");
             playlist_list.appendChild(li);
             stylePlaylist();
@@ -231,13 +232,33 @@
 
         });        
 
-      window.addEventListener("message", (event) => {
+        function getSidFromServer() {
+          return new Promise(resolve => {
+          let xmlhttp = new XMLHttpRequest();
+          xmlhttp.onreadystatechange = function() {
+              if (this.readyState == 4 && this.status == 200) {
+                  // if it worked, parse that string, make it back into an object
+                  resolve (JSON.parse(this.responseText).id);
+              }
+          };
+          xmlhttp.open("GET", "/sendSongId", true);
+          xmlhttp.send();
+        });
+      }
+      
+      
+      
+      
+        window.addEventListener("message", (event) => {
         if (Object.values(event.data).length != 0) {
           const dataObj = event.data;                                      // !!!!!!!!!! THIS IS THE DATA THAT WAS SUBMITTED >> event.data
+          async function getsid() {
+            let songid = await getSidFromServer();
             dataObj.playlists.forEach(element => {
+              console.log(songid);
               let tempIndex = datajson.findIndex(o => o.name == element);
               const reformattedDataObj = {                                   //reformats data from add_tracks to add to page and data structure
-                id: datajson[tempIndex].data.length,
+                id: songid,
                 index: datajson[tempIndex].data.length,                      //NEEEDS TO BE CHANGED IM PRETTY SURE
                 name: dataObj.name,
                 artist: dataObj.artist,
@@ -252,9 +273,11 @@
                 displaySongs(tempIndex);
                 changeListTextColor(tempIndex);
                 addDrag();
-                createSettingsFields(datajson[tempIndex].name);
+                createSettingsFields(tempIndex);
               }
             });
+          }
+          getsid();
         }
       });
 
@@ -276,7 +299,7 @@
       }
 
       function addSongToEditList(object) {
-        createSettingsFields();
+        createSettingsFields(viewPlaylistIndex);
         /*
         let editli = document.createElement("li");
         editli.className = "edit-songs-item";
@@ -314,7 +337,6 @@
         
         function loadTrack(track_index, track) {
             // Clear the previous seek timer
-            console.log(track);
             
             clearInterval(updateTimer);
             resetValues();
@@ -332,12 +354,7 @@
             updateTimer = setInterval(handleTime, 1000);
 
             track.currentTime = track_list[track_index].ts;
-            
-            // Move to the next track if the current finishes playing
-            // using the 'ended' event
-            //track.addEventListener("ended", nextTrack(false));
-            
-            // Apply a random background color
+          
             //random_bg_color();
             top_div.style.backgroundImage = "url(" + track_list[track_index].image + ")";
         }
@@ -357,7 +374,6 @@
         }
 
         function handleTime() {
-          console.log(track_list[track_index].name);
           seekUpdate(getCurrentTrack());
           
           
@@ -381,57 +397,12 @@
             nextTrack();
             getCurrentTrack().volume = 0.2;
           }
-          
-          /*
-          if (currentAudio) {
-            if (curr_track.currentTime > track_list[track_index].te) {
-              console.log("1");
-              curr_track.pause();
-              currentAudio = false;
-              track_index = next_track_index;
-              bothPlaying = false;
-              
-            } else if (curr_track.currentTime > track_list[track_index].te - faderLength) {
-              curr_track.volume *= 0.7;
-              if(!bothPlaying) {
-                console.log("2");
-                nextTrack(true);
-                other_track.volume = 0.4;
-                bothPlaying = true;
-              }
-              other_track.volume = Math.min(other_track.volume * 1.5, 1);
-            }
-            other_track.volume = 1;
-
-          } else {
-            //other is playing
-            if(other_track.currentTime > track_list[track_index].te) {
-              console.log("3");
-              other_track.pause();
-              currentAudio = true;
-              track_index = next_track_index;
-              bothPlaying = false;
-            
-            } else if (other_track.currentTime > track_list[track_index].te - faderLength) {
-              other_track.volume *= 0.7;
-
-              if(!bothPlaying) {
-                console.log("1");
-                nextTrack(true);
-                curr_track.volume = 0.4;
-                bothPlaying = true;
-              }
-              curr_track.volume = Math.min(curr_track.volume * 1.5, 1);
-            }
-            curr_track.volume = 1;
-          }
-          */
         }
 
         function seekUpdate(track) {
             let seekPosition = 0;
-            console.log(track_list[track_index].name);
-
+            console.log(track_list);
+            console.log(track_index);
             // Check if the current track duration is a legible number
             if (!isNaN(curr_track.duration)) {
               seekPosition = track.currentTime * (100 /  track_list[track_index].te); //track.duration);
@@ -479,14 +450,16 @@
               pauseTrack();
           }
             
-          function playTrack(trackToUse) {
+          async function playTrack(trackToUse) {
             // Play the loaded track
-
-            trackToUse.play();
-            isPlaying = true;
-            
-            // Replace icon with the pause icon
-            playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
+            try {
+              trackToUse.play();
+              isPlaying = true;        
+              // Replace icon with the pause icon
+              playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
+            } catch (err) {
+              console.log("do nothing?");
+            }
           }
             
           function pauseTrack() {
@@ -499,6 +472,8 @@
           }
             
           function nextTrack() {
+            console.log(track_list);
+            console.log(track_index);
             trackToUse = getCurrentTrack();
             // Go back to the first track if the
             // current one is the last in the track list          
@@ -553,7 +528,7 @@
             
 
           function handleListClick(index) {
-            if (index >= 0) {
+          if (index != undefined) {
             displaySongs(index);
             changeListTextColor(index);
             playlistDisplaying = true;
@@ -787,7 +762,9 @@
               playlistData.removeChild(playlistData.lastChild);
             }
           //track_list = datajson[index].data;
+          console.log(index);
           let displayingList = datajson[index].data;
+          console.log(displayingList);
           for (let i = 0; i < displayingList.length; i++) {
             const elem = displayingList.find(o => o.index === i);
             let li = document.createElement('li');
@@ -844,8 +821,11 @@
 
       function createSettingsFields(index) {
         
-
+        console.log("here");
         for (let i = 0; i < edit_list_items.length; i++) {
+            console.log(datajson);
+            console.log(index);
+            console.log(i);
             let songobj = datajson[index].data.find(o => o.index == i);
             let timestart = songobj.ts;
             let timeend = songobj.te;
