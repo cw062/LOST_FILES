@@ -1,6 +1,10 @@
 if (process.env.NODE_ENV != 'production') {
   require('dotenv').config();
 }
+
+let iterations = 10000;
+let isLoggedin = false;
+
 //Define dependencies
 const express = require('express');
 const path = require('path');
@@ -14,6 +18,9 @@ const { timeLog } = require('console');
 const { connection } = require('mongoose');
 const crypto = require('crypto');
 const app = express();
+const upload = multer({ storage: storage });
+app.use('/', express.static(public));
+app.use(express.static(path.join(__dirname)));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
@@ -61,6 +68,17 @@ const pool = mysql.createPool({
   port: process.env.DB_PORT
 });
 
+let storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/')
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname)
+  }
+});
+
+//sql queries---------------------------------------------------------------------------------------------------sql queries---------------------------------------------
+//stores a users info in db after sign up, returns true on success, false on fail
 function storeUserInfo(username, hash, salt) {
   return new Promise( resolve => {
     pool.getConnection(function(err, connection) {
@@ -81,34 +99,7 @@ function storeUserInfo(username, hash, salt) {
     });
   });
 }
-
-function checkDatabaseForUsername(username) {
-  return new Promise( resolve => {
-    pool.getConnection(function(err, connection) {
-      if(err) {
-        console.error("Database connection failed" + err.stack);
-        return;
-      }
-      let values = [username];
-      connection.query('SELECT * FROM Users WHERE username = ?', [values], function (err, result) {
-        if(err) {
-          console.log(err);
-        } else {
-          resolve(result);
-        }
-      });
-    connection.release();
-    });
-  });
-}
-/*
-function queryUserData(uid) {
-  return new Promise (resolve => {
-    resolve()
-  })
-}
-*/
-
+//inserts a playlist into the database, returns true on success, false on fail
 function insertPlaylistIntoDB(uid, name) {
   return new Promise( resolve => {
     pool.getConnection(function(err, connection) {
@@ -129,30 +120,7 @@ function insertPlaylistIntoDB(uid, name) {
     });
   });
 }
-
-function insertTrackIntoDbHelper(dataobj, activeUid) {
-  let song_index = 0;
-  let sid = -1;
-  async function insertTrackOnce() {
-    sid = await insertTrackData(dataobj.name, dataobj.artist, dataobj.path, dataobj.duration, activeUid); //insert metadata, need to return SELECT LAST_INSERT_ID()
-    songid.id = sid;
-  }
-  insertTrackOnce();
-
-  dataobj.playlists.forEach(element => {
-    async function doWork() {
-      let pid = await findPlaylistInDb(element, activeUid); //returns pid
-      let findIndexResult = await findIndex(pid, activeUid);  //returns row with highest song_index RowDataPacket { pid: 18,sid: 1, uid: 28, song_index: 1, ts: 0,te: 0 }
-      console.log(findIndexResult);
-      if (findIndexResult != 0)
-        song_index = Number(findIndexResult[0].song_index) + 1;
-      console.log(element + " , pid: "+pid+" index: "+song_index);
-      let result = await insertIntoPlaylistDataDb(pid, sid, activeUid, song_index, 0, dataobj.duration);
-    }
-    doWork();
-  });
-}
-
+//inserts a the playlist metadata into the database, true on success, false on fail
 function insertIntoPlaylistDataDb(pid, sid, uid, index, ts, te) {
   return new Promise( resolve => {
     pool.getConnection(function(err, connection) {
@@ -167,46 +135,6 @@ function insertIntoPlaylistDataDb(pid, sid, uid, index, ts, te) {
           resolve(false);
         } else {
           resolve(true);
-        }
-      });
-    connection.release();
-    });
-  });
-}
-
-function findIndex(pid, uid) {
-  return new Promise( resolve => {
-    pool.getConnection(function(err, connection) {
-      if(err) {
-        console.error("Database connection failed" + err.stack);
-        return;
-      }
-      let values = [pid, uid];
-      connection.query('SELECT * FROM Playlist_Data WHERE (pid, uid) = (?) ORDER BY song_index DESC LIMIT 1;', [values], function (err, result) {
-        if(err) {
-          console.log(err);
-        } else {
-          resolve(result);
-        }
-      });
-    connection.release();
-    });
-  });
-}
-
-function findPlaylistInDb(name, uid) {
-  return new Promise( resolve => {
-    pool.getConnection(function(err, connection) {
-      if(err) {
-        console.error("Database connection failed" + err.stack);
-        return;
-      }
-      let values = [name, uid];
-      connection.query('SELECT * FROM Playlist WHERE (name, uid) = (?)', [values], function (err, result) {
-        if(err) {
-          console.log(err);
-        } else {
-          resolve(result[0].pid);
         }
       });
     connection.release();
@@ -237,76 +165,190 @@ function insertTrackData(name, artist, path, duration, activeUid) {
     });
   });
 }
-
-
-
-let iterations = 10000;
-let isLoggedin = false;
-//takes a password and returns a hash and salt
-function hashPassword(password) {
-  let returnobj = {
-    hash: "",
-    salt: ""
-  };
-  return new Promise(resolve => {
-    returnobj.salt = crypto.randomBytes(128).toString('base64');
-    crypto.pbkdf2(password, returnobj.salt, iterations, 64, 'sha512', (err, derivedKey) => {
-      if (err) throw err;
-      returnobj.hash = derivedKey.toString('hex'); 
-      resolve(returnobj);
+//finds how many tracks are in the passed in playlist
+function findIndex(pid, uid) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [pid, uid];
+      connection.query('SELECT * FROM Playlist_Data WHERE (pid, uid) = (?) ORDER BY song_index DESC LIMIT 1;', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          resolve(result);
+        }
+      });
+    connection.release();
     });
-});
+  });
 }
-
-function isPasswordCorrect(savedHash, savedSalt, savedIterations, passwordAttempt) {
-  //retreive row from db --probably rename these parameters
-  let newhash = "";
+//looks up the entered username on login, returns hashed password and salt if successful, nothing if fail
+function checkDatabaseForUsername(username) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [username];
+      connection.query('SELECT * FROM Users WHERE username = ?', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+//finds playlist id in db based on name and userid, returns playlist id on success, nothing on fail
+function findPlaylistInDb(name, uid) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [name, uid];
+      connection.query('SELECT * FROM Playlist WHERE (name, uid) = (?)', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          resolve(result[0].pid);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+//gets the name, path from track table, returns the row on success, nothing on fail
+function selectFromTracks(track_id) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [track_id];
+      connection.query('SELECT * FROM Tracks WHERE track_id = ?', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+//returns the list of tracks for the passed in playlist, containing song id, ts, and te
+function getPlaylistSongList(pid, uid) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [pid, uid];
+      connection.query('SELECT * FROM Playlist_Data WHERE (pid, uid) = (?)', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+//gets all of the playlist names for the active user
+function getPlaylistListFromDb(uid) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [uid];
+      connection.query('SELECT * FROM Playlist WHERE uid = ?', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+//updates the time start and time end for each track in the passed in playlist
+function updateTimeValues(ts, te, song_index, pid) {
   return new Promise(resolve => {
-    crypto.pbkdf2(passwordAttempt, savedSalt, savedIterations, 64, 'sha512', (err, derivedKey) => {
-      if (err) throw err;
-      newhash = derivedKey.toString('hex'); 
-      resolve(savedHash == newhash);
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      connection.query('UPDATE Playlist_Data SET ts = '+ts+', te = '+te+' WHERE song_index = ' + song_index+ ' and pid = ' + pid + ';', function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          console.log(result);
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+//updates the song_index of a track 
+function updateOrderInDB(id, index, pid) {
+  return new Promise(resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      console.log('UPDATE Playlist_Data SET song_index = '+index+' WHERE sid = ' + id+ ' and pid = '+pid);
+      connection.query('UPDATE Playlist_Data SET song_index = '+index+' WHERE sid = ' + id+ ' and pid = '+pid+';', function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          resolve(result);
+        }
+      });
+    connection.release();
     });
   });
 }
 
+//sql helpers----------------------------------------------------------------------------------------------------sql helpers--------------------------------------------------
+function insertTrackIntoDbHelper(dataobj, activeUid) {
+  let song_index = 0;
+  let sid = -1;
+  async function insertTrackOnce() {
+    sid = await insertTrackData(dataobj.name, dataobj.artist, dataobj.path, dataobj.duration, activeUid); //insert metadata, need to return SELECT LAST_INSERT_ID()
+    songid.id = sid;
+  }
+  insertTrackOnce();
 
-
-let storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, 'uploads/')
-    },
-    filename: function (req, file, cb) {
-      cb(null, file.originalname)
+  dataobj.playlists.forEach(element => {
+    async function doWork() {
+      let pid = await findPlaylistInDb(element, activeUid); //returns pid
+      let findIndexResult = await findIndex(pid, activeUid);  //returns row with highest song_index RowDataPacket { pid: 18,sid: 1, uid: 28, song_index: 1, ts: 0,te: 0 }
+      console.log(findIndexResult);
+      if (findIndexResult != 0)
+        song_index = Number(findIndexResult[0].song_index) + 1;
+      console.log(element + " , pid: "+pid+" index: "+song_index);
+      let result = await insertIntoPlaylistDataDb(pid, sid, activeUid, song_index, 0, dataobj.duration);
     }
+    doWork();
   });
-  
-  const upload = multer({ storage: storage });
-
-//add all static files to the app
-app.use('/', express.static(public));
-app.use(express.static(path.join(__dirname)));
-
-//after signup is successful, we will have no data to give to client
-//after login is successful, need to query all data that has the same uid and pass it here and to the addtracks path
-app.get('/', (req, res) => {      
-  playlistData = [];
-  playlistNames = [];
-  if (req.session.user != null) {
-    async function loginHelper() {
-      await getDataFromDbHelper(req.session.user);
-      res.render('Homepage', {data: {json: playlistData}});  
-    }
-    loginHelper();
-  } else {
-    res.render('Login', {data: false});
-  }   
-});
-
-app.get('/sendSongId', (req, res) => {
-  console.log(songid.id + 'in.get');
-  res.send(songid);
-});
+}
 
 function getDataFromDbHelper(uid) {
   return new Promise(resolve => {
@@ -341,66 +383,60 @@ function getDataFromDbHelper(uid) {
   });
 }
 
-function selectFromTracks(track_id) {
-  return new Promise( resolve => {
-    pool.getConnection(function(err, connection) {
-      if(err) {
-        console.error("Database connection failed" + err.stack);
-        return;
-      }
-      let values = [track_id];
-      connection.query('SELECT * FROM Tracks WHERE track_id = ?', [values], function (err, result) {
-        if(err) {
-          console.log(err);
-        } else {
-          resolve(result);
-        }
-      });
-    connection.release();
-    });
-  });
+function insertTimeValuesIntoDbHelper(formobj) {
+  for (let i = 0; i < (Object.keys(formobj).length-1);) {
+    let tsmin = formatNumber(Object.values(formobj)[i]);
+    let tssec = formatNumber(Object.values(formobj)[++i]);
+    let temin = formatNumber(Object.values(formobj)[++i]);
+    let tesec = formatNumber(Object.values(formobj)[++i]);
+    i++;
+    let song_index = i / 4 -1;
+    let timestart = (tsmin * 60) + tssec;
+    let timeend = (temin * 60 ) + tesec;
+    async function callUpdateDb() {
+      let pid = await findPlaylistInDb(formobj.playlistIdentifier, activeUid);
+      let result = await updateTimeValues(timestart, timeend, song_index, pid);
+    }
+    callUpdateDb();
+  }
 }
 
-function getPlaylistSongList(pid, uid) {
-  return new Promise( resolve => {
-    pool.getConnection(function(err, connection) {
-      if(err) {
-        console.error("Database connection failed" + err.stack);
-        return;
-      }
-      let values = [pid, uid];
-      connection.query('SELECT * FROM Playlist_Data WHERE (pid, uid) = (?)', [values], function (err, result) {
-        if(err) {
-          console.log(err);
-        } else {
-          resolve(result);
-        }
-      });
-    connection.release();
-    });
-  });
+function reorderTrackListHelper(activeUid, idArray, indexArray, playlistName) {
+  console.log(idArray);
+  console.log(indexArray);
+  async function doSomething() {
+    let pid = await findPlaylistInDb(playlistName, activeUid);
+    for(let i = 0; i < idArray.length; i++) {    
+      await updateOrderInDB(idArray[i], indexArray[i], pid);
+    }
+  }
+  doSomething();
 }
+//post and get------------------------------------------------------------------------------------------------------------post/get-----------------------------
+//after signup is successful, we will have no data to give to client
+//after login is successful, need to query all data that has the same uid and pass it here and to the addtracks path
+app.get('/', (req, res) => {      
+  playlistData = [];
+  playlistNames = [];
+  if (req.session.user != null) {
+    async function loginHelper() {
+      await getDataFromDbHelper(req.session.user);
+      res.render('Homepage', {data: {json: playlistData}});  
+    }
+    loginHelper();
+  } else {
+    res.render('Login', {data: false});
+  }   
+});
 
-function getPlaylistListFromDb(uid) {
-  return new Promise( resolve => {
-    pool.getConnection(function(err, connection) {
-      if(err) {
-        console.error("Database connection failed" + err.stack);
-        return;
-      }
-      let values = [uid];
-      connection.query('SELECT * FROM Playlist WHERE uid = ?', [values], function (err, result) {
-        if(err) {
-          console.log(err);
-        } else {
-          resolve(result);
-        }
-      });
-    connection.release();
-    });
-  });
-}
+app.get('/sendSongId', (req, res) => {
+  console.log(songid.id + 'in.get');
+  res.send(songid);
+});
 
+app.get('/sendDJ', (req, res) => {
+  res.send(playlistData);
+});
 
 app.get('/Login', (req, res) => {
   res.render('Login', {data: false});
@@ -432,56 +468,6 @@ app.post('/ajaxpost', upload.none(), (req, res) => {
   
 });
 
-function formatNumber(x) {
-  if (x.length == 1) {
-    return Number(x);
-  } else {
-    if (x[0] == '0') {
-      return Number(x[1]);
-    }
-    else
-      return Number(x);
-  }
-}
-
-function insertTimeValuesIntoDbHelper(formobj) {
-  for (let i = 0; i < (Object.keys(formobj).length-1);) {
-    let tsmin = formatNumber(Object.values(formobj)[i]);
-    let tssec = formatNumber(Object.values(formobj)[++i]);
-    let temin = formatNumber(Object.values(formobj)[++i]);
-    let tesec = formatNumber(Object.values(formobj)[++i]);
-    i++;
-    let song_index = i / 4 -1;
-    let timestart = (tsmin * 60) + tssec;
-    let timeend = (temin * 60 ) + tesec;
-    async function callUpdateDb() {
-      let pid = await findPlaylistInDb(formobj.playlistIdentifier, activeUid);
-      let result = await updateTimeValues(timestart, timeend, song_index, pid);
-    }
-    callUpdateDb();
-  }
-}
-
-function updateTimeValues(ts, te, song_index, pid) {
-  return new Promise(resolve => {
-    pool.getConnection(function(err, connection) {
-      if(err) {
-        console.error("Database connection failed" + err.stack);
-        return;
-      }
-      connection.query('UPDATE Playlist_Data SET ts = '+ts+', te = '+te+' WHERE song_index = ' + song_index+ ' and pid = ' + pid + ';', function (err, result) {
-        if(err) {
-          console.log(err);
-        } else {
-          console.log(result);
-          resolve(result);
-        }
-      });
-    connection.release();
-    });
-  });
-}
-
 app.post('/usernamePost', upload.none(), (req, res) => {
   async function checkUsername() {
     let result = await checkDatabaseForUsername(JSON.parse(JSON.stringify(req.body)).username);    //true for succcess, false for fail
@@ -496,38 +482,6 @@ app.post('/usernamePost', upload.none(), (req, res) => {
 app.post('/postNewTrackList', upload.none(), (req, res) => {
   reorderTrackListHelper(req.session.user, JSON.parse(JSON.stringify(req.body)).id, JSON.parse(JSON.stringify(req.body)).index, JSON.parse(JSON.stringify(req.body)).playlistIdentifier);   
 });
-
-function reorderTrackListHelper(activeUid, idArray, indexArray, playlistName) {
-  console.log(idArray);
-  console.log(indexArray);
-  async function doSomething() {
-    let pid = await findPlaylistInDb(playlistName, activeUid);
-    for(let i = 0; i < idArray.length; i++) {    
-      await updateOrderInDB(idArray[i], indexArray[i], pid);
-    }
-  }
-  doSomething();
-}
-
-function updateOrderInDB(id, index, pid) {
-  return new Promise(resolve => {
-    pool.getConnection(function(err, connection) {
-      if(err) {
-        console.error("Database connection failed" + err.stack);
-        return;
-      }
-      console.log('UPDATE Playlist_Data SET song_index = '+index+' WHERE sid = ' + id+ ' and pid = '+pid);
-      connection.query('UPDATE Playlist_Data SET song_index = '+index+' WHERE sid = ' + id+ ' and pid = '+pid+';', function (err, result) {
-        if(err) {
-          console.log(err);
-        } else {
-          resolve(result);
-        }
-      });
-    connection.release();
-    });
-  });
-}
 
 app.post('/add_tracks', upload.single('file'), (req, res) => {
         let track = req.body.nameData;
@@ -545,11 +499,8 @@ app.post('/add_tracks', upload.single('file'), (req, res) => {
           playlists: playlistArray
         };
         //might need to wrap this in async
-        insertTrackIntoDbHelper(obj, req.session.user); //inserts track into database after submitting add_tracks
-      
-        
-        res.render('add_tracks', {data: {json: obj, playlistNames: playlistNames}});
-          
+        insertTrackIntoDbHelper(obj, req.session.user); //inserts track into database after submitting add_tracks 
+        res.render('add_tracks', {data: {json: obj, playlistNames: playlistNames}});        
 });
 
 app.post('/Login', (req, res) => {
@@ -578,7 +529,6 @@ app.post('/Login', (req, res) => {
 
     }
     getPassCorrect();
-
 });
 
 
@@ -599,6 +549,48 @@ app.post('/Signup', (req, res) => {
   createHashandSalt();
 
 });
+
+//crypto functions---------------------------------------------------------------------------------crypto functions-----------------------------------------------
+//takes a password and returns a hash and salt
+function hashPassword(password) {
+  let returnobj = {
+    hash: "",
+    salt: ""
+  };
+  return new Promise(resolve => {
+    returnobj.salt = crypto.randomBytes(128).toString('base64');
+    crypto.pbkdf2(password, returnobj.salt, iterations, 64, 'sha512', (err, derivedKey) => {
+      if (err) throw err;
+      returnobj.hash = derivedKey.toString('hex'); 
+      resolve(returnobj);
+    });
+});
+}
+
+function isPasswordCorrect(savedHash, savedSalt, savedIterations, passwordAttempt) {
+  //retreive row from db --probably rename these parameters
+  let newhash = "";
+  return new Promise(resolve => {
+    crypto.pbkdf2(passwordAttempt, savedSalt, savedIterations, 64, 'sha512', (err, derivedKey) => {
+      if (err) throw err;
+      newhash = derivedKey.toString('hex'); 
+      resolve(savedHash == newhash);
+    });
+  });
+}
+//generic functions-------------------------------------------------------------------------------------------generic functions-------------------------------
+function formatNumber(x) {
+  if (x.length == 1) {
+    return Number(x);
+  } else {
+    if (x[0] == '0') {
+      return Number(x[1]);
+    }
+    else
+      return Number(x);
+  }
+}
+
 //server starts listening for any attempts from a client to connect at port: {port}
 app.listen(port, () => {
     console.log(`Now listening on port ${port}`); 
