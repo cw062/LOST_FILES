@@ -18,7 +18,24 @@ const { timeLog } = require('console');
 const { connection } = require('mongoose');
 const crypto = require('crypto');
 const app = express();
+let storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/')
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname)
+  }
+});
 const upload = multer({ storage: storage });
+app.set('view engine', 'ejs');
+const public = path.join(__dirname, 'public');
+const port = 5000;
+let playlistNames = [];
+let playlistData = [];
+let obj = {};
+let songid = {
+  id: null
+};
 app.use('/', express.static(public));
 app.use(express.static(path.join(__dirname)));
 app.use(express.urlencoded({ extended: true }));
@@ -50,15 +67,6 @@ app.use(
     }
   })
 );
-app.set('view engine', 'ejs');
-const public = path.join(__dirname, 'public');
-const port = 5000;
-let playlistNames = [];
-let playlistData = [];
-let obj = {};
-let songid = {
-  id: null
-};
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
@@ -66,15 +74,6 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.MYSQL_DB,
   port: process.env.DB_PORT
-});
-
-let storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/')
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname)
-  }
 });
 
 //sql queries---------------------------------------------------------------------------------------------------sql queries---------------------------------------------
@@ -313,11 +312,74 @@ function updateOrderInDB(id, index, pid) {
         console.error("Database connection failed" + err.stack);
         return;
       }
-      console.log('UPDATE Playlist_Data SET song_index = '+index+' WHERE sid = ' + id+ ' and pid = '+pid);
-      connection.query('UPDATE Playlist_Data SET song_index = '+index+' WHERE sid = ' + id+ ' and pid = '+pid+';', function (err, result) {
+      connection.query('UPDATE Playlist_Data SET song_index = '+index+' WHERE sid = ' + id + ' and pid = '+pid+';', function (err, result) {
         if(err) {
           console.log(err);
         } else {
+          console.log(result);
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+
+function updateSongIndex(uid, pid, song_index) {
+  newSongIndex = song_index-1;
+  return new Promise(resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      connection.query('UPDATE Playlist_Data SET song_index = '+newSongIndex+' WHERE song_index = ' + song_index + ' and uid = ' + uid + ' and pid = '+pid+';', function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          console.log(result);
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+
+function findSongInPlaylistData(activeUid, songid, pid) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [pid, activeUid, songid];
+      connection.query('SELECT * FROM Playlist_Data WHERE (pid, uid, sid) = (?) ORDER BY song_index DESC LIMIT 1;', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+
+function deleteSongfromPlaylistData(activeUid, songid, pid) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [pid, activeUid, songid];
+      console.log(values);
+      connection.query('DELETE FROM Playlist_Data WHERE (pid, uid, sid) = (?);', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          console.log(result);
           resolve(result);
         }
       });
@@ -383,7 +445,7 @@ function getDataFromDbHelper(uid) {
   });
 }
 
-function insertTimeValuesIntoDbHelper(formobj) {
+function insertTimeValuesIntoDbHelper(formobj, activeUid) {
   for (let i = 0; i < (Object.keys(formobj).length-1);) {
     let tsmin = formatNumber(Object.values(formobj)[i]);
     let tssec = formatNumber(Object.values(formobj)[++i]);
@@ -412,6 +474,24 @@ function reorderTrackListHelper(activeUid, idArray, indexArray, playlistName) {
   }
   doSomething();
 }
+
+function deleteSongHelper(activeUid, songid, playlistName, playlistLength) {
+  async function doStuff() {
+    let pid = await findPlaylistInDb(playlistName, activeUid);
+    let rowData = await findSongInPlaylistData(activeUid, songid, pid);
+    let song_index = rowData[0].song_index;
+    await deleteSongfromPlaylistData(activeUid, songid, pid);
+    console.log(song_index);
+    console.log(playlistLength);
+    for (let i = song_index + 1; i < playlistLength; i++) {
+      console.log("here");
+      await updateSongIndex(activeUid, pid, i);
+    }
+
+  }
+  doStuff();
+}
+
 //post and get------------------------------------------------------------------------------------------------------------post/get-----------------------------
 //after signup is successful, we will have no data to give to client
 //after login is successful, need to query all data that has the same uid and pass it here and to the addtracks path
@@ -463,7 +543,7 @@ app.post('/ajaxpost', upload.none(), (req, res) => {
 
   } else {
     //access the database and update the ts and te fields
-    insertTimeValuesIntoDbHelper(req.body);
+    insertTimeValuesIntoDbHelper(req.body, req.session.user);
   }
   
 });
@@ -480,7 +560,10 @@ app.post('/usernamePost', upload.none(), (req, res) => {
 });
 
 app.post('/postNewTrackList', upload.none(), (req, res) => {
+  console.log(JSON.parse(JSON.stringify(req.body)).id + "this");
   reorderTrackListHelper(req.session.user, JSON.parse(JSON.stringify(req.body)).id, JSON.parse(JSON.stringify(req.body)).index, JSON.parse(JSON.stringify(req.body)).playlistIdentifier);   
+  const responseData = { message: 'Request received successfully!' };
+  res.json(responseData);
 });
 
 app.post('/add_tracks', upload.single('file'), (req, res) => {
@@ -548,6 +631,10 @@ app.post('/Signup', (req, res) => {
   }
   createHashandSalt();
 
+});
+
+app.post('/postDeleteSong', upload.none(), (req, res) => {
+  deleteSongHelper(req.session.user, JSON.parse(JSON.stringify(req.body)).songid, JSON.parse(JSON.stringify(req.body)).playlistIdentifier, JSON.parse(JSON.stringify(req.body)).playlistLength);
 });
 
 //crypto functions---------------------------------------------------------------------------------crypto functions-----------------------------------------------

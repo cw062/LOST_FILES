@@ -51,6 +51,7 @@ let updateTimer;
 let iWindow = null;
 let viewPlaylistIndex = 0;
 let add_button_clicked = false;
+let assignFadingTrack = true;
 let playlistIdentifier = document.createElement('input');
 playlistIdentifier.type = "hidden";
 playlistIdentifier.value = "";
@@ -59,13 +60,20 @@ document.getElementById("settings_form").appendChild(playlistIdentifier);
 let curr_track = document.createElement('audio');
 let other_track = document.createElement('audio');    
 slider_container.style.top = (75 + window.scrollY / window.innerHeight * 27) + 'vh';
-stylePlaylist();
-assignDJ();
-if(datajson.length > 0)
-    track_list = datajson[currentPlaylist].data; 
+
 
 
 //event listeners----------------------------------------------------------------------------------------------------------------------event listeners
+window.addEventListener("DOMContentLoaded", function () {
+    assignDJ();
+    if(datajson.length > 0) {
+        track_list = datajson[currentPlaylist].data; 
+        track_name.textContent = track_list[track_index].name;
+        track_artist.textContent = track_list[track_index].artist;
+        now_playing.textContent = datajson[currentPlaylist].name;
+    }
+
+});
 
 window.addEventListener("scroll", function () {
     slider_container.style.top = (75 + window.scrollY / window.innerHeight * 27) + 'vh';
@@ -118,7 +126,6 @@ document.getElementById("new-playlist-form").addEventListener('submit', function
     li.onclick = function () { handleListClick(x); };
     li.textContent = form_data.get("new_playlist_name");
     playlist_list.appendChild(li);
-    stylePlaylist();
     document.getElementById('add_tracks_iframe').src = document.getElementById('add_tracks_iframe').src;
 });
 
@@ -140,16 +147,19 @@ question_button.addEventListener('mouseleave', function() {
 });
 
 edit_list.addEventListener("drop", (event) => {
-    reorderPlaylist();
+    async function reorder() {
+        await reorderPlaylist();
+        let x = await sendNewPlaylistOrder(datajson[viewPlaylistIndex].data);
+        console.log(x);
+     }
+    reorder();
     recolorPlaylist();
     reloadTrack();
     //displaySettings();
-    sendNewPlaylistOrder(track_list);
+    
     
 });
 
-edit_list.addEventListener("dragover", initSortableList);
-edit_list.addEventListener("dragenter", e => e.preventDefault());
 
 window.addEventListener("message", (event) => {
     if (Object.values(event.data).length != 0) {
@@ -207,6 +217,18 @@ function getSidFromServer() {
     });
 }
 
+function sendDeleteSongRequest(songid, playlistName, playlistLength) {
+    let ajax = new XMLHttpRequest();
+    ajax.open("POST", "/postDeleteSong", true);
+    ajax.contentType = 'application/json'
+    const formData = new FormData();
+    formData.append('songid', songid);
+    formData.append('playlistIdentifier', playlistName);
+    formData.append('playlistLength', playlistLength);
+    console.log(formData);
+    ajax.send(formData);
+}
+
 function getDJFromServer() {
     return new Promise(resolve => {
         let xmlhttp = new XMLHttpRequest();
@@ -221,19 +243,22 @@ function getDJFromServer() {
     });
 }
 
-function sendNewPlaylistOrder(track_list) {
+function sendNewPlaylistOrder(track_listing) {
+    //return new Promise(resolve => {
     let ajax = new XMLHttpRequest();
-    ajax.open("POST", "/postNewTrackList", true);
-    ajax.contentType = 'application/json'
-    
+    ajax.open("POST", "/postNewTrackList", true);    
     const formData = new FormData();
-    track_list.forEach((object) => {
+    track_listing.forEach((object) => {
         Object.entries(object).forEach(([key, value]) => {
         formData.append(key, value);
         });
     });
     formData.append('playlistIdentifier', datajson[viewPlaylistIndex].name);
-    ajax.send(formData);
+    ajax.addEventListener("load", (event) => {
+        console.log(event);
+    });
+      ajax.send(formData);
+    //});
 }
 
 //Functions---------------------------------------------------------------------------------------------------------------------------------------------Functions
@@ -246,11 +271,12 @@ async function assignDJ() {
 
 function loadTrack(track_index, track) {
     // Clear the previous seek timer
-    
+    console.log(track_list[track_index].name);
     clearInterval(updateTimer);
     resetValues();
     // Load a new track
     track.src = track_list[track_index].path;
+    console.log("aboveload");
     track.load();
     // Update details of the track
     track_name.textContent = track_list[track_index].name;
@@ -259,12 +285,15 @@ function loadTrack(track_index, track) {
     
     // Set an interval of 1000 milliseconds
     // for updating the seek slider
+    console.log("aboveupdatetimer");
     updateTimer = setInterval(handleTime, 1000);
-
+    console.log("belowupdatetimer");
     track.currentTime = track_list[track_index].ts;
     
     //random_bg_color();
     top_div.style.backgroundImage = "url(" + track_list[track_index].image + ")";
+    //getFadingTrack().src = track_list[getNextTrack()].path;
+    assignFadingTrack = true;
 }
 
 function getFadingTrack() {
@@ -283,10 +312,12 @@ function getTrackNotInUse() {
 
 function handleTime() {
     seekUpdate(getCurrentTrack());   
+    console.log(fading);
     if (fading) {
-        getFadingTrack().volume *= 0.7;
-        getCurrentTrack().volume = Math.min(getCurrentTrack().volume * 1.5, 1)
-        if (fading && getFadingTrack().currentTime >= fadingTrackTe) {
+        getFadingTrack().volume = Math.max(getFadingTrack().volume*0.7, .1);
+        getCurrentTrack().volume = Math.min(getCurrentTrack().volume * 1.5, 1);
+        console.log("3");
+        if (fading && getFadingTrack().currentTime >= fadingTrackTe - 0.6) {
             console.log("2");
             getFadingTrack().pause();
             getFadingTrack().currentTime = 0;
@@ -294,13 +325,24 @@ function handleTime() {
             getCurrentTrack().volume = 1;
         }
     } else if (getCurrentTrack().currentTime >= track_list[track_index].te - faderLength) {
+        console.log("1");
         fading = true;
         fadingTrackTe = track_list[track_index].te;
         currentAudio = !currentAudio;  //switches which track will be used
         getFadingTrack().volume *= 0.7;
-        nextTrack();
+        nextTrack(false);
         getCurrentTrack().volume = 0.2;
     }
+}
+
+function getNextTrack() {
+    let track_index_helper = track_list[track_index].index;
+    if (track_index_helper < track_list.length - 1)
+        track_index_helper += 1;
+    else 
+        track_index_helper = 0;
+    //console.log(track_list[track_id_finder(track_index_helper)]);
+    return track_id_finder(track_index_helper);
 }
 
 function seekUpdate(track) {
@@ -351,16 +393,16 @@ function playpauseTrack() {
         pauseTrack();
 }
     
-async function playTrack(trackToUse) {
+function playTrack(trackToUse) {
     // Play the loaded track
-    try {
+        console.log(trackToUse.src);
+        trackToUse.curr_time = 0;
         trackToUse.play();
+        console.log("belowplay");
         isPlaying = true;        
         // Replace icon with the pause icon
         playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
-    } catch (err) {
-        console.log("do nothing?");
-    }
+        
 }
     
 function pauseTrack() {
@@ -372,7 +414,7 @@ function pauseTrack() {
     playpause_btn.innerHTML = '<i class="fa fa-play-circle fa-5x"></i>';
 }
     
-function nextTrack() {
+function nextTrack(resetFade) {
     let trackToUse = getCurrentTrack();          
     let track_index_helper = track_list[track_index].index;
     console.log(trackToUse);
@@ -382,11 +424,16 @@ function nextTrack() {
     
     track_index = track_id_finder(track_index_helper);
     // Load and play the new track
-        loadTrack(track_index, trackToUse);
-        playTrack(trackToUse);   
+    if (resetFade) {
+        fading = false;
+    }
+    loadTrack(track_index, trackToUse);
+    console.log("between");
+    playTrack(trackToUse); 
+    console.log("bottomofnexttrack");  
 }
     
-function prevTrack() {
+function prevTrack(resetFade) {
     // Go back to the last track if the
     // current one is the first in the track list                        
     let track_index_helper = track_list[track_index].index; 
@@ -397,8 +444,13 @@ function prevTrack() {
 
     track_index = track_id_finder(track_index_helper);
     // Load and play the new track
-    loadTrack(track_index, curr_track);
-    playTrack(curr_track);
+    getCurrentTrack().pause();
+    if (resetFade) {
+        fading = false;
+    }
+    loadTrack(track_index, getCurrentTrack());
+    playTrack(getCurrentTrack());
+    console.log("bot of prev");
 }
 
 function seekTo() {
@@ -436,13 +488,6 @@ function random_bg_color() {
     document.body.style.background = "linear-gradient("+bgColor+","+bgColor2+")";
 }
 
-function stylePlaylist() {
-    for (let i = 0; i < playlist_list.children.length; i++) {
-        if (i % 2 == 1 && i != viewPlaylistIndex) 
-            playlist_list.children[i].style.background = "#1e1e1e";
-    }
-}
-
 const initSortableList = (e) => {
     e.preventDefault();
     const draggingItem = document.querySelector(".dragging");
@@ -466,7 +511,8 @@ const initSortableList = (e) => {
     // Inserting the dragging item before the found sibling
     edit_list.insertBefore(draggingItem, nextSibling);
 }
-
+edit_list.addEventListener("dragover", initSortableList);
+edit_list.addEventListener("dragenter", e => e.preventDefault());
 
 function handleSaveButton(playlistIndex) {
     postFunction();
@@ -483,17 +529,6 @@ function handleSaveButton(playlistIndex) {
     }
 }
 
-function formatNumber(x) {
-    if (x.length == 1) {
-        return Number(x);
-    } else {
-    if (x[0] == '0') {
-        return Number(x[1]);
-    }
-    else
-        return Number(x);
-    }
-}
 
 function reloadTrack() {
     //track_art.style.backgroundImage = 
@@ -517,6 +552,7 @@ function recolorPlaylist() {
 
 //updates track_list[i].index to new values after element is dropped
 function reorderPlaylist() {        
+    return new Promise(resolve => {
     while(playlistData.firstChild) {
         playlistData.removeChild(playlistData.lastChild);
     }
@@ -539,6 +575,8 @@ function reorderPlaylist() {
         playlistData.appendChild(li);
     }
     track_list = datajson[viewPlaylistIndex].data;
+    resolve(true);
+    })
 }
 
 function addDrag() {
@@ -568,16 +606,17 @@ function changeListTextColor(index) {
 }
 
 let handleSongClick = function(event) {     
-    if (event != undefined) {
+    if (event != undefined && event.target.name >= 0) {
+        fading = false;
+        other_track.pause();
+        curr_track.pause();
         track_list = datajson[viewPlaylistIndex].data;
-        currentPlaylist = viewPlaylistIndex;
-        if (event.target.name >= 0) {                
-            track_index = track_index_finder(event.target.name);
-            curr_track.pause();
-            other_track.pause();
-            loadTrack(track_index, curr_track);
-            playTrack(curr_track);
-        }
+        currentPlaylist = viewPlaylistIndex;          
+        track_index = track_index_finder(event.target.name);
+        //curr_track.pause();
+        //other_track.pause();
+        loadTrack(track_index, getCurrentTrack());
+        playTrack(getCurrentTrack());
     }
 }
 
@@ -587,6 +626,7 @@ function displaySongs(index) {
         playlistData.removeChild(playlistData.lastChild);
     }
     let displayingList = datajson[index].data;
+    console.log(displayingList);
     for (let i = 0; i < displayingList.length; i++) {
         const elem = displayingList.find(o => o.index === i);
         let li = document.createElement('li');
@@ -691,6 +731,10 @@ for (let i = 0; i < edit_list_items.length; i++) {
     const hyphen = document.createElement("span");
     hyphen.textContent = "-";
     hyphen.classList = "hyphen";
+    let deleteIcon = document.createElement("i");
+    deleteIcon.classList = "fas fa-minus-circle";
+    deleteIcon.style.color = "#F072A9";
+    deleteIcon.id = "delete-song-" + songid;
     let listSpan = document.createElement("span");
     listSpan.classList = "list-span";
     teInputSec.value = Math.floor(timeend % 60);
@@ -704,9 +748,19 @@ for (let i = 0; i < edit_list_items.length; i++) {
     listSpan.appendChild(teInputMin);
     listSpan.appendChild(colon2);
     listSpan.appendChild(teInputSec);
+    listSpan.appendChild(deleteIcon);
     edit_list_items[i].appendChild(listSpan);
     const regex = new RegExp("^[0-9]*$");
 
+    deleteIcon.addEventListener("click", (event) => {                                                           //change
+        let result = confirm("Are you sure you want to delete " + datajson[viewPlaylistIndex].data[dataJsonIndexFinder(viewPlaylistIndex, Number(event.target.id.substring(12)))].name + " from " + datajson[viewPlaylistIndex].name + "? If it does not belong to any other playlist, it will be deleted from the database entirely.");
+        if (result) {
+            sendDeleteSongRequest(Number(event.target.id.substring(12)), datajson[viewPlaylistIndex].name, datajson[viewPlaylistIndex].data.length);
+            deleteSongFromPlaylist(Number(event.target.id.substring(12)), viewPlaylistIndex);
+
+        }
+    });
+    
     tsInputMin.addEventListener("beforeinput", (event) => {
         if (event.data != null && !regex.test(event.data)) 
             event.preventDefault();
@@ -730,7 +784,7 @@ for (let i = 0; i < edit_list_items.length; i++) {
     tsInputMin.addEventListener('focusout', function(e) {       
         let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
         let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-        if (start > end) {
+        if (start + faderLength >= end) {
             tsInputMin.value = "00";
             tsInputSec.value = "00";
         }
@@ -739,7 +793,7 @@ for (let i = 0; i < edit_list_items.length; i++) {
     tsInputSec.addEventListener('focusout', function(e) {
         let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
         let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-        if (start > end) {
+        if (start + faderLength >= end) {
             tsInputMin.value = "00";
             tsInputSec.value = "00";
         }
@@ -747,7 +801,7 @@ for (let i = 0; i < edit_list_items.length; i++) {
     teInputMin.addEventListener('focusout', function() {   
         let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
         let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-        if (start > end || end > songobj.duration) {
+        if (start + faderLength >= end || end > songobj.duration) {
             teInputMin.value = reverseFormatNumber(Math.floor(songobj.duration / 60));
             teInputSec.value = reverseFormatNumber(Math.floor(songobj.duration % 60));
         } 
@@ -755,13 +809,38 @@ for (let i = 0; i < edit_list_items.length; i++) {
     teInputSec.addEventListener('focusout', function() {    
         let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
         let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-        if (start > end || end > songobj.duration) {
+        if (start + faderLength >= end || end > songobj.duration) {
             teInputMin.value = reverseFormatNumber(Math.floor(songobj.duration / 60));
             teInputSec.value = reverseFormatNumber(Math.floor(songobj.duration % 60));
         }
     });
 }
     playlistIdentifier.value = datajson[index].name;
+}
+
+function dataJsonIndexFinder(index, id) {
+    return datajson[index].data.findIndex(o => o.id == id);
+}
+
+function deleteSongFromPlaylist(id, djIndex) {
+    let removeIndex = datajson[djIndex].data[dataJsonIndexFinder(djIndex, id)].index;
+    let array = datajson[djIndex].data;
+    let replacementArray = [];
+    for (let i = 0; i < array.length; i++) {
+        if (array[i].index != removeIndex) {
+            if(array[i].index > removeIndex) {
+                array[i].index -= 1;
+            }
+            replacementArray.push(array[i]);
+        }
+        
+    }
+    datajson[djIndex].data = replacementArray;
+    console.log(datajson[djIndex].data);
+    displaySongs(viewPlaylistIndex);
+    changeListTextColor(viewPlaylistIndex);
+    addDrag();
+    createSettingsFields(viewPlaylistIndex);
 }
 
 function formatNumber(x) {

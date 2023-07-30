@@ -129,7 +129,7 @@ async function helper() {
 make sure reload track isnt fucked up
 remove the playing x of y and change it to the current playing playlist
 
- SET FOREIGN_KEY_CHECKS = 1;
+ SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE `mydb`.`Tracks`;
 
 have to account for 
@@ -150,3 +150,9 @@ i have to have 2 audio elements
 i will start with the same one every time
 only when i am fading tracks should i switch the audio element //probably
 when i click a song to play it should keep the same audio element
+
+i am on deletesonghelper
+
+result.affectedRows
+
+dont forget to fix the other ajax post requests. add in the server a response, thanks chat

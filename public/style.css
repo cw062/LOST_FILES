@@ -670,9 +670,9 @@ input[type="range"]::-ms-fill-upper {
 
 .list-span {
   position: relative;
-  left: 16vw;
+  left: 11vw;
   display: inline-flex;
-  width: 100%;
+  width: 20vw;
   top: -2.5vh;
 }
 
@@ -739,6 +739,14 @@ input[type="range"]::-ms-fill-upper {
   opacity: 0;
   visibility: hidden;
   transition-duration: 750ms;
+}
+
+.fa-minus-circle {
+  margin-left: 3vw;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  position: relative;
 }
 
 
