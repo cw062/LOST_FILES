@@ -156,3 +156,5 @@ i am on deletesonghelper
 result.affectedRows
 
 dont forget to fix the other ajax post requests. add in the server a response, thanks chat
+
+rewrite the way to display playlists

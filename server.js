@@ -4,6 +4,7 @@ if (process.env.NODE_ENV != 'production') {
 
 let iterations = 10000;
 let isLoggedin = false;
+let loggedInUsers = [];
 
 //Define dependencies
 const express = require('express');
@@ -388,6 +389,50 @@ function deleteSongfromPlaylistData(activeUid, songid, pid) {
   });
 }
 
+function deletePlaylistFromPlaylistData(pid, uid) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [pid, uid];
+      console.log(values);
+      connection.query('DELETE FROM Playlist_Data WHERE (pid, uid) = (?);', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          console.log(result);
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+
+function deletePlaylistFromPlaylist(pid, uid) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [pid, uid];
+      console.log(values);
+      connection.query('DELETE FROM Playlist WHERE (pid, uid) = (?);', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          console.log(result);
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+
 //sql helpers----------------------------------------------------------------------------------------------------sql helpers--------------------------------------------------
 function insertTrackIntoDbHelper(dataobj, activeUid) {
   let song_index = 0;
@@ -492,25 +537,35 @@ function deleteSongHelper(activeUid, songid, playlistName, playlistLength) {
   doStuff();
 }
 
+function deletePlaylistHelper(activeUid, name) {
+  async function dplh() {
+    console.log(name);
+    let pid = await findPlaylistInDb(name, activeUid);
+    console.log(pid);
+    await deletePlaylistFromPlaylistData(pid, activeUid);
+    await deletePlaylistFromPlaylist(pid, activeUid);
+  }
+  dplh();
+}
+
 //post and get------------------------------------------------------------------------------------------------------------post/get-----------------------------
 //after signup is successful, we will have no data to give to client
 //after login is successful, need to query all data that has the same uid and pass it here and to the addtracks path
 app.get('/', (req, res) => {      
   playlistData = [];
   playlistNames = [];
-  if (req.session.user != null) {
+  if (loggedInUsers.includes(req.session.user)) {
     async function loginHelper() {
       await getDataFromDbHelper(req.session.user);
       res.render('Homepage', {data: {json: playlistData}});  
     }
     loginHelper();
   } else {
-    res.render('Login', {data: false});
+    res.redirect('/Login');
   }   
 });
 
 app.get('/sendSongId', (req, res) => {
-  console.log(songid.id + 'in.get');
   res.send(songid);
 });
 
@@ -545,6 +600,8 @@ app.post('/ajaxpost', upload.none(), (req, res) => {
     //access the database and update the ts and te fields
     insertTimeValuesIntoDbHelper(req.body, req.session.user);
   }
+  const responseData = { message: 'Request received successfully!' };
+  res.json(responseData);
   
 });
 
@@ -598,15 +655,19 @@ app.post('/Login', (req, res) => {
         if (result == false)
           res.render('Login', {data: true});
         else {
-          console.log('here');
-          req.session.user = dbrow[0].uid;
-          req.session.save(function (err) {
-            if (err)
-              return next(err)
-          });
-          //might need to use another async/promise
-          //playlistData = await queryUserData(dbrow[0].uid);
-          res.redirect('/');
+          if(loggedInUsers.includes(dbrow[0].uid)) {
+            res.render('Login', {data: true});
+          } else {
+            req.session.user = dbrow[0].uid;
+            loggedInUsers.push(req.session.user);
+            req.session.save(function (err) {
+              if (err)
+                return next(err)
+            });
+            //might need to use another async/promise
+            //playlistData = await queryUserData(dbrow[0].uid);
+            res.redirect('/');
+        }
         }
       }
 
@@ -635,6 +696,30 @@ app.post('/Signup', (req, res) => {
 
 app.post('/postDeleteSong', upload.none(), (req, res) => {
   deleteSongHelper(req.session.user, JSON.parse(JSON.stringify(req.body)).songid, JSON.parse(JSON.stringify(req.body)).playlistIdentifier, JSON.parse(JSON.stringify(req.body)).playlistLength);
+  const responseData = { message: 'Request received successfully!' };
+  res.json(responseData);
+});
+
+app.post('/postDeletePlaylist', upload.none(), (req, res) => {
+  deletePlaylistHelper(req.session.user, JSON.parse(JSON.stringify(req.body)).name);
+  console.log(req.session.user +"user");
+  const responseData = { message: 'Request received successfully!' };
+  res.json(responseData);
+});
+
+app.post('/logoutRequest', upload.none(), (req, res) => {
+  loggedInUsers.splice(loggedInUsers.indexOf(req.session.user), 1);
+  req.session.user = null;
+  req.session.save(function (err) {
+    if (err) next(err)
+
+    // regenerate the session, which is good practice to help
+    // guard against forms of session fixation
+    req.session.regenerate(function (err) {
+      if (err) next(err)
+      res.redirect('/Login')
+    })
+  })
 });
 
 //crypto functions---------------------------------------------------------------------------------crypto functions-----------------------------------------------

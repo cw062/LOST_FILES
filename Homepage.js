@@ -1,3 +1,5 @@
+//const { data } = require("jquery");
+
 //initialize variables
 let playlist_songs = [];
 let currentPlaylist = 0;
@@ -60,6 +62,7 @@ document.getElementById("settings_form").appendChild(playlistIdentifier);
 let curr_track = document.createElement('audio');
 let other_track = document.createElement('audio');    
 slider_container.style.top = (75 + window.scrollY / window.innerHeight * 27) + 'vh';
+playlistPlayingIndex = 0;
 
 
 
@@ -77,6 +80,10 @@ window.addEventListener("DOMContentLoaded", function () {
 
 window.addEventListener("scroll", function () {
     slider_container.style.top = (75 + window.scrollY / window.innerHeight * 27) + 'vh';
+});
+
+document.querySelector(".signout-container").addEventListener("click", () => {
+    //sendLogOutRequest();
 });
 
 save_button.addEventListener('click', function () {handleSaveButton(viewPlaylistIndex);});
@@ -149,10 +156,10 @@ question_button.addEventListener('mouseleave', function() {
 edit_list.addEventListener("drop", (event) => {
     async function reorder() {
         await reorderPlaylist();
-        let x = await sendNewPlaylistOrder(datajson[viewPlaylistIndex].data);
-        console.log(x);
      }
     reorder();
+    sendNewPlaylistOrder(datajson[viewPlaylistIndex].data);
+
     recolorPlaylist();
     reloadTrack();
     //displaySettings();
@@ -225,7 +232,6 @@ function sendDeleteSongRequest(songid, playlistName, playlistLength) {
     formData.append('songid', songid);
     formData.append('playlistIdentifier', playlistName);
     formData.append('playlistLength', playlistLength);
-    console.log(formData);
     ajax.send(formData);
 }
 
@@ -254,11 +260,29 @@ function sendNewPlaylistOrder(track_listing) {
         });
     });
     formData.append('playlistIdentifier', datajson[viewPlaylistIndex].name);
-    ajax.addEventListener("load", (event) => {
-        console.log(event);
-    });
+    //ajax.addEventListener("load", (event) => {
+      //  console.log(event);
+    //});
       ajax.send(formData);
     //});
+}
+
+function sendDeletePlaylistRequest(name) {
+    let ajax = new XMLHttpRequest();
+    ajax.open("POST", "/postDeletePlaylist", true);
+    ajax.contentType = 'application/json'
+    const formData = new FormData();
+    formData.append('name', name);
+    ajax.send(formData);
+}
+
+function sendLogOutRequest() {
+    let ajax = new XMLHttpRequest();
+    ajax.open("POST", "/logoutRequest", true);
+    ajax.contentType = 'application/json'
+    const formData = new FormData();
+    formData.append('logout', true);
+    ajax.send(formData);
 }
 
 //Functions---------------------------------------------------------------------------------------------------------------------------------------------Functions
@@ -574,7 +598,6 @@ function reorderPlaylist() {
         }
         playlistData.appendChild(li);
     }
-    track_list = datajson[viewPlaylistIndex].data;
     resolve(true);
     })
 }
@@ -841,6 +864,57 @@ function deleteSongFromPlaylist(id, djIndex) {
     changeListTextColor(viewPlaylistIndex);
     addDrag();
     createSettingsFields(viewPlaylistIndex);
+}
+
+function deletePlaylist() {
+    let index = viewPlaylistIndex;
+    let confirmResult = confirm("Are you sure you want to delete playlist " + datajson[index].name + "? Any tracks that dont belong to other playlists will be completely deleted from the database.");
+    if (confirmResult) {
+        sendDeletePlaylistRequest(document.querySelector(".playlist-list-item" + index).textContent);
+        deletePlaylistHelper(index);        
+    }
+}
+
+function deletePlaylistHelper(index) {
+    let newArray = [];
+    for (let i = 0; i < datajson.length; i++) {
+        if (i != index) {
+            newArray.push(datajson[i]);
+        }
+    }
+    datajson = newArray;
+    console.log(newArray);
+    viewPlaylistIndex = 0;
+    handleListClick(0);
+    if (index === currentPlaylist) {
+        currentPlaylist = 0;
+        track_list = datajson[0].data;
+        curr_track.pause();
+        other_track.pause();
+    }
+    console.log(index);
+    playlist_list.removeChild(document.querySelector(".playlist-list-item" + index));
+    console.log(datajson.length);
+    for (let i = index + 1; i < datajson.length+1; i++) {
+        let num = i - 1;
+        let element = document.querySelector(".playlist-list-item" + i);
+        element.removeAttribute("onclick");
+        element.addEventListener("click", () => {
+            handleListClick(num);
+        });
+        element.className = "playlist-list-item" + num;
+    }
+    
+    
+}
+
+function repaintPlaylistList() {
+    while(playlist_list.firstChild) {
+        playlist_list.removeChild()
+    }
+    datajson.forEach(function callback (element,index) {
+        
+    });
 }
 
 function formatNumber(x) {

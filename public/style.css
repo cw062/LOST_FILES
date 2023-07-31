@@ -747,8 +747,40 @@ input[type="range"]::-ms-fill-upper {
   align-items: center;
   display: flex;
   position: relative;
+  cursor: pointer;
+
 }
 
+.signout-container {
+  position: relative;
+  left: 68vw;
+  top: 5vh;
+  height: 6vh;
+  width: 8vw;
+  overflow: hidden;
+  background-color: black;
+  border: solid 2px #F072A9;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 60px;
+  min-height: 20px;
+}
+
+.signout-text {
+  color: #F072A9;
+  font-size: 1rem;
+  text-decoration: none;
+  font-family: "Quicksand", sans-serif;
+  padding: 0px;
+  overflow: hidden;
+  transition-duration: 500ms;
+  background-color: black;
+  border: none;
+  cursor: pointer;
+
+}
 
 
 /*

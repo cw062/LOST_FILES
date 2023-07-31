@@ -50,8 +50,11 @@
     </div>
 
     <section class="top-div">
-      
-
+      <form action="/logoutRequest" method="POST" id="logoutForm" name="logoutForm">
+        <div class="signout-container">
+          <input class="signout-text" type="submit" name="sigout-text" value="Log Out">
+        </div>
+      </form>
       <div class="playlist-songs-container">    
         <ol class="list" id ="list"></ol>
       </div>
@@ -59,7 +62,7 @@
     </section> 
     <section class="bottom-div">
       <div class="edit-playlist-title-container">
-        <span class="edit-title">Edit</span>
+        <i class="fas fa-minus-circle" onclick="deletePlaylist()"></i>
         <span class="settings-title"></span>
         <button class="question-button">
           <i class="far fa-question-circle fa-lg"></i>
