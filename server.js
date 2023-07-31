@@ -685,6 +685,7 @@ app.post('/Signup', (req, res) => {
       //need to get created uid and assign it to activeuid
       let dbrow = await checkDatabaseForUsername(req.body.username);
       req.session.user = dbrow[0].uid;
+      loggedInUsers.push(req.session.user);
       res.redirect('/');
     } else {
       res.render('Signup', {root: __dirname});
