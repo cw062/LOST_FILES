@@ -36,7 +36,8 @@
             let serverdata = <%- JSON.stringify(data) %>
 
             window.addEventListener('DOMContentLoaded', (event) => {
-                if (serverdata === true) {
+                if (serverdata != "No message") {
+                    console.log(serverdata);
                     displayErrorMessage();
                 }
                 if (user_field.value.length > 0) {
@@ -123,6 +124,7 @@
             function displayErrorMessage() {
                 login_title.style.marginBottom = '5vh';
                 error_message.style.visibility = 'visible';
+                error_message.textContent = serverdata;
             }
         </script>
     </body>

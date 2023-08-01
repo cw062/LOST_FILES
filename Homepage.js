@@ -24,7 +24,6 @@ const list_container = document.querySelector(".playlist-songs-container");
 let edit_playlist_button = document.querySelector(".edit-playlist-button");
 let settings_container = document.querySelector(".playlist-songs-settings-container");
 let settings_list = document.querySelector(".song-settings-list");
-let save_button = document.querySelector(".save-button-container");
 let settings_title = document.querySelector(".settings-title");
 let settings_form = document.querySelector(".settings_form");
 let add_tracks_iframe = document.querySelector(".popup-iframe");
@@ -61,7 +60,7 @@ playlistIdentifier.name = "playlistIdentifier";
 document.getElementById("settings_form").appendChild(playlistIdentifier);
 let curr_track = document.createElement('audio');
 let other_track = document.createElement('audio');    
-slider_container.style.top = (75 + window.scrollY / window.innerHeight * 27) + 'vh';
+slider_container.style.top = (82 + window.scrollY / window.innerHeight * 27) + 'vh';
 playlistPlayingIndex = 0;
 
 
@@ -79,14 +78,13 @@ window.addEventListener("DOMContentLoaded", function () {
 });
 
 window.addEventListener("scroll", function () {
-    slider_container.style.top = (75 + window.scrollY / window.innerHeight * 27) + 'vh';
+    slider_container.style.top = (82 + window.scrollY / window.innerHeight * 18) + 'vh';
 });
 
 document.querySelector(".signout-container").addEventListener("click", () => {
     //sendLogOutRequest();
 });
 
-save_button.addEventListener('click', function () {handleSaveButton(viewPlaylistIndex);});
 
 add_playlist.addEventListener("click", function () {
     if (!add_button_clicked) {
@@ -696,7 +694,6 @@ function displaySettings() {
         list_container.style.left = "77vw";
         list_container.style.width = "21vw";
     }
-    save_button.style.visibility = "visible";
 }
 
 function createSettingsFields(index) {
@@ -807,19 +804,21 @@ for (let i = 0; i < edit_list_items.length; i++) {
     tsInputMin.addEventListener('focusout', function(e) {       
         let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
         let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-        if (start + faderLength >= end) {
+        if (start + faderLength >= end || start) {
             tsInputMin.value = "00";
             tsInputSec.value = "00";
         }
+        handleSaveButton(viewPlaylistIndex);
     });
 
     tsInputSec.addEventListener('focusout', function(e) {
         let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
         let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-        if (start + faderLength >= end) {
+        if (start + faderLength >= end || formatNumber(tsInputSec.value) > 59) {
             tsInputMin.value = "00";
             tsInputSec.value = "00";
         }
+        handleSaveButton(viewPlaylistIndex);
     });
     teInputMin.addEventListener('focusout', function() {   
         let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
@@ -828,14 +827,16 @@ for (let i = 0; i < edit_list_items.length; i++) {
             teInputMin.value = reverseFormatNumber(Math.floor(songobj.duration / 60));
             teInputSec.value = reverseFormatNumber(Math.floor(songobj.duration % 60));
         } 
+        handleSaveButton(viewPlaylistIndex);
     });
     teInputSec.addEventListener('focusout', function() {    
         let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
         let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-        if (start + faderLength >= end || end > songobj.duration) {
+        if (start + faderLength >= end || end > songobj.duration || formatNumber(teInputSec.value) > 59) {
             teInputMin.value = reverseFormatNumber(Math.floor(songobj.duration / 60));
             teInputSec.value = reverseFormatNumber(Math.floor(songobj.duration % 60));
         }
+        handleSaveButton(viewPlaylistIndex);
     });
 }
     playlistIdentifier.value = datajson[index].name;

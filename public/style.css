@@ -23,7 +23,7 @@ body {
   }
   .top-div {
     position: absolute;
-    left: 21vw;
+    left: 20.3vw;
     top: 0px;
     width: 89vw;
     height: 100vh;
@@ -34,7 +34,7 @@ body {
 
   .bottom-div {
     position: absolute;
-    left: 22vw;
+    left: 20.3vw;
     width: 89vw;
     top: 100vh;
     height: 100vh;
@@ -137,17 +137,16 @@ body {
     
   /* Define the slider width so that it scales properly */
   .slider_container {
-    position: absolute;
-    top: 73vh;
+    position: relative;
+    top: 82vh;
     height: 17vh;
-    left: 24vw;
+    left: 20.3vw;
     width: 60vw;
     background-color: black;
     color: #F072A9;
     border: 2px solid #F072A9;
-    border-radius: 10px;
+   
     padding: 0px;    
-    position: absolute;
     z-index: 3;
     min-width: 500px;
   } 
@@ -283,8 +282,9 @@ input[type="range"]::-ms-fill-upper {
     background-color: black;
     color: white;
     border-right: solid 2px;
+    border-top: solid 2px;
+    border-left: solid 2px;
     border-color: #F072A9;
-    border-top-right-radius: 10px;
     padding-top: 1vh;
     padding-bottom: 1vh;
     min-width: 125px;
@@ -354,11 +354,10 @@ input[type="range"]::-ms-fill-upper {
 
   .popup {
     position: absolute;
-    border-radius: 10px;
-    top: 23vh;
-    left: 4vw;
+    top: 17.5vh;
+    left: 40.5vw;
     width: 30vw;
-    height: 75vh;
+    height: 81.9vh;
     background-color: black;
     z-index: 1;
     border: solid 2px #F072A9;
@@ -421,14 +420,13 @@ input[type="range"]::-ms-fill-upper {
   background-color: black;
   padding: 0px;
   color: #F072A9;
-  top: 28vh;
-  left: 35vw;
+  top: 24vh;
+  left: 0vw;
   width: 40vw;
-  height: 70vh;
+  height: 75.4vh;
   overflow-x: hidden;
   overflow-y: scroll;
   direction: rtl;
-  border-radius: 10px;
   border: 2px solid #F072A9;
   scrollbar-color: #F072A9 black;
   scrollbar-width: none;
@@ -467,8 +465,9 @@ input[type="range"]::-ms-fill-upper {
   overflow-x: hidden;
   overflow-y: scroll;
   min-width: 125px;
-  border-bottom-right-radius: 10px;
   border-right: 2px solid #F072A9;
+  border-left: solid 2px #F072A9;
+  border-bottom: solid 2px #F072A9;
   scrollbar-color: #F072A9 black;
   scrollbar-width: none;
   transition-duration: 500ms;
@@ -545,7 +544,7 @@ input[type="range"]::-ms-fill-upper {
 
 .save-button-container {
   position: relative;
-  left: 63vw;
+  left: 27vw;
   top: 15vh;
   height: 6vh;
   width: 10vw;
@@ -566,7 +565,6 @@ input[type="range"]::-ms-fill-upper {
   text-decoration: none;
   cursor: pointer;
   outline: none;
-  border-radius: 10px;
   font-family: "Quicksand", sans-serif;
   padding: 0px;
   overflow: hidden;
@@ -577,7 +575,7 @@ input[type="range"]::-ms-fill-upper {
 .tsmin {
   background-color: black;
   color: #F072A9;
-  border-color: #070505;
+  border: none;
   left: 10vw;
   display: block;
   width: 15px; 
@@ -611,7 +609,7 @@ input[type="range"]::-ms-fill-upper {
 .tssec {
   background-color: black;
   color: #F072A9;
-  border-color: #070505;
+  border: none;
   left: 14vw;
   display: block;
   width: 15px; 
@@ -625,7 +623,7 @@ input[type="range"]::-ms-fill-upper {
 .temin {
   background-color: black;
   color: #F072A9;
-  border-color: #070505;
+  border: none;
   left: 26vw;
   display: block;
   width: 15px;
@@ -639,7 +637,7 @@ input[type="range"]::-ms-fill-upper {
 .tesec {
   background-color: black;
   color: #F072A9;
-  border-color: #070505;
+  border: none;
   left: 30vw;
   display: block;
   width: 15px;
@@ -684,14 +682,13 @@ input[type="range"]::-ms-fill-upper {
 
 .edit-playlist-title-container {
   position: relative;
-  left: 35vw;
-  top: 21vh;
+  left: 0vw;
+  top: 17.5vh;
   height: 6vh;
-  width: 27vw;
+  width: 40vw;
   overflow: hidden;
   background-color: black;
   border: 2px solid #F072A9;
-  border-radius: 10px;
   color: #F072A9;
   justify-content: space-evenly;
   display: flex;

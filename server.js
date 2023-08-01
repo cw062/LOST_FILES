@@ -574,7 +574,7 @@ app.get('/sendDJ', (req, res) => {
 });
 
 app.get('/Login', (req, res) => {
-  res.render('Login', {data: false});
+  res.render('Login', {data: "No message"});
   console.log(req.session);
 });
 
@@ -648,15 +648,15 @@ app.post('/Login', (req, res) => {
       //get row from db that matches username
       let dbrow = await checkDatabaseForUsername(req.body.username);
       if (dbrow == 0)
-        res.render('Login', {data: true});
+        res.render('Login', {data: "Username Incorrect"});
       else {
         let result = await isPasswordCorrect(dbrow[0].password, dbrow[0].salt, iterations, req.body.pass);
         //isLoggedin = result;
         if (result == false)
-          res.render('Login', {data: true});
+          res.render('Login', {data: "Password Incorect"});
         else {
           if(loggedInUsers.includes(dbrow[0].uid)) {
-            res.render('Login', {data: true});
+            res.render('Login', {data: "Account already logged in on another device"});
           } else {
             req.session.user = dbrow[0].uid;
             loggedInUsers.push(req.session.user);
