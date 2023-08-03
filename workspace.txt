@@ -158,3 +158,30 @@ result.affectedRows
 dont forget to fix the other ajax post requests. add in the server a response, thanks chat
 
 rewrite the way to display playlists
+
+
+let x = await dowloadS3('y2mate.com - FLAMIN HOT CHEETOS CLAIRO LYRICS(1).mp3');
+      console.log(x);
+      fs.writeFile(process.cwd() + '/uploads/clairosong.mp3', x.Body, (err) => {
+        if (err)
+          console.log(err);
+        else {
+          console.log("File written successfully\n");
+          console.log("The written has the following contents:");
+        }
+      });
+      console.log(x);
+      playlistData[0].data[0].path = "uploads/clairosong.mp3";
+
+
+song cache attempt
+      let cachedSongs = [];
+async function loadTrack(track_index, track) {
+    // Clear the previous seek timer
+    console.log(track_list[track_index].name);
+    clearInterval(updateTimer);
+    resetValues();
+    if (!cachedSongs.includes(track_list[track_index].path)) {
+    let source  = await getSong(track_list[track_index].path);
+    cachedSongs.push(track_list[track_index].path);
+    }

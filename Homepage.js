@@ -53,6 +53,8 @@ let iWindow = null;
 let viewPlaylistIndex = 0;
 let add_button_clicked = false;
 let assignFadingTrack = true;
+let preLoadFlag = true;
+
 let playlistIdentifier = document.createElement('input');
 playlistIdentifier.type = "hidden";
 playlistIdentifier.value = "";
@@ -61,7 +63,7 @@ document.getElementById("settings_form").appendChild(playlistIdentifier);
 let curr_track = document.createElement('audio');
 let other_track = document.createElement('audio');    
 slider_container.style.top = (82 + window.scrollY / window.innerHeight * 27) + 'vh';
-playlistPlayingIndex = 0;
+let playlistPlayingIndex = 0;
 
 
 
@@ -291,15 +293,41 @@ async function assignDJ() {
         track_list = datajson[currentPlaylist].data; 
 }
 
-function loadTrack(track_index, track) {
+async function getSong(path) {
+    return new Promise(resolve => {
+        let ajax = new XMLHttpRequest();
+        const formData = new FormData();
+        formData.append('path', path);
+        ajax.onreadystatechange = function() {
+            if (ajax.readyState == 4 && ajax.status == 200) {
+              console.log(ajax.responseText);
+              resolve(true);
+             }
+           };
+        ajax.open("POST", "/getSong", true);
+        ajax.send(formData);
+    });
+}
+
+async function preLoadTrack(track_index) {
+    await getSong(track_list[track_index].path);
+}
+
+async function loadTrack(track_index, track) {
     // Clear the previous seek timer
     console.log(track_list[track_index].name);
     clearInterval(updateTimer);
     resetValues();
     // Load a new track
-    track.src = track_list[track_index].path;
-    console.log("aboveload");
+    track.src = 'public/uploads/' + track_list[track_index].path;
     track.load();
+    let playAndRemove = () => {
+        playTrack(track);
+        track.removeEventListener("canplaythrough", playAndRemove);
+
+    }
+    track.addEventListener("canplaythrough", playAndRemove);
+    
     // Update details of the track
     track_name.textContent = track_list[track_index].name;
     track_artist.textContent = track_list[track_index].artist;
@@ -307,9 +335,7 @@ function loadTrack(track_index, track) {
     
     // Set an interval of 1000 milliseconds
     // for updating the seek slider
-    console.log("aboveupdatetimer");
     updateTimer = setInterval(handleTime, 1000);
-    console.log("belowupdatetimer");
     track.currentTime = track_list[track_index].ts;
     
     //random_bg_color();
@@ -317,6 +343,8 @@ function loadTrack(track_index, track) {
     //getFadingTrack().src = track_list[getNextTrack()].path;
     assignFadingTrack = true;
 }
+
+
 
 function getFadingTrack() {
     if (currentAudio)
@@ -331,7 +359,6 @@ function getTrackNotInUse() {
     else
     return curr_track;
 }
-
 function handleTime() {
     seekUpdate(getCurrentTrack());   
     console.log(fading);
@@ -341,10 +368,12 @@ function handleTime() {
         console.log("3");
         if (fading && getFadingTrack().currentTime >= fadingTrackTe - 0.6) {
             console.log("2");
+            console.log(getFadingTrack().src);
             getFadingTrack().pause();
             getFadingTrack().currentTime = 0;
             fading = false;
             getCurrentTrack().volume = 1;
+            preLoadFlag = true;
         }
     } else if (getCurrentTrack().currentTime >= track_list[track_index].te - faderLength) {
         console.log("1");
@@ -355,6 +384,11 @@ function handleTime() {
         nextTrack(false);
         getCurrentTrack().volume = 0.2;
     }
+
+    if(getCurrentTrack().currentTime > track_list[track_index].te - 20 && preLoadFlag) {
+        preLoadTrack(getNextTrack());
+        preLoadFlag = false;
+    }
 }
 
 function getNextTrack() {
@@ -364,6 +398,7 @@ function getNextTrack() {
     else 
         track_index_helper = 0;
     //console.log(track_list[track_id_finder(track_index_helper)]);
+    console.log(track_id_finder(track_index_helper));
     return track_id_finder(track_index_helper);
 }
 
@@ -436,7 +471,7 @@ function pauseTrack() {
     playpause_btn.innerHTML = '<i class="fa fa-play-circle fa-5x"></i>';
 }
     
-function nextTrack(resetFade) {
+async function nextTrack(resetFade) {
     let trackToUse = getCurrentTrack();          
     let track_index_helper = track_list[track_index].index;
     console.log(trackToUse);
@@ -448,14 +483,16 @@ function nextTrack(resetFade) {
     // Load and play the new track
     if (resetFade) {
         fading = false;
-    }
+        await preLoadTrack(track_index);
+
+    } 
     loadTrack(track_index, trackToUse);
     console.log("between");
-    playTrack(trackToUse); 
+    //playTrack(trackToUse); 
     console.log("bottomofnexttrack");  
 }
     
-function prevTrack(resetFade) {
+async function prevTrack(resetFade) {
     // Go back to the last track if the
     // current one is the first in the track list                        
     let track_index_helper = track_list[track_index].index; 
@@ -470,8 +507,9 @@ function prevTrack(resetFade) {
     if (resetFade) {
         fading = false;
     }
+    await preLoadTrack(track_index);
     loadTrack(track_index, getCurrentTrack());
-    playTrack(getCurrentTrack());
+    //playTrack(getCurrentTrack());
     console.log("bot of prev");
 }
 
@@ -626,7 +664,7 @@ function changeListTextColor(index) {
     active.style.borderBottom = "10px solid #F072A9";
 }
 
-let handleSongClick = function(event) {     
+let handleSongClick = async function(event) {     
     if (event != undefined && event.target.name >= 0) {
         fading = false;
         other_track.pause();
@@ -636,8 +674,9 @@ let handleSongClick = function(event) {
         track_index = track_index_finder(event.target.name);
         //curr_track.pause();
         //other_track.pause();
+        await preLoadTrack(track_index);
         loadTrack(track_index, getCurrentTrack());
-        playTrack(getCurrentTrack());
+        //playTrack(getCurrentTrack());
     }
 }
 
@@ -943,5 +982,5 @@ function convertToSeconds(min, sec) {
 }
 
 // Load the first track in the tracklist
-if (track_list.length > 0)
-    loadTrack(track_index, curr_track);
+/*if (track_list.length > 0)
+    loadTrack(track_index, curr_track);*/

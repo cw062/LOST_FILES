@@ -18,10 +18,43 @@ const MySQLStore = require('express-mysql-session')(session);
 const { timeLog } = require('console');
 const { connection } = require('mongoose');
 const crypto = require('crypto');
+const aws = require('aws-sdk');
 const app = express();
+
+const bucket = process.env.S3_BUCKET_NAME;
+const region = process.env.S3_REGION;
+const accessKey = process.env.S3_ACCESS_KEY;
+const secretKey = process.env.S3_SECRET_ACCESS_KEY;
+aws.config.update({
+  secretAccessKey: secretKey,
+  accessKeyId: accessKey,
+  region: region
+});
+let s3 = new aws.S3({apiVersion: '2006-03-01'});
+
+
+function uploadS3(file, name) {
+  const filestream = fs.createReadStream(file.path);
+  const uploadParams = {
+    Bucket: bucket,
+    Body: filestream,
+    Key: name
+  };
+  return s3.upload(uploadParams).promise();
+}
+
+function dowloadS3(path) {
+  const downloadParams = {
+    Key: path,
+    Bucket: bucket
+  };
+
+  return s3.getObject(downloadParams).promise();
+}
+
 let storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/')
+    cb(null, 'public/uploads/')
   },
   filename: function (req, file, cb) {
     cb(null, file.originalname)
@@ -76,6 +109,8 @@ const pool = mysql.createPool({
   database: process.env.MYSQL_DB,
   port: process.env.DB_PORT
 });
+
+
 
 //sql queries---------------------------------------------------------------------------------------------------sql queries---------------------------------------------
 //stores a users info in db after sign up, returns true on success, false on fail
@@ -605,6 +640,7 @@ app.post('/ajaxpost', upload.none(), (req, res) => {
   
 });
 
+
 app.post('/usernamePost', upload.none(), (req, res) => {
   async function checkUsername() {
     let result = await checkDatabaseForUsername(JSON.parse(JSON.stringify(req.body)).username);    //true for succcess, false for fail
@@ -623,11 +659,11 @@ app.post('/postNewTrackList', upload.none(), (req, res) => {
   res.json(responseData);
 });
 
-app.post('/add_tracks', upload.single('file'), (req, res) => {
+app.post('/add_tracks', upload.single('file'), async (req, res) => {
         let track = req.body.nameData;
         const artist = req.body.artistData;                           //add sending a list of playlist names in the render
         const playlistArray = req.body.checkbox;
-        const pathToFile = req.file.path;
+        const pathToFile = req.file.path.substring(15);
         const extension = path.extname(req.file.originalname);
         const duration = req.body.duration;
         track = track + extension;
@@ -638,7 +674,10 @@ app.post('/add_tracks', upload.single('file'), (req, res) => {
           duration: duration,
           playlists: playlistArray
         };
+        console.log(obj);
         //might need to wrap this in async
+        let x = await uploadS3(req.file, pathToFile);
+        console.log(x);
         insertTrackIntoDbHelper(obj, req.session.user); //inserts track into database after submitting add_tracks 
         res.render('add_tracks', {data: {json: obj, playlistNames: playlistNames}});        
 });
@@ -693,6 +732,23 @@ app.post('/Signup', (req, res) => {
   }
   createHashandSalt();
 
+});
+
+app.post('/getSong', upload.none(), (req, res) => {
+  async function dothisthing() {
+    console.log(JSON.parse(JSON.stringify(req.body)).path);
+    let song = await dowloadS3(JSON.parse(JSON.stringify(req.body)).path);
+    fs.writeFile(process.cwd() + '/public/uploads/' + JSON.parse(JSON.stringify(req.body)).path, song.Body, (err) => {
+      if (err)
+        console.log(err);
+      else {
+        console.log("File written successfully\n");
+        console.log("The written has the following contents:");
+        res.json({"success": true});
+      }
+    });
+  }
+  dothisthing();
 });
 
 app.post('/postDeleteSong', upload.none(), (req, res) => {

@@ -201,7 +201,7 @@ body {
       height: 10px;
       cursor: ew-resize;
       background: white;
-      box-shadow: -80px 0 0 80px #F072A9;
+      box-shadow: -26vw 0 0 26vw #F072A9;
     }
 
 }
@@ -655,8 +655,7 @@ input[type="range"]::-ms-fill-upper {
   width: 19vw;
   height: 4vh;
   background-color: black;
-  border: none;
-  border-right: 2px solid #F072A9;
+  border: 2px solid #F072A9;
   padding: 0px;
   color: white;
   border-top: 1px solid #F072A9;
