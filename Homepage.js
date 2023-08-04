@@ -224,7 +224,7 @@ function getSidFromServer() {
     });
 }
 
-function sendDeleteSongRequest(songid, playlistName, playlistLength) {
+function sendDeleteSongRequest(songid, playlistName, playlistLength, path) {
     let ajax = new XMLHttpRequest();
     ajax.open("POST", "/postDeleteSong", true);
     ajax.contentType = 'application/json'
@@ -232,6 +232,7 @@ function sendDeleteSongRequest(songid, playlistName, playlistLength) {
     formData.append('songid', songid);
     formData.append('playlistIdentifier', playlistName);
     formData.append('playlistLength', playlistLength);
+    formData.append('path', path);
     ajax.send(formData);
 }
 
@@ -322,6 +323,7 @@ async function loadTrack(track_index, track) {
     track.src = 'public/uploads/' + track_list[track_index].path;
     track.load();
     let playAndRemove = () => {
+        console.log("playandremove triggered!");
         playTrack(track);
         track.removeEventListener("canplaythrough", playAndRemove);
 
@@ -811,10 +813,11 @@ for (let i = 0; i < edit_list_items.length; i++) {
     edit_list_items[i].appendChild(listSpan);
     const regex = new RegExp("^[0-9]*$");
 
-    deleteIcon.addEventListener("click", (event) => {                                                           //change
-        let result = confirm("Are you sure you want to delete " + datajson[viewPlaylistIndex].data[dataJsonIndexFinder(viewPlaylistIndex, Number(event.target.id.substring(12)))].name + " from " + datajson[viewPlaylistIndex].name + "? If it does not belong to any other playlist, it will be deleted from the database entirely.");
+    deleteIcon.addEventListener("click", (event) => {       
+        let obj = datajson[viewPlaylistIndex].data[dataJsonIndexFinder(viewPlaylistIndex, Number(event.target.id.substring(12)))];                                             //change
+        let result = confirm("Are you sure you want to delete " + obj.name + " from " + datajson[viewPlaylistIndex].name + "? If it does not belong to any other playlist, it will be deleted from the database entirely.");
         if (result) {
-            sendDeleteSongRequest(Number(event.target.id.substring(12)), datajson[viewPlaylistIndex].name, datajson[viewPlaylistIndex].data.length);
+            sendDeleteSongRequest(Number(event.target.id.substring(12)), datajson[viewPlaylistIndex].name, datajson[viewPlaylistIndex].data.length, obj.path);
             deleteSongFromPlaylist(Number(event.target.id.substring(12)), viewPlaylistIndex);
 
         }

@@ -93,7 +93,7 @@
 		if (inputElement.files.length) {
 			updateThumbnail(dropZoneElement, inputElement.files[0]);
 		}
-		
+		console.log("inchange");
 		computeLength(inputElement.files[0])
 			.then((result) => {
 				songLength.value = result.duration;					//-----duration of each track
@@ -112,6 +112,7 @@
 			"canplaythrough",
 			() => {
 				URL.revokeObjectURL(objectURL);
+				console.log(mySound.duration);
 				resolve({
 				file,
 				duration: mySound.duration
@@ -142,6 +143,13 @@
 		}
 
 		dropZoneElement.classList.remove("drop-zone--over");
+		computeLength(inputElement.files[0])
+			.then((result) => {
+				songLength.value = result.duration;					//-----duration of each track
+			})
+			.catch ((error) => {
+				console.log(error);
+			});
 
 	});
 });

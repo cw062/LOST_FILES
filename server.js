@@ -52,13 +52,22 @@ function dowloadS3(path) {
   return s3.getObject(downloadParams).promise();
 }
 
+function deleteS3(path) {
+  const deleteParams = {
+    Key: path,
+    Bucket: bucket
+  };
+  return s3.deleteObject(deleteParams).promise();
+
+}
+
 let storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  /*destination: function (req, file, cb) {
     cb(null, 'public/uploads/')
   },
   filename: function (req, file, cb) {
     cb(null, file.originalname)
-  }
+  }*/
 });
 const upload = multer({ storage: storage });
 app.set('view engine', 'ejs');
@@ -300,6 +309,26 @@ function getPlaylistSongList(pid, uid) {
     });
   });
 }
+
+function selectFromPlaylistData(sid) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [sid];
+      connection.query('SELECT * FROM Playlist_Data WHERE sid = ?', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
 //gets all of the playlist names for the active user
 function getPlaylistListFromDb(uid) {
   return new Promise( resolve => {
@@ -412,6 +441,28 @@ function deleteSongfromPlaylistData(activeUid, songid, pid) {
       let values = [pid, activeUid, songid];
       console.log(values);
       connection.query('DELETE FROM Playlist_Data WHERE (pid, uid, sid) = (?);', [values], function (err, result) {
+        if(err) {
+          console.log(err);
+        } else {
+          console.log(result);
+          resolve(result);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+
+function deleteSongFromTracks(track_id) {
+  return new Promise( resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let values = [track_id];
+      console.log(values);
+      connection.query('DELETE FROM Tracks WHERE track_id = ?;', [values], function (err, result) {
         if(err) {
           console.log(err);
         } else {
@@ -555,14 +606,19 @@ function reorderTrackListHelper(activeUid, idArray, indexArray, playlistName) {
   doSomething();
 }
 
-function deleteSongHelper(activeUid, songid, playlistName, playlistLength) {
+function deleteSongHelper(activeUid, songid, playlistName, playlistLength, path) {
   async function doStuff() {
     let pid = await findPlaylistInDb(playlistName, activeUid);
     let rowData = await findSongInPlaylistData(activeUid, songid, pid);
     let song_index = rowData[0].song_index;
     await deleteSongfromPlaylistData(activeUid, songid, pid);
-    console.log(song_index);
-    console.log(playlistLength);
+    let songExist = await selectFromPlaylistData(songid);
+    if (songExist == 0) {
+      //delete from tracks
+      deleteSongFromTracks(songid);
+      deleteS3(path);
+
+    }
     for (let i = song_index + 1; i < playlistLength; i++) {
       console.log("here");
       await updateSongIndex(activeUid, pid, i);
@@ -663,18 +719,17 @@ app.post('/add_tracks', upload.single('file'), async (req, res) => {
         let track = req.body.nameData;
         const artist = req.body.artistData;                           //add sending a list of playlist names in the render
         const playlistArray = req.body.checkbox;
-        const pathToFile = req.file.path.substring(15);
         const extension = path.extname(req.file.originalname);
+        const pathToFile = req.session.user +'/'+ track + Date.now() + extension;
         const duration = req.body.duration;
-        track = track + extension;
         const obj = {
           name: track,
-          artist: artist,
+          artist: artist,                                   
           path: pathToFile,
           duration: duration,
           playlists: playlistArray
         };
-        console.log(obj);
+        console.log(pathToFile);
         //might need to wrap this in async
         let x = await uploadS3(req.file, pathToFile);
         console.log(x);
@@ -752,7 +807,7 @@ app.post('/getSong', upload.none(), (req, res) => {
 });
 
 app.post('/postDeleteSong', upload.none(), (req, res) => {
-  deleteSongHelper(req.session.user, JSON.parse(JSON.stringify(req.body)).songid, JSON.parse(JSON.stringify(req.body)).playlistIdentifier, JSON.parse(JSON.stringify(req.body)).playlistLength);
+  deleteSongHelper(req.session.user, JSON.parse(JSON.stringify(req.body)).songid, JSON.parse(JSON.stringify(req.body)).playlistIdentifier, JSON.parse(JSON.stringify(req.body)).playlistLength, JSON.parse(JSON.stringify(req.body)).path);
   const responseData = { message: 'Request received successfully!' };
   res.json(responseData);
 });
