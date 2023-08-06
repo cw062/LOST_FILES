@@ -33,11 +33,13 @@
 	let playlist_names = <%- JSON.stringify(data.playlistNames) %>;
 	let dataForHomepage = <%- JSON.stringify(data.json) %>;
 	let songLength = document.getElementById("duration");
-	
+	console.log(99);
 
 	window.addEventListener('DOMContentLoaded', (event) => {
+		console.log("we are here");	
+
 		window.parent.postMessage(dataForHomepage, "*");
-		createCheckboxes();		
+		createCheckboxes();	
 	});
 
 	window.addEventListener("message", ({data, source}) => {
@@ -60,6 +62,7 @@
 	});*/
 
 	function createCheckboxes() {
+		console.log("create");
 		playlist_names.forEach((element, index) => {
 			const label = document.createElement('label');
 			label.classList = "container"
@@ -84,7 +87,7 @@
 
     document.querySelectorAll(".drop-zone__input").forEach((inputElement) => {
 	const dropZoneElement = inputElement.closest(".drop-zone");
-
+		console.log("thisran");
 	dropZoneElement.addEventListener("click", (e) => {
 		inputElement.click();
 	});
@@ -104,6 +107,21 @@
 		
 	});
 
+	inputElement.addEventListener("input", (e) => {
+		if (inputElement.files.length) {
+			updateThumbnail(dropZoneElement, inputElement.files[0]);
+		}
+		console.log("in input");
+		computeLength(inputElement.files[0])
+			.then((result) => {
+				songLength.value = result.duration;					//-----duration of each track
+			})
+			.catch ((error) => {
+				console.log(error);
+			});
+		
+	});
+
 	function computeLength(file) {
 		return new Promise((resolve) => {
 			var objectURL = URL.createObjectURL(file);
@@ -112,7 +130,7 @@
 			"canplaythrough",
 			() => {
 				URL.revokeObjectURL(objectURL);
-				console.log(mySound.duration);
+				console.log(mySound.duration + "duration");
 				resolve({
 				file,
 				duration: mySound.duration
@@ -136,7 +154,7 @@
 
 	dropZoneElement.addEventListener("drop", (e) => {
 		e.preventDefault();
-
+		console.log("in drop zone over");
 		if (e.dataTransfer.files.length) {
 			inputElement.files = e.dataTransfer.files;
 			updateThumbnail(dropZoneElement, e.dataTransfer.files[0]);
@@ -161,6 +179,14 @@
  * @param {File} file
  */
 function updateThumbnail(dropZoneElement, file) {
+	console.log("in update thumb");
+	computeLength(inputElement.files[0])
+			.then((result) => {
+				songLength.value = result.duration;					//-----duration of each track
+			})
+			.catch ((error) => {
+				console.log(error);
+			});
 	let thumbnailElement = dropZoneElement.querySelector(".drop-zone__thumb");
 
 	// First time - remove the prompt

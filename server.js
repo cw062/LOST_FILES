@@ -18,46 +18,40 @@ const MySQLStore = require('express-mysql-session')(session);
 const { timeLog } = require('console');
 const { connection } = require('mongoose');
 const crypto = require('crypto');
-const aws = require('aws-sdk');
+const { S3Client, GetObjectCommand, PutObjectCommand, ListObjectsCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const app = express();
-
+const s3Client = new S3Client({ region: process.env.S3_REGION });
 const bucket = process.env.S3_BUCKET_NAME;
-const region = process.env.S3_REGION;
-const accessKey = process.env.S3_ACCESS_KEY;
-const secretKey = process.env.S3_SECRET_ACCESS_KEY;
-aws.config.update({
-  secretAccessKey: secretKey,
-  accessKeyId: accessKey,
-  region: region
-});
-let s3 = new aws.S3({apiVersion: '2006-03-01'});
 
-
-function uploadS3(file, name) {
+async function uploadS3(file, name) {
   const filestream = fs.createReadStream(file.path);
   const uploadParams = {
     Bucket: bucket,
     Body: filestream,
     Key: name
   };
-  return s3.upload(uploadParams).promise();
+  const command = new PutObjectCommand(uploadParams);
+  return await s3Client.send(command);
 }
 
-function dowloadS3(path) {
+async function dowloadS3(path) {
   const downloadParams = {
     Key: path,
     Bucket: bucket
   };
 
-  return s3.getObject(downloadParams).promise();
+  const command = new GetObjectCommand(downloadParams);
+  return await s3Client.send(command);
 }
 
-function deleteS3(path) {
+async function deleteS3(path) {
   const deleteParams = {
     Key: path,
     Bucket: bucket
   };
-  return s3.deleteObject(deleteParams).promise();
+
+  const command = new DeleteObjectCommand(deleteParams);
+  return await s3Client.send(command);
 
 }
 
@@ -72,7 +66,7 @@ let storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 app.set('view engine', 'ejs');
 const public = path.join(__dirname, 'public');
-const port = 5000;
+const port = process.env.APP_PORT;
 let playlistNames = [];
 let playlistData = [];
 let obj = {};
@@ -88,10 +82,10 @@ const IN_PROD = process.env.NODE_ENV === 'production';
 const TWO_HOURS = 1000 * 60 * 60 * 2;
 const options = {
   connectionLimit: 10,
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+  host: process.env.RDS_HOSTNAME,
+  port: process.env.RDS_PORT,
+  user: process.env.RDS_USERNAME,
+  password: process.env.RDS_PASSWORD,
   database: process.env.MYSQL_DB,
   createDatabaseTable: true
 };
@@ -112,11 +106,11 @@ app.use(
 );
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+  host: process.env.RDS_HOSTNAME,
+  user: process.env.RDS_USERNAME,
+  password: process.env.RDS_PASSWORD,
   database: process.env.MYSQL_DB,
-  port: process.env.DB_PORT
+  port: process.env.RDS_PORT
 });
 
 
@@ -633,8 +627,26 @@ function deletePlaylistHelper(activeUid, name) {
     console.log(name);
     let pid = await findPlaylistInDb(name, activeUid);
     console.log(pid);
+    let rows = await getPlaylistSongList(pid, activeUid);
+    console.log(rows);
+    console.log("aboveisrows");
     await deletePlaylistFromPlaylistData(pid, activeUid);
     await deletePlaylistFromPlaylist(pid, activeUid);
+    for (let i = 0; i < rows.length; i++) {
+        console.log(rows[i].sid + " element.sid");
+        let songExist = await selectFromPlaylistData(rows[i].sid);
+        console.log(songExist);
+        console.log("aboveis songexist");
+        if (songExist == 0) {
+          //delete from tracks        
+          console.log("indph");
+          let row = await selectFromTracks(rows[i].sid);
+          console.log(row);
+          console.log("above is row");
+          deleteSongFromTracks(rows[i].sid);
+          deleteS3(row[0].path);
+        }
+    }
   }
   dplh();
 }
@@ -670,7 +682,7 @@ app.get('/Login', (req, res) => {
 });
 
 app.get('/Signup', (req, res) => {
-  res.render('Signup', {root: __dirname});
+  res.render('SignUp', {root: __dirname});
 });
 
 
@@ -780,6 +792,13 @@ app.post('/Signup', (req, res) => {
       let dbrow = await checkDatabaseForUsername(req.body.username);
       req.session.user = dbrow[0].uid;
       loggedInUsers.push(req.session.user);
+      fs.mkdir(process.cwd() + '/public/uploads/' + req.session.user, (error) => {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log("New Directory created successfully !!");
+        }
+      });
       res.redirect('/');
     } else {
       res.render('Signup', {root: __dirname});
@@ -793,7 +812,8 @@ app.post('/getSong', upload.none(), (req, res) => {
   async function dothisthing() {
     console.log(JSON.parse(JSON.stringify(req.body)).path);
     let song = await dowloadS3(JSON.parse(JSON.stringify(req.body)).path);
-    fs.writeFile(process.cwd() + '/public/uploads/' + JSON.parse(JSON.stringify(req.body)).path, song.Body, (err) => {
+    const fileBuffer = await new Response(song.Body).arrayBuffer();
+    fs.writeFile(process.cwd() + '/public/uploads/' + JSON.parse(JSON.stringify(req.body)).path, new Uint8Array(fileBuffer), (err) => {
       if (err)
         console.log(err);
       else {

@@ -5,16 +5,35 @@
     background-color: black;
 }
 
-.main-container {
+@media only screen 
+and (min-device-width: 500px) { 
+  .main-container {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: 34vw;
+      height: 70vh;
+      display: flex;
+      flex-direction: column;
+      font-size: 1rem;
+  }
+}
+
+@media only screen
+and (min-device-width: 300px)
+and (max-device-width: 500px) {
+  .main-container {
     position: absolute;
     inset: 0;
     margin: auto;
-    width: 34vw;
+    margin-top: 50%;
+    width: 90vw;
     height: 70vh;
     display: flex;
     flex-direction: column;
+    font-size: 2.5rem;
 }
-
+}
 .login-title {
     position: relative;
     align-items: center;
@@ -101,7 +120,7 @@
     color: rgb(255, 106, 106);
     text-transform: uppercase;
     font-family: helvetica;
-    font-size: 12px;
+    font-size: 1em;
     letter-spacing: 3px;
     transition:         all .4s cubic-bezier(0.645, 0.045, 0.355, 1);
     cursor: pointer;
@@ -213,4 +232,12 @@
 }
 
 .error-message {
+}
+
+.username {
+  font-size: 1em;
+}
+
+.pass {
+  font-size: 1em;
 }

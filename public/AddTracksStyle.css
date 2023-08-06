@@ -58,6 +58,8 @@
   outline: none;
   border-radius: 10px;
   font-family: "Quicksand", sans-serif;
+  -webkit-appearance: none;
+  opacity: 1;
 }
 
 .submit-button:hover {
@@ -245,6 +247,11 @@
   .checkboxes-container::-webkit-scrollbar {
     display: none;
   }
+
+  .input-field {
+    font-size: 1em;
+  }
+
 
   .input-field:focus {
 
