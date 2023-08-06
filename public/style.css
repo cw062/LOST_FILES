@@ -3,7 +3,6 @@ body {
     /* Smoothly transition the background color */
     transition: background-color .5s;
     height: 200vh;
-    /*overflow-y: hidden; */
     background-image: linear-gradient(#F072A9, black);
     overflow-x:hidden;
 
@@ -13,22 +12,22 @@ body {
     position: absolute;
     top: 0vh;
     left: 0vw;
-    width: 100vw;
+    width: 100%;
   }
 
   html {
-    scroll-snap-type: y mandatory;
+    /*scroll-snap-type: y mandatory;*/
     scroll-behavior: smooth;
 
   }
   .top-div {
     position: absolute;
-    left: 20.3vw;
+    left: 20%;
     top: 0px;
-    width: 89vw;
-    height: 100vh;
-    scroll-snap-stop: always;
-    scroll-snap-align: start;
+    width: 89%;
+    height: 100%;
+    /*scroll-snap-stop: always;
+    scroll-snap-align: start;*/
 
   }
 
@@ -38,8 +37,8 @@ body {
     width: 89vw;
     top: 100vh;
     height: 100vh;
-    scroll-snap-stop: always;
-    scroll-snap-align: start;
+    /*scroll-snap-stop: always;
+    scroll-snap-align: start;*/
 
   }
 
@@ -764,6 +763,8 @@ input[type="range"]::-ms-fill-upper {
   align-items: center;
   min-width: 60px;
   min-height: 20px;
+  -webkit-appearance: none;
+  opacity: 1;
 }
 
 .signout-text {
@@ -777,6 +778,8 @@ input[type="range"]::-ms-fill-upper {
   background-color: black;
   border: none;
   cursor: pointer;
+  -webkit-appearance: none;
+  opacity: 1;
 
 }
 
