@@ -9,7 +9,7 @@ let loggedInUsers = [];
 //Define dependencies
 const express = require('express');
 const path = require('path');
-const multer = require('multer');
+const fileupload = require('express-fileupload');
 const cors = require('cors');
 const fs = require('fs');
 const mysql = require('mysql');
@@ -24,10 +24,10 @@ const s3Client = new S3Client({ region: process.env.S3_REGION });
 const bucket = process.env.S3_BUCKET_NAME;
 
 async function uploadS3(file, name) {
-  const filestream = fs.createReadStream(file.path);
+  //const filestream = fs.createReadStream(file);
   const uploadParams = {
     Bucket: bucket,
-    Body: filestream,
+    Body: file,
     Key: name
   };
   const command = new PutObjectCommand(uploadParams);
@@ -55,15 +55,8 @@ async function deleteS3(path) {
 
 }
 
-let storage = multer.diskStorage({
-  /*destination: function (req, file, cb) {
-    cb(null, 'public/uploads/')
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname)
-  }*/
-});
-const upload = multer({ storage: storage });
+
+
 app.set('view engine', 'ejs');
 const public = path.join(__dirname, 'public');
 const port = process.env.APP_PORT;
@@ -78,6 +71,7 @@ app.use(express.static(path.join(__dirname)));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
+app.use(fileupload());
 const IN_PROD = process.env.NODE_ENV === 'production';
 const TWO_HOURS = 1000 * 60 * 60 * 2;
 const options = {
@@ -499,7 +493,6 @@ function deletePlaylistFromPlaylist(pid, uid) {
         return;
       }
       let values = [pid, uid];
-      console.log(values);
       connection.query('DELETE FROM Playlist WHERE (pid, uid) = (?);', [values], function (err, result) {
         if(err) {
           console.log(err);
@@ -514,27 +507,32 @@ function deletePlaylistFromPlaylist(pid, uid) {
 }
 
 //sql helpers----------------------------------------------------------------------------------------------------sql helpers--------------------------------------------------
-function insertTrackIntoDbHelper(dataobj, activeUid) {
-  let song_index = 0;
+async function insertTrackIntoDbHelper(dataobj, activeUid) {
   let sid = -1;
-  async function insertTrackOnce() {
     sid = await insertTrackData(dataobj.name, dataobj.artist, dataobj.path, dataobj.duration, activeUid); //insert metadata, need to return SELECT LAST_INSERT_ID()
     songid.id = sid;
-  }
-  insertTrackOnce();
-
-  dataobj.playlists.forEach(element => {
-    async function doWork() {
-      let pid = await findPlaylistInDb(element, activeUid); //returns pid
+  if(Array.isArray(dataobj.playlists)) {
+    dataobj.playlists.forEach(element => {
+      console.log(element);
+      async function doWork() {
+        let pid = await findPlaylistInDb(element, activeUid); //returns pid
+        let findIndexResult = await findIndex(pid, activeUid);  //returns row with highest song_index RowDataPacket { pid: 18,sid: 1, uid: 28, song_index: 1, ts: 0,te: 0 }
+        let song_index = 0;
+        if (findIndexResult != 0) {
+          console.log(findIndexResult[0].song_index);
+          song_index = Number(findIndexResult[0].song_index) + 1;
+        }
+        await insertIntoPlaylistDataDb(pid, sid, activeUid, song_index, 0, dataobj.duration);
+      }
+      doWork();
+    });
+  } else {
+      let pid = await findPlaylistInDb(dataobj.playlists, activeUid); //returns pid
       let findIndexResult = await findIndex(pid, activeUid);  //returns row with highest song_index RowDataPacket { pid: 18,sid: 1, uid: 28, song_index: 1, ts: 0,te: 0 }
-      console.log(findIndexResult);
       if (findIndexResult != 0)
         song_index = Number(findIndexResult[0].song_index) + 1;
-      console.log(element + " , pid: "+pid+" index: "+song_index);
-      let result = await insertIntoPlaylistDataDb(pid, sid, activeUid, song_index, 0, dataobj.duration);
-    }
-    doWork();
-  });
+      await insertIntoPlaylistDataDb(pid, sid, activeUid, song_index, 0, dataobj.duration);
+  }
 }
 
 function getDataFromDbHelper(uid) {
@@ -691,7 +689,7 @@ app.get('/add_tracks', (req, res) => {
     res.render('add_tracks', {data: {json: obj, playlistNames: playlistNames}});      
 });
 
-app.post('/ajaxpost', upload.none(), (req, res) => {
+app.post('/ajaxpost', (req, res) => {
   if (JSON.parse(JSON.stringify(req.body)).new_playlist_name != undefined) {
     playlistNames.push(JSON.parse(JSON.stringify(req.body)).new_playlist_name);
     async function insertPlaylist() {
@@ -709,7 +707,7 @@ app.post('/ajaxpost', upload.none(), (req, res) => {
 });
 
 
-app.post('/usernamePost', upload.none(), (req, res) => {
+app.post('/usernamePost', (req, res) => {
   async function checkUsername() {
     let result = await checkDatabaseForUsername(JSON.parse(JSON.stringify(req.body)).username);    //true for succcess, false for fail
     if (result == 0)
@@ -720,33 +718,30 @@ app.post('/usernamePost', upload.none(), (req, res) => {
   checkUsername();
 });
 
-app.post('/postNewTrackList', upload.none(), (req, res) => {
+app.post('/postNewTrackList', (req, res) => {
   console.log(JSON.parse(JSON.stringify(req.body)).id + "this");
   reorderTrackListHelper(req.session.user, JSON.parse(JSON.stringify(req.body)).id, JSON.parse(JSON.stringify(req.body)).index, JSON.parse(JSON.stringify(req.body)).playlistIdentifier);   
   const responseData = { message: 'Request received successfully!' };
   res.json(responseData);
 });
 
-app.post('/add_tracks', upload.single('file'), async (req, res) => {
-        let track = req.body.nameData;
-        const artist = req.body.artistData;                           //add sending a list of playlist names in the render
-        const playlistArray = req.body.checkbox;
-        const extension = path.extname(req.file.originalname);
-        const pathToFile = req.session.user +'/'+ track + Date.now() + extension;
-        const duration = req.body.duration;
+app.post('/add_tracks', async (req, res) => {
+        let data = JSON.parse(JSON.stringify(req.body));
+        console.log(path.extname(req.files.file.name));
         const obj = {
-          name: track,
-          artist: artist,                                   
-          path: pathToFile,
-          duration: duration,
-          playlists: playlistArray
+          name: data.nameData,
+          artist: data.artistData,                                   
+          path: req.session.user + "/" + data.nameData + data.artistData + Date.now() + path.extname(req.files.file.name),
+          duration: Math.floor(data.duration),
+          playlists: data['checkbox[]']
         };
-        console.log(pathToFile);
+        console.log(obj.path);
         //might need to wrap this in async
-        let x = await uploadS3(req.file, pathToFile);
+        let x = await uploadS3(req.files.file.data, obj.path);
         console.log(x);
-        insertTrackIntoDbHelper(obj, req.session.user); //inserts track into database after submitting add_tracks 
-        res.render('add_tracks', {data: {json: obj, playlistNames: playlistNames}});        
+        await insertTrackIntoDbHelper(obj, req.session.user); //inserts track into database after submitting add_tracks 
+      
+        res.json({pathFromServer: obj.path});        
 });
 
 app.post('/Login', (req, res) => {
@@ -808,7 +803,7 @@ app.post('/Signup', (req, res) => {
 
 });
 
-app.post('/getSong', upload.none(), (req, res) => {
+app.post('/getSong', (req, res) => {
   async function dothisthing() {
     console.log(JSON.parse(JSON.stringify(req.body)).path);
     let song = await dowloadS3(JSON.parse(JSON.stringify(req.body)).path);
@@ -826,20 +821,20 @@ app.post('/getSong', upload.none(), (req, res) => {
   dothisthing();
 });
 
-app.post('/postDeleteSong', upload.none(), (req, res) => {
+app.post('/postDeleteSong', (req, res) => {
   deleteSongHelper(req.session.user, JSON.parse(JSON.stringify(req.body)).songid, JSON.parse(JSON.stringify(req.body)).playlistIdentifier, JSON.parse(JSON.stringify(req.body)).playlistLength, JSON.parse(JSON.stringify(req.body)).path);
   const responseData = { message: 'Request received successfully!' };
   res.json(responseData);
 });
 
-app.post('/postDeletePlaylist', upload.none(), (req, res) => {
+app.post('/postDeletePlaylist', (req, res) => {
   deletePlaylistHelper(req.session.user, JSON.parse(JSON.stringify(req.body)).name);
   console.log(req.session.user +"user");
   const responseData = { message: 'Request received successfully!' };
   res.json(responseData);
 });
 
-app.post('/logoutRequest', upload.none(), (req, res) => {
+app.post('/logoutRequest', (req, res) => {
   loggedInUsers.splice(loggedInUsers.indexOf(req.session.user), 1);
   req.session.user = null;
   req.session.save(function (err) {

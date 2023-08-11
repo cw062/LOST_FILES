@@ -7,17 +7,17 @@
 <link rel="stylesheet" type="text/css" href="/style.css">
 </head>
 <body>
-  <div class="main-container">
+  <section class="top-grid-left">
     <div class="library-header-container">
-        <div class="playlist-title">Playlists</div>
+      <div class="playlist-title">Playlists</div>
         <button class="plus-button">
           <div class="button-vertical-line"></div>
           <div class="button-horizontal-line"></div>
         </button>
-        <form id="new-playlist-form">
-          <input type="text" class="new-playlist" name="new_playlist_name" placeholder="New Playlist">
-        </form>
       </div>
+      <form id="new-playlist-form" class="new-playlist-form">
+        <input type="text" class="new-playlist" name="new_playlist_name" placeholder="New Playlist">
+      </form>
     <div class="playlist-list-container">
       <ul class="playlist-list">
         <% data.json.forEach(function callback(element, index) { %>
@@ -26,7 +26,57 @@
 
       </ul>
     </div>
+    <form action="/logoutRequest" method="POST" id="logoutForm" name="logoutForm" class="logout-form"></form>
+      <div class="signout-container">
+        <input class="signout-text" type="submit" name="sigout-text" value="Log Out" form="logoutForm">
+      </div>
+  </section>
+  <section class="top-grid-right">
+    <div class="edit-playlist-title-container">
+      <i class="fas fa-minus-circle" id="delete-playlist-circle" onclick="deletePlaylist()"></i>
+      <span class="settings-title"></span>
+      <div class="navigation-container">
+        <button class="top-button">Edit</button>
+        <button class="bottom-button">Add</button>
+      </div>
+    </div>
+
+    <div class="playlist-songs-container">    
+      <ol class="list" id ="list"></ol>
+    </div>
+
+    <div class="edit-playlist-songs-container">    
+      <ol class="edit-list" id ="edit-list"></ol>
+    </div>
+    <form id="settings_form" class="settings-form"></form>
     
+    <div class="popup">
+      <form id= "add_tracks_form" enctype="multipart/form-data" style.display="none"></form>
+      <span class="upload-track-title">Upload Track</span>
+      <span class="enter-info-title">Enter Track Info</span>
+      <div class="text-input-container">
+        <label for="field1" class="label1"><span class="track-span">Track Name</span><input type="text" class="track-input-field" name="nameData" form="add_tracks_form" value="" /></label>
+      </div>
+      <div class="text-input-container2">
+        <label for="field2" class="label2"><span class="artist-span">Artist Name</span><input type="text" class="artist-input-field" name="artistData" form="add_tracks_form" value="" /></label>
+      </div>
+      <input type="hidden" id="duration" value="0" form="add_tracks_form" name="duration"/>
+      <span class="select-playlists-title">Select Playlists To Add To</span>
+      <div class="checkboxes-main-container">
+        <div class="checkboxes-container">         
+        </div> 
+      </div>
+      <div class="drop-zone">
+        <span class="drop-zone__prompt">Drop file here or click to choose</span>
+        <input type="file" name="file" id="file" accept=".wav, .mp3" class="drop-zone__input" form="add_tracks_form">
+      </div>
+      <div class="submit-button-container">
+        <button class="submit-button"  value="Submit" name="submit">Click To Upload Track</button>
+    </div>
+      
+         
+  </div>
+
     <div class="slider_container">
       <div class="prev-track" onclick="prevTrack(true)">
         <i class="fa fa-step-backward fa-2x"></i>
@@ -46,40 +96,9 @@
         <div class="track-name"></div>
         <div class="track-artist"></div>
         </div>
-
     </div>
-
-    <section class="top-div">
-      <form action="/logoutRequest" method="POST" id="logoutForm" name="logoutForm">
-        <div class="signout-container">
-          <input class="signout-text" type="submit" name="sigout-text" value="Log Out">
-        </div>
-      </form>
-      <div class="playlist-songs-container">    
-        <ol class="list" id ="list"></ol>
-      </div>
-  
-    </section> 
-    <section class="bottom-div">
-      <div class="edit-playlist-title-container">
-        <i class="fas fa-minus-circle" onclick="deletePlaylist()"></i>
-        <span class="settings-title"></span>
-        <button class="question-button">
-          <i class="far fa-question-circle fa-lg"></i>
-        </button>
-      </div>
-      <div class="info">
-        <span>Change playlist order by dragging and dropping tracks. Numbers on the left specify the start and end times of each track</span>
-      </div>
-      <div class="popup">
-        <iframe class="popup-iframe" src="/add_tracks" title="ADDTRACKS" id="add_tracks_iframe"></iframe> 
-      </div>
-      <div class="edit-playlist-songs-container">    
-        <ol class="edit-list" id ="edit-list"></ol>
-      </div>
-      <form id="settings_form"></form>
-    </section>
-  </div>
+      
+  </section>
     <script src="Homepage.js"></script>
   </body>
 

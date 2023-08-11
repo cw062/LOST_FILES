@@ -26,7 +26,6 @@ let settings_container = document.querySelector(".playlist-songs-settings-contai
 let settings_list = document.querySelector(".song-settings-list");
 let settings_title = document.querySelector(".settings-title");
 let settings_form = document.querySelector(".settings_form");
-let add_tracks_iframe = document.querySelector(".popup-iframe");
 let top_div = document.querySelector(".top-div");
 let edit_list = document.querySelector(".edit-list");
 let edit_list_items = document.querySelectorAll(".edit-songs-item");
@@ -34,11 +33,19 @@ let edit_container = document.querySelector(".edit-playlist-songs-container");
 let slider_container = document.querySelector(".slider_container");
 let add_playlist = document.querySelector(".plus-button");
 let playlist_list_container = document.querySelector(".playlist-list-container");
-let new_playlist = document.querySelector(".new-playlist");
+let new_playlist = document.querySelector(".new-playlist-form");
 let bvl = document.querySelector(".button-vertical-line");
 let bhl = document.querySelector(".button-horizontal-line");
 let question_button = document.querySelector(".question-button");
-let info = document.querySelector(".info");
+let checkboxes_container = document.querySelector(".checkboxes-container");
+let songLength = document.getElementById("duration");
+let submit_buttom = document.querySelector(".submit-button");
+let artist_data = document.querySelector(".artist-input-field");
+let trackName_data = document.querySelector(".track-input-field");
+let top_button = document.querySelector(".top-button");
+let bottom_button = document.querySelector(".bottom-button");
+let dropZoneElement = document.querySelector(".drop-zone");
+let inputElement = document.querySelector(".drop-zone__input");
 let playlistDisplaying = false;
 let track_index = 0;
 let isPlaying = false;    //keeps track of if any audio is playing 
@@ -54,6 +61,10 @@ let viewPlaylistIndex = 0;
 let add_button_clicked = false;
 let assignFadingTrack = true;
 let preLoadFlag = true;
+let dur = 0;
+let currentView = 'Play';
+let canUpload = true;
+
 
 let playlistIdentifier = document.createElement('input');
 playlistIdentifier.type = "hidden";
@@ -62,7 +73,7 @@ playlistIdentifier.name = "playlistIdentifier";
 document.getElementById("settings_form").appendChild(playlistIdentifier);
 let curr_track = document.createElement('audio');
 let other_track = document.createElement('audio');    
-slider_container.style.top = (82 + window.scrollY / window.innerHeight * 27) + 'vh';
+//slider_container.style.top = (82 + window.scrollY / window.innerHeight * 27) + 'vh';
 let playlistPlayingIndex = 0;
 
 
@@ -70,40 +81,59 @@ let playlistPlayingIndex = 0;
 //event listeners----------------------------------------------------------------------------------------------------------------------event listeners
 window.addEventListener("DOMContentLoaded", function () {
     assignDJ();
-    if(datajson.length > 0) {
+    console.log(datajson);
+   /* if(datajson.length > 0) {
+        console.log("in here");
         track_list = datajson[currentPlaylist].data; 
         track_name.textContent = track_list[track_index].name;
         track_artist.textContent = track_list[track_index].artist;
         now_playing.textContent = datajson[currentPlaylist].name;
-    }
+        createCheckboxes();
+    }*/
 
 });
 
-window.addEventListener("scroll", function () {
+/*window.addEventListener("scroll", function () {
     slider_container.style.top = (82 + window.scrollY / window.innerHeight * 18) + 'vh';
-});
+});*/
 
 document.querySelector(".signout-container").addEventListener("click", () => {
     //sendLogOutRequest();
 });
 
 
+top_button.addEventListener("click", () => {
+    let temp = top_button.textContent;
+    changeView(temp, currentView);
+    top_button.textContent = currentView;
+    currentView = temp;
+});
+bottom_button.addEventListener("click", () => {
+    let temp = bottom_button.textContent;
+    changeView(temp, currentView);
+    bottom_button.textContent = currentView;
+    currentView = temp;
+});
+
 add_playlist.addEventListener("click", function () {
     if (!add_button_clicked) {
-        playlist_list_container.style.top = '12.2vh';
         add_playlist.style.transform = 'rotate(45deg)';
         new_playlist.focus();
         add_button_clicked = true
         bvl.style.backgroundColor = '#ff9494';
         bhl.style.backgroundColor = '#ff9494';
-        new_playlist.style.visibility = 'visible';
+        document.querySelector(".top-grid-left").style.gridTemplateRows = '1fr 0.5fr 5.5fr 1fr';
+        new_playlist.style.display = 'flex';
+        playlist_list_container.style.gridRowStart = "3";
         
     } else {
         add_button_clicked = false;
-        playlist_list_container.style.top = '8vh';
         add_playlist.style.transform = 'rotate(90deg)';
         bvl.style.backgroundColor = 'white';
         bhl.style.backgroundColor = 'white';
+        document.querySelector(".top-grid-left").style.gridTemplateRows = '1fr 6fr 1fr';
+        new_playlist.style.display = 'none';
+        playlist_list_container.style.gridRowStart = "2";
     }
 });
 
@@ -133,24 +163,28 @@ document.getElementById("new-playlist-form").addEventListener('submit', function
     li.onclick = function () { handleListClick(x); };
     li.textContent = form_data.get("new_playlist_name");
     playlist_list.appendChild(li);
-    document.getElementById('add_tracks_iframe').src = document.getElementById('add_tracks_iframe').src;
+    createCheckboxes();
 });
 
-add_tracks_iframe.addEventListener("load", () => {
-    iWindow = add_tracks_iframe.contentWindow;
-});
+let submitPlayAndRemove = async () => {
+    let y = document.querySelectorAll(".checkboxes:checked")
+    let checkedArray = [];
+    y.forEach(element => {
+        checkedArray.push(element.value);
+    });
+    if (inputElement.value != "" && checkedArray != 0 && artist_data.value != "" && trackName_data != "") {
+        canUpload = false;
+        submit_buttom.removeEventListener("click", submitPlayAndRemove);
+        await addTracksData();
+        submit_buttom.addEventListener("click", submitPlayAndRemove);
+        canUpload = true;
+    }
+}
+submit_buttom.addEventListener("click", submitPlayAndRemove);
 
-
-
-question_button.addEventListener('mouseover', function() {
-    info.style.visibility ='visible';
-    info.style.opacity = 1;
-    
-});
-
-question_button.addEventListener('mouseleave', function() {
-    info.style.opacity = 0;
-    info.style.visibility = 'hidden';
+dropZoneElement.addEventListener("click", (e) => {
+    if (canUpload)
+        inputElement.click();
 });
 
 edit_list.addEventListener("drop", (event) => {
@@ -161,46 +195,70 @@ edit_list.addEventListener("drop", (event) => {
     sendNewPlaylistOrder(datajson[viewPlaylistIndex].data);
 
     recolorPlaylist();
-    reloadTrack();
     //displaySettings();
     
     
 });
 
 
-window.addEventListener("message", (event) => {
-    if (Object.values(event.data).length != 0) {
-        const dataObj = event.data;                                      // !!!!!!!!!! THIS IS THE DATA THAT WAS SUBMITTED >> event.data
-        async function getsid() {
-        let songid = await getSidFromServer();
-        dataObj.playlists.forEach(element => {
-            console.log(songid);
-            let tempIndex = datajson.findIndex(o => o.name == element);
-            const reformattedDataObj = {                                   //reformats data from add_tracks to add to page and data structure
-            id: songid,
-            index: datajson[tempIndex].data.length,                      //NEEEDS TO BE CHANGED IM PRETTY SURE
-            name: dataObj.name,
-            artist: dataObj.artist,
-            image: "yeee.png",
-            path: dataObj.path,
-            ts: 0,
-            te: Math.floor(dataObj.duration)
-            };
-            
-            datajson[tempIndex].data.push(reformattedDataObj);
-            if (tempIndex == viewPlaylistIndex) {
-            displaySongs(tempIndex);
-            changeListTextColor(tempIndex);
-            addDrag();
-            createSettingsFields(tempIndex);
-            }
-        });
+async function addTracksData() {
+    let y = document.querySelectorAll(".checkboxes:checked")
+    let checkedArray = [];
+    y.forEach(element => {
+        checkedArray.push(element.value);
+    });
+    console.log(checkedArray);
+    console.log(artist_data.value);
+    console.log(trackName_data.value); 
+    console.log(document.getElementById("file").files[0]);
+    console.log(dur);
+    let form_data = new FormData(document.getElementById("add_tracks_form"));
+    let newPath = await sendTrackData(form_data);
+    console.log(newPath.pathFromServer);
+   let songid = await getSidFromServer();
+   
+    checkedArray.forEach(element => {
+        let tempIndex = datajson.findIndex(o => o.name == element);
+        const reformattedDataObj = {                                   //reformats data from add_tracks to add to page and data structure
+        id: songid,
+        index: datajson[tempIndex].data.length,                      //NEEEDS TO BE CHANGED IM PRETTY SURE
+        name: trackName_data.value,
+        artist: artist_data.value,
+        image: "yeee.png",
+        path: newPath.pathFromServer,
+        ts: 0,
+        te: Math.floor(dur)
+        };
+        
+        datajson[tempIndex].data.push(reformattedDataObj);
+        if (tempIndex == viewPlaylistIndex) {
+        displaySongs(tempIndex);
+        changeListTextColor(tempIndex);
+        addDrag();
+        createSettingsFields(tempIndex);
         }
-        getsid();
-    }
-});
+    });
+    document.getElementById("add_tracks_form").reset();
+    document.querySelector(".drop-zone__prompt").textContent = "Drop file here or click to upload";
+    document.querySelector(".drop-zone__prompt").style.fontSize = "1em";
+}
 
 //ajax functions
+
+function sendTrackData(formData) {
+    return new Promise(resolve => {
+        let ajax = new XMLHttpRequest();
+        ajax.contentType = 'application/json';
+        ajax.onreadystatechange = function() {
+            if (ajax.readyState == 4 && ajax.status == 200) {
+              console.log(ajax.responseText);
+              resolve(JSON.parse(ajax.responseText));
+             }
+           };
+        ajax.open("POST", "/add_tracks", true);
+        ajax.send(formData);
+    });
+}
 
 function postFunction() {
     let ajax = new XMLHttpRequest();
@@ -288,10 +346,33 @@ function sendLogOutRequest() {
 
 //Functions---------------------------------------------------------------------------------------------------------------------------------------------Functions
 
+function changeView(nextView, prevView) {
+    if (nextView === 'Add') {
+        popup.style.display = 'grid';       
+    } else if (nextView === 'Edit') {
+        edit_container.style.display = 'block';
+    } else {
+        list_container.style.display = 'block';
+    }
+    if (prevView === 'Add') {
+        popup.style.display = 'none';       
+    } else if (prevView === 'Edit') {
+        edit_container.style.display = 'none';
+    } else {
+        list_container.style.display = 'none';
+    }
+    
+}
+
 async function assignDJ() {
     datajson = await getDJFromServer();
     if(datajson.length > 0)
-        track_list = datajson[currentPlaylist].data; 
+        //track_list = datajson[currentPlaylist].data; 
+        console.log("in here");
+        //track_name.textContent = track_list[track_index].name;
+        //track_artist.textContent = track_list[track_index].artist;
+        //now_playing.textContent = datajson[currentPlaylist].name;
+        createCheckboxes();
 }
 
 async function getSong(path) {
@@ -341,7 +422,7 @@ async function loadTrack(track_index, track) {
     track.currentTime = track_list[track_index].ts;
     
     //random_bg_color();
-    top_div.style.backgroundImage = "url(" + track_list[track_index].image + ")";
+    //top_div.style.backgroundImage = "url(" + track_list[track_index].image + ")";
     //getFadingTrack().src = track_list[getNextTrack()].path;
     assignFadingTrack = true;
 }
@@ -568,7 +649,7 @@ const initSortableList = (e) => {
             }
 
         }  
-        return e.clientY + edit_container.scrollTop <= sibling.offsetTop + sibling.offsetHeight + window.innerHeight / 100 * 28;
+        return e.clientY + edit_container.scrollTop <= sibling.offsetTop + sibling.offsetHeight + window.innerHeight / 100 * 1;
     });
     // Inserting the dragging item before the found sibling
     edit_list.insertBefore(draggingItem, nextSibling);
@@ -592,14 +673,6 @@ function handleSaveButton(playlistIndex) {
 }
 
 
-function reloadTrack() {
-    //track_art.style.backgroundImage = 
-    //     "url(" + track_list[track_index].image + ")";
-    track_name.textContent = track_list[track_index].name;
-    track_artist.textContent = track_list[track_index].artist;
-    now_playing.textContent = datajson[currentPlaylist].name;
-        //"PLAYING " + (track_list[track_index].index + 1) + " OF " + track_list.length;
-}
 
 function recolorPlaylist() {
     //recolor playlist so it is always alternating
@@ -701,14 +774,20 @@ function displaySongs(index) {
         list_span.name = elem.id;
         li.appendChild(list_span);
         let editli = document.createElement("li");
+        let trackArtist = document.createElement("div");
+        trackArtist.className = "settingsInfo";
         editli.className = "edit-songs-item";
         editli.draggable = true;
-        editli.innerText = elem.name;
         editli.id = elem.id; 
-        let edit_list_span = document.createElement("span");
-        edit_list_span.textContent = elem.artist;
-        edit_list_span.className = "artist-name-span";
-        editli.appendChild(edit_list_span);
+        let track_span = document.createElement("span");
+        track_span.textContent = elem.name;
+        track_span.className = "track-name-span";
+        trackArtist.appendChild(track_span);
+        let artist_span = document.createElement("span");
+        artist_span.textContent = elem.artist;
+        artist_span.className = "artist-name-span";
+        trackArtist.appendChild(artist_span);
+        editli.appendChild(trackArtist);
         if (i %2 == 0) {                                                                     
             li.style.color = 'white';
             li.style.background = '#1e1e1e';
@@ -809,7 +888,7 @@ for (let i = 0; i < edit_list_items.length; i++) {
     listSpan.appendChild(teInputMin);
     listSpan.appendChild(colon2);
     listSpan.appendChild(teInputSec);
-    listSpan.appendChild(deleteIcon);
+    edit_list_items[i].appendChild(deleteIcon);
     edit_list_items[i].appendChild(listSpan);
     const regex = new RegExp("^[0-9]*$");
 
@@ -928,7 +1007,7 @@ function deletePlaylistHelper(index) {
     datajson = newArray;
     console.log(newArray);
     viewPlaylistIndex = 0;
-    handleListClick(0);
+    handleListClick(0); //this neeed to change
     if (index === currentPlaylist) {
         currentPlaylist = 0;
         track_list = datajson[0].data;
@@ -947,6 +1026,7 @@ function deletePlaylistHelper(index) {
         });
         element.className = "playlist-list-item" + num;
     }
+    createCheckboxes();
     
     
 }
@@ -984,6 +1064,145 @@ function convertToSeconds(min, sec) {
     return min * 60 + sec;
 }
 
-// Load the first track in the tracklist
-/*if (track_list.length > 0)
-    loadTrack(track_index, curr_track);*/
+
+
+
+	/*window.addEventListener("resize", (event) => {
+		let nameList = document.querySelectorAll(".container");
+		nameList.forEach((element, index) => {
+			console.log(element.textContent);
+			if (playlist_names[index].length * 15 > window.innerWidth) {
+				element.textContent = playlist_names[index].substring(0, Math.floor(window.innerWidth / 14));
+			} else {
+				element.textContent = playlist_names[index];
+			}
+		});
+	});*/
+
+    function computeLength(file) {
+        console.log(file);
+		return new Promise((resolve) => {
+			let objectURL = URL.createObjectURL(file);
+            let mySound = new Audio();
+            mySound.src = objectURL;
+            mySound.load();
+			mySound.addEventListener(
+			"canplay",
+			() => {
+				URL.revokeObjectURL(objectURL);
+				console.log(mySound.duration + "duration");
+				resolve({
+				file,
+				duration: mySound.duration
+				});
+			},
+			false,
+			);
+            console.log("bottom");
+            
+
+		});  
+	}
+
+	function createCheckboxes() {
+        while(checkboxes_container.firstChild) {
+            checkboxes_container.removeChild(checkboxes_container.lastChild);
+        }
+
+		datajson.forEach((element, index) => {
+			const label = document.createElement('label');
+			label.classList = "container"
+			if (element.name.length * 15 > window.innerWidth) {
+				label.textContent = element.name.substring(0, Math.floor(window.innerWidth / 14));
+			} else {
+				label.textContent = element.name;
+			}
+			const check_box = document.createElement("input");
+			check_box.type = "checkbox";
+            check_box.className = "checkboxes";
+			check_box.name = "checkbox[]";
+			check_box.value = element.name;
+            check_box.setAttribute("form", "add_tracks_form");
+			check_box.onclick = "toggleCheckValue(index)";
+			const spanCheckmark = document.createElement("span");
+			spanCheckmark.classList = "checkmark";
+			label.appendChild(check_box);
+			label.appendChild(spanCheckmark);
+			checkboxes_container.appendChild(label);
+			
+		});
+	}
+
+	
+	
+
+	inputElement.addEventListener("change", (e) => {
+        if (inputElement.files[0].type == 'audio/wav' || inputElement.files[0].type == 'audio/mpeg') {
+            if (inputElement.files.length) {
+                updateThumbnail(dropZoneElement, inputElement.files[0]);
+            }
+            computeLength(inputElement.files[0])
+                .then((result) => {
+                    console.log("in res");
+                    dur = result.duration;
+                    songLength.value = result.duration;					//-----duration of each track
+                })
+                .catch ((error) => {
+                    console.log(error);
+                });
+        } else {
+            document.querySelector(".drop-zone__prompt").textContent = "Drop file here or click to upload";
+            document.querySelector(".drop-zone__prompt").style.fontSize = "1em";
+            inputElement.value ="";
+        }
+		
+	});
+    
+
+	dropZoneElement.addEventListener("dragover", (e) => {
+		e.preventDefault();
+		dropZoneElement.classList.add("drop-zone--over");
+	});
+
+	["dragleave", "dragend"].forEach((type) => {
+		dropZoneElement.addEventListener(type, (e) => {
+			dropZoneElement.classList.remove("drop-zone--over");
+		});
+	});
+
+	dropZoneElement.addEventListener("drop", (e) => {
+		e.preventDefault();
+        if (inputElement.files[0].type == 'audio/wav' || inputElement.files[0].type == 'audio/mpeg') {
+            if (e.dataTransfer.files.length) {
+                inputElement.files = e.dataTransfer.files;
+                updateThumbnail(dropZoneElement, e.dataTransfer.files[0]);
+            }
+
+            dropZoneElement.classList.remove("drop-zone--over");
+            computeLength(inputElement.files[0])
+                .then((result) => {
+                    dur = result.duration;
+                    songLength.value = result.duration;					//-----duration of each track
+                })
+                .catch ((error) => {
+                    console.log(error);
+                });
+        } else {
+            inputElement.value = "";
+            document.querySelector(".drop-zone__prompt").textContent = "Drop file here or click to upload";
+            document.querySelector(".drop-zone__prompt").style.fontSize = "1em";
+        }
+
+	});
+
+
+/**
+ * Updates the thumbnail on a drop zone element.
+ *
+ * @param {HTMLElement} dropZoneElement
+ * @param {File} file
+ */
+function updateThumbnail(dropZoneElement, file) {
+    dropZoneElement.querySelector(".drop-zone__prompt").textContent = file.name;
+    dropZoneElement.querySelector(".drop-zone__prompt").style.fontSize = "0.8em";
+}
