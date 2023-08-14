@@ -46,6 +46,7 @@ let top_button = document.querySelector(".top-button");
 let bottom_button = document.querySelector(".bottom-button");
 let dropZoneElement = document.querySelector(".drop-zone");
 let inputElement = document.querySelector(".drop-zone__input");
+let deletePlaylistButton = document.createElement("delete-playlist-circle");
 let playlistDisplaying = false;
 let track_index = 0;
 let isPlaying = false;    //keeps track of if any audio is playing 
@@ -80,11 +81,16 @@ let playlistPlayingIndex = 0;
 
 //event listeners----------------------------------------------------------------------------------------------------------------------event listeners
 window.addEventListener("DOMContentLoaded", function () {
-    assignDJ();
-    console.log(datajson);
-   /* if(datajson.length > 0) {
-        console.log("in here");
-        track_list = datajson[currentPlaylist].data; 
+    async function ad() {
+        await assignDJ();
+        console.log(datajson);
+        createPlaylistDisplay();
+        if(datajson.length > 0) {
+            
+        }
+    }
+    ad();
+   /*     track_list = datajson[currentPlaylist].data; 
         track_name.textContent = track_list[track_index].name;
         track_artist.textContent = track_list[track_index].artist;
         now_playing.textContent = datajson[currentPlaylist].name;
@@ -92,6 +98,18 @@ window.addEventListener("DOMContentLoaded", function () {
     }*/
 
 });
+
+function createPlaylistDisplay() {
+    console.log("here");
+    console.log(datajson);
+    datajson.forEach((element, index) => {
+        let li = document.createElement('li');
+        li.className = "playlist-list-item" + index;
+        li.onclick = function () { handleListClick(index); };
+        li.textContent = element.name;
+        playlist_list.appendChild(li);
+    });
+}
 
 /*window.addEventListener("scroll", function () {
     slider_container.style.top = (82 + window.scrollY / window.innerHeight * 18) + 'vh';
@@ -101,6 +119,25 @@ document.querySelector(".signout-container").addEventListener("click", () => {
     //sendLogOutRequest();
 });
 
+deletePlaylistButton.addEventListener("click", () => {
+    deletePlaylist();
+});
+
+next_btn.addEventListener("click", () => {
+    nextTrack(true);
+});
+
+prev_btn.addEventListener("click", () => {
+    prevTrack(true);
+});
+
+seek_slider.addEventListener("change", () => {
+    seekTo();
+});
+
+playpause_btn.addEventListener("click", () => {
+    playpauseTrack();
+});
 
 top_button.addEventListener("click", () => {
     let temp = top_button.textContent;
@@ -137,7 +174,7 @@ add_playlist.addEventListener("click", function () {
     }
 });
 
-playlistData.addEventListener('click', function () { handleSongClick(); }, true);        
+//playlistData.addEventListener('click', handleSongClick, true);        
 
 document.getElementById("new-playlist-form").addEventListener('submit', function(e) {
     e.preventDefault();
@@ -740,6 +777,7 @@ function changeListTextColor(index) {
 }
 
 let handleSongClick = async function(event) {     
+    console.log(event);
     if (event != undefined && event.target.name >= 0) {
         fading = false;
         other_track.pause();
@@ -1085,9 +1123,9 @@ function convertToSeconds(min, sec) {
 			let objectURL = URL.createObjectURL(file);
             let mySound = new Audio();
             mySound.src = objectURL;
-            mySound.load();
+            //mySound.load();
 			mySound.addEventListener(
-			"canplay",
+			"canplaythrough",
 			() => {
 				URL.revokeObjectURL(objectURL);
 				console.log(mySound.duration + "duration");

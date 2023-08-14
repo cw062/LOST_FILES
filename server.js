@@ -18,11 +18,17 @@ const MySQLStore = require('express-mysql-session')(session);
 const { timeLog } = require('console');
 const { connection } = require('mongoose');
 const crypto = require('crypto');
+//const helmet = require("helmet");
+//const RateLimit = require("express-rate-limit");
+const http = require('http');
 const { S3Client, GetObjectCommand, PutObjectCommand, ListObjectsCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const app = express();
 const s3Client = new S3Client({ region: process.env.S3_REGION });
 const bucket = process.env.S3_BUCKET_NAME;
-
+/*const limiter = RateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 20,
+});*/
 async function uploadS3(file, name) {
   //const filestream = fs.createReadStream(file);
   const uploadParams = {
@@ -72,6 +78,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
 app.use(fileupload());
+//app.use(limiter);
+/*app.use(helmet.contentSecurityPolicy({
+  directives: {
+    scriptSrc: ["'self'"],
+    mediaSrc: ["'self'", "blob:"] // Add the correct path to your public directory
+  },
+}));*/
 const IN_PROD = process.env.NODE_ENV === 'production';
 const TWO_HOURS = 1000 * 60 * 60 * 2;
 const options = {
@@ -891,6 +904,9 @@ function formatNumber(x) {
 }
 
 //server starts listening for any attempts from a client to connect at port: {port}
+//app.set("port", port);
+//const server = http.createServer(app);
+//server.listen(port);
 app.listen(port, () => {
     console.log(`Now listening on port ${port}`); 
 });

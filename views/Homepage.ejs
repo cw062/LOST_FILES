@@ -20,10 +20,6 @@
       </form>
     <div class="playlist-list-container">
       <ul class="playlist-list">
-        <% data.json.forEach(function callback(element, index) { %>
-          <li class="playlist-list-item<%=index%>" onclick="handleListClick( <%= index %> )"><%= element.name %></li>
-        <% }); %>
-
       </ul>
     </div>
     <form action="/logoutRequest" method="POST" id="logoutForm" name="logoutForm" class="logout-form"></form>
@@ -33,7 +29,7 @@
   </section>
   <section class="top-grid-right">
     <div class="edit-playlist-title-container">
-      <i class="fas fa-minus-circle" id="delete-playlist-circle" onclick="deletePlaylist()"></i>
+      <i class="fas fa-minus-circle" id="delete-playlist-circle"></i>
       <span class="settings-title"></span>
       <div class="navigation-container">
         <button class="top-button">Edit</button>
@@ -78,17 +74,17 @@
   </div>
 
     <div class="slider_container">
-      <div class="prev-track" onclick="prevTrack(true)">
+      <div class="prev-track">
         <i class="fa fa-step-backward fa-2x"></i>
       </div>
-      <div class="playpause-track" onclick="playpauseTrack()">
+      <div class="playpause-track">
         <i class="fa fa-play-circle fa-5x"></i>
       </div>
-      <div class="next-track" onclick="nextTrack(true)">
+      <div class="next-track">
         <i class="fa fa-step-forward fa-2x"></i>
       </div>
       <div class="current-time">00:00</div>
-      <input type="range" min="1" max="100" value="0" class="seek_slider" onchange="seekTo()">
+      <input type="range" min="1" max="100" value="0" class="seek_slider">
       <div class="total-duration">00:00</div>
 
       <div class="details">
