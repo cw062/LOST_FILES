@@ -4,27 +4,22 @@ if (process.env.NODE_ENV != 'production') {
 
 let iterations = 10000;
 let isLoggedin = false;
-let loggedInUsers = [];
+let loggedInUsers = [45];
 
 //Define dependencies
-const express = require('express');
-const path = require('path');
-const fileupload = require('express-fileupload');
-const cors = require('cors');
+const app = require('./app');
 const fs = require('fs');
 const mysql = require('mysql');
-const session = require('express-session');
-const MySQLStore = require('express-mysql-session')(session);
+
 const { timeLog } = require('console');
-const { connection } = require('mongoose');
-const crypto = require('crypto');
+//const { connection } = require('mongoose');
 //const helmet = require("helmet");
 //const RateLimit = require("express-rate-limit");
-const http = require('http');
 const { S3Client, GetObjectCommand, PutObjectCommand, ListObjectsCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
-const app = express();
 const s3Client = new S3Client({ region: process.env.S3_REGION });
 const bucket = process.env.S3_BUCKET_NAME;
+
+
 /*const limiter = RateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 20,
@@ -62,9 +57,6 @@ async function deleteS3(path) {
 }
 
 
-
-app.set('view engine', 'ejs');
-const public = path.join(__dirname, 'public');
 const port = process.env.APP_PORT;
 let playlistNames = [];
 let playlistData = [];
@@ -72,12 +64,8 @@ let obj = {};
 let songid = {
   id: null
 };
-app.use('/', express.static(public));
-app.use(express.static(path.join(__dirname)));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-app.use(cors());
-app.use(fileupload());
+
+
 //app.use(limiter);
 /*app.use(helmet.contentSecurityPolicy({
   directives: {
@@ -85,32 +73,7 @@ app.use(fileupload());
     mediaSrc: ["'self'", "blob:"] // Add the correct path to your public directory
   },
 }));*/
-const IN_PROD = process.env.NODE_ENV === 'production';
-const TWO_HOURS = 1000 * 60 * 60 * 2;
-const options = {
-  connectionLimit: 10,
-  host: process.env.RDS_HOSTNAME,
-  port: process.env.RDS_PORT,
-  user: process.env.RDS_USERNAME,
-  password: process.env.RDS_PASSWORD,
-  database: process.env.MYSQL_DB,
-  createDatabaseTable: true
-};
-const sessionStore = new MySQLStore(options);
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    store: sessionStore,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      maxAge: TWO_HOURS,
-      sameSite: true,
-      secure: IN_PROD
-    }
-  })
-);
+
 
 const pool = mysql.createPool({
   host: process.env.RDS_HOSTNAME,
@@ -687,20 +650,6 @@ app.get('/sendDJ', (req, res) => {
   res.send(playlistData);
 });
 
-app.get('/Login', (req, res) => {
-  res.render('Login', {data: "No message"});
-  console.log(req.session);
-});
-
-app.get('/Signup', (req, res) => {
-  res.render('SignUp', {root: __dirname});
-});
-
-
-app.get('/add_tracks', (req, res) => {     
-
-    res.render('add_tracks', {data: {json: obj, playlistNames: playlistNames}});      
-});
 
 app.post('/ajaxpost', (req, res) => {
   if (JSON.parse(JSON.stringify(req.body)).new_playlist_name != undefined) {
@@ -757,7 +706,7 @@ app.post('/add_tracks', async (req, res) => {
         res.json({pathFromServer: obj.path});        
 });
 
-app.post('/Login', (req, res) => {
+/*app.post('/Login', (req, res) => {
     async function getPassCorrect() {
       //get row from db that matches username
       let dbrow = await checkDatabaseForUsername(req.body.username);
@@ -814,7 +763,7 @@ app.post('/Signup', (req, res) => {
   }
   createHashandSalt();
 
-});
+}); */
 
 app.post('/getSong', (req, res) => {
   async function dothisthing() {
@@ -864,32 +813,7 @@ app.post('/logoutRequest', (req, res) => {
 
 //crypto functions---------------------------------------------------------------------------------crypto functions-----------------------------------------------
 //takes a password and returns a hash and salt
-function hashPassword(password) {
-  let returnobj = {
-    hash: "",
-    salt: ""
-  };
-  return new Promise(resolve => {
-    returnobj.salt = crypto.randomBytes(128).toString('base64');
-    crypto.pbkdf2(password, returnobj.salt, iterations, 64, 'sha512', (err, derivedKey) => {
-      if (err) throw err;
-      returnobj.hash = derivedKey.toString('hex'); 
-      resolve(returnobj);
-    });
-});
-}
 
-function isPasswordCorrect(savedHash, savedSalt, savedIterations, passwordAttempt) {
-  //retreive row from db --probably rename these parameters
-  let newhash = "";
-  return new Promise(resolve => {
-    crypto.pbkdf2(passwordAttempt, savedSalt, savedIterations, 64, 'sha512', (err, derivedKey) => {
-      if (err) throw err;
-      newhash = derivedKey.toString('hex'); 
-      resolve(savedHash == newhash);
-    });
-  });
-}
 //generic functions-------------------------------------------------------------------------------------------generic functions-------------------------------
 function formatNumber(x) {
   if (x.length == 1) {
