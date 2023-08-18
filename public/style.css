@@ -4,8 +4,6 @@ html {
 }
 
 body {
-    
-    /* Smoothly transition the background color */
     height: 100vh;
     overflow-x:hidden;
     overflow-y: hidden;
@@ -67,14 +65,11 @@ body {
     margin: 25px;
     height: 250px;
     width: 250px;
-    background-image: URL(
-       "https://source.unsplash.com/Qrspubmx6kE/640x360");
     background-size: cover;
     background-position: center;
     border-radius: 15%;
   }
     
-  /* Changing the font sizes to suitable ones */
   .now-playing {
     font-size: 1rem;
   }
@@ -87,8 +82,6 @@ body {
     font-size: 1em;
   }
     
-  /* Using flex with the row direction to
-     align items in a horizontal direction */
   .buttons {
     display: flex;
     flex-direction: row;
@@ -117,19 +110,15 @@ body {
     display: flex;
     padding: 0px;
     opacity: 0.8;
-    
-    /* Smoothly transition the opacity */
     transition: opacity .2s;
   }
     
-  /* Change the opacity when mouse is hovered */
   .playpause-track:hover,
   .prev-track:hover,
   .next-track:hover {
     opacity: 1.0;
   }
     
-  /* Define the slider width so that it scales properly */
   .slider_container {
     grid-row-start: 3;
     background-color: black;
@@ -212,7 +201,6 @@ input[type="range"]::-ms-fill-upper {
   background-color: white;
 }
     
-  /* Change the opacity when mouse is hovered */
   .seek_slider:hover {
     opacity: 1.0;
   }
@@ -233,8 +221,6 @@ input[type="range"]::-ms-fill-upper {
     padding: 0px;
   }
     
-  /* Change the mouse cursor to a pointer
-     when hovered over */
   i.fa-play-circle,
   i.fa-pause-circle,
   i.fa-step-forward,
@@ -421,10 +407,6 @@ input[type="range"]::-ms-fill-upper {
   display: grid;
   grid-template-columns: 1fr 4fr 1fr;
   grid-auto-flow: column;
-}
-
-.edit-songs-item:nth-child(odd) {
-  /*background-color: #8c8b8b;*/
 }
 
 .settingsInfo {
@@ -922,239 +904,222 @@ input[type="range"]::-ms-fill-upper {
   color: black;
 }
 
-.add-tracks-image-container {
-    width: 100%; /* Set the desired width of the cropped image */
-    height: 5vh; /* Set the desired height of the cropped image */
-    overflow: hidden; /* Hide any overflowing content */
-  }
+.container {
+  display: block;
+  position: relative;
+  padding-left: 15%;
+  padding-bottom: 12px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: initial;
+  font-family: "Quicksand", sans-serif;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  color: #F072A9;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0px;
+}
+
+
+/* Hide the browser's default checkbox */
+.container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+  color: white;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 2%;
+  height: 80%;
+  width: 10%;
+  background-color: black;
+  transition-duration: 500ms;
+  transition-property: background-color;
+  border-color: #F072A9;
+  border: 1px solid;
+  /*border-bottom: 2px solid;*/
+
+}
+
+/* On mouse-over, add a grey background color */
+.container:hover input ~ .checkmark {
+  background-color: #ccc;
+}
+
+.container input:checked ~ .checkmark {
+  background-color: #F072A9;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+/* Show the checkmark when checked */
+.container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+/* Style the checkmark/indicator */
+.container .checkmark:after {
+  left: 40%;
+  top: 5px;
+  width: 5px;
+  height: 10px;
+  border: solid black;
+  border-width: 0 3px 3px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+.checkboxes-container {
+  overflow-x: hidden;
+  background-color: black;
+  scrollbar-width: none;
   
-  .cropped-image {
-    width: 100%; /* Set the width of the image to fill the container */
-    height: 100%; /* Set the height of the image to fill the container */
-    object-fit: fill; /* Resize the image to cover the container while maintaining aspect ratio */
-  }
+}
 
-  .cropped-image:hover {
-    opacity: 20%;
-  }
-
-  .container {
-    display: block;
-    position: relative;
-    padding-left: 15%;
-    padding-bottom: 12px;
-    cursor: pointer;
-    font-size: 1em;
-    font-weight: initial;
-    font-family: "Quicksand", sans-serif;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    color: #F072A9;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    margin: 0px;
-  }
-
-
-  /* Hide the browser's default checkbox */
-  .container input {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    height: 0;
-    width: 0;
-    color: white;
-  }
-  
-  /* Create a custom checkbox */
-  .checkmark {
-    position: absolute;
-    top: 0;
-    left: 2%;
-    height: 80%;
-    width: 10%;
-    background-color: black;
-    transition-duration: 500ms;
-    transition-property: background-color;
-    border-color: #F072A9;
-    border: 1px solid;
-    /*border-bottom: 2px solid;*/
-
-  }
-  
-  /* On mouse-over, add a grey background color */
-  .container:hover input ~ .checkmark {
-    background-color: #ccc;
-  }
-  
-  /* When the checkbox is checked, add a blue background */
-  .container input:checked ~ .checkmark {
-    background-color: #F072A9;
-  }
-  
-  /* Create the checkmark/indicator (hidden when not checked) */
-  .checkmark:after {
-    content: "";
-    position: absolute;
-    display: none;
-  }
-  
-  /* Show the checkmark when checked */
-  .container input:checked ~ .checkmark:after {
-    display: block;
-  }
-  
-  /* Style the checkmark/indicator */
-  .container .checkmark:after {
-    left: 40%;
-    top: 5px;
-    width: 5px;
-    height: 10px;
-    border: solid black;
-    border-width: 0 3px 3px 0;
-    -webkit-transform: rotate(45deg);
-    -ms-transform: rotate(45deg);
-    transform: rotate(45deg);
-  }
-  
-  .checkboxes-container {
-    overflow-x: hidden;
-    background-color: black;
-    scrollbar-width: none;
-    
-  }
-
-  .checkboxes-container::-webkit-scrollbar {
-    display: none;
-  }
+.checkboxes-container::-webkit-scrollbar {
+  display: none;
+}
 
 
 
-  .checkboxes-main-container {
-    grid-row-start: 2;
-    grid-column-start: 2;
-    grid-row-end: 6;
-    overflow-y: scroll;
-    scrollbar-width: thin;
-    scrollbar-color: #F072A9 black;
-    border-left: 2px solid #F072A9;
-  }
+.checkboxes-main-container {
+  grid-row-start: 2;
+  grid-column-start: 2;
+  grid-row-end: 6;
+  overflow-y: scroll;
+  scrollbar-width: thin;
+  scrollbar-color: #F072A9 black;
+  border-left: 2px solid #F072A9;
+}
 
-  .checkboxes-main-container::-webkit-scrollbar {
-    background: black;
-    width: 0.5vw;
-  }
+.checkboxes-main-container::-webkit-scrollbar {
+  background: black;
+  width: 0.5vw;
+}
 
-  .checkboxes-main-container::-webkit-scrollbar-thumb {
-    background: #F072A9;
-  }
+.checkboxes-main-container::-webkit-scrollbar-thumb {
+  background: #F072A9;
+}
 
-  .input-field {
-    font-size: 1em;
-  }
+.input-field {
+  font-size: 1em;
+}
 
 
-  .input-field:focus {
+.input-field:focus {
 
-    outline: solid 1px #F072A9;
-    -moz-outline-radius: 10px;
-    border-radius: 10px;
-  }
+  outline: solid 1px #F072A9;
+  -moz-outline-radius: 10px;
+  border-radius: 10px;
+}
 
-  .logout-form {
-    display: none;
-  }
+.logout-form {
+  display: none;
+}
 
-  .settings-form {
-    visibility: hidden;
-  }
+.settings-form {
+  visibility: hidden;
+}
 
-  .form-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr 1fr;
-  }
+.form-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+}
 
-  .text-input-container {
-    grid-row-start: 4;
-    grid-column-start: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+.text-input-container {
+  grid-row-start: 4;
+  grid-column-start: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  .text-input-container2 {
-    grid-row-start: 5;
-    grid-column-start: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+.text-input-container2 {
+  grid-row-start: 5;
+  grid-column-start: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  .select-playlists-title {
-    grid-row-start: 1;
-    grid-column-start: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-left: 2px solid #F072A9;
-  }
+.select-playlists-title {
+  grid-row-start: 1;
+  grid-column-start: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 2px solid #F072A9;
+}
 
-  .upload-track-title {
-    grid-row-start: 1;
-    grid-column-start: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+.upload-track-title {
+  grid-row-start: 1;
+  grid-column-start: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  .enter-info-title {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    grid-row-start: 3;
-    grid-column-start: 1;
-  }
+.enter-info-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  grid-row-start: 3;
+  grid-column-start: 1;
+}
 
-  .label1 {
-    display: grid;
-    grid-template-columns: 3fr 7fr;
-    width: 80%;
-  }
+.label1 {
+  display: grid;
+  grid-template-columns: 3fr 7fr;
+  width: 80%;
+}
 
-  .label2 {
-    display: grid;
-    grid-template-columns: 3fr 7fr;
-    width: 80%;
-  }
+.label2 {
+  display: grid;
+  grid-template-columns: 3fr 7fr;
+  width: 80%;
+}
 
-  .artist-span {
-    grid-column-start: 1;
-    display: flex;
-    align-items: center;
-  }
+.artist-span {
+  grid-column-start: 1;
+  display: flex;
+  align-items: center;
+}
 
-  .track-span {
-    grid-column-start: 1;
-    display: flex;
-    align-items: center;
-  }
+.track-span {
+  grid-column-start: 1;
+  display: flex;
+  align-items: center;
+}
 
-  .artist-input-field {
-    grid-column-start: 2;
-    background-color: black;
-    color: white;
-    border-color: #F072A9;
-    outline-color: #F072A9;
-  }
+.artist-input-field {
+  grid-column-start: 2;
+  background-color: black;
+  color: white;
+  border-color: #F072A9;
+  outline-color: #F072A9;
+}
 
-  .track-input-field {
-    grid-column-start: 2;
-    background-color: black;
-    color: white;
-    border-color: #F072A9;
-    outline-color: #F072A9;
-  }
+.track-input-field {
+  grid-column-start: 2;
+  background-color: black;
+  color: white;
+  border-color: #F072A9;
+  outline-color: #F072A9;
+}

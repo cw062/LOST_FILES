@@ -1,4 +1,3 @@
-//const { data } = require("jquery");
 
 //initialize variables
 let playlist_songs = [];
@@ -49,9 +48,9 @@ let inputElement = document.querySelector(".drop-zone__input");
 let deletePlaylistButton = document.getElementById("delete-playlist-circle");
 let playlistDisplaying = false;
 let track_index = 0;
-let isPlaying = false;    //keeps track of if any audio is playing 
-let currentAudio = true;                      //keeps track of which audio element is playing or paused true = current, false = other
-let bothPlaying = false;  //keeps track of when to play both tracks or just 1
+let isPlaying = false;    
+let currentAudio = true;                      
+let bothPlaying = false;  
 let next_track_index = 0;
 let faderLength = 5;
 let fading = false;
@@ -74,28 +73,14 @@ playlistIdentifier.name = "playlistIdentifier";
 document.getElementById("settings_form").appendChild(playlistIdentifier);
 let curr_track = document.createElement('audio');
 let other_track = document.createElement('audio');    
-//slider_container.style.top = (82 + window.scrollY / window.innerHeight * 27) + 'vh';
 let playlistPlayingIndex = 0;
 
-
-
-//event listeners----------------------------------------------------------------------------------------------------------------------event listeners
+//event listeners
 window.addEventListener("DOMContentLoaded", function () {
-    async function ad() {
-        console.log("inad");
-        await assignDJ();
-        console.log(datajson);
-        createPlaylistDisplay();
-        if(datajson.length > 0) {
-            
-        }
-    }
-    ad();
+    loadData();
 });
 
 function createPlaylistDisplay() {
-    console.log("here");
-    console.log(datajson);
     datajson.forEach((element, index) => {
         let li = document.createElement('li');
         li.className = "playlist-list-item" + index;
@@ -104,14 +89,6 @@ function createPlaylistDisplay() {
         playlist_list.appendChild(li);
     });
 }
-
-/*window.addEventListener("scroll", function () {
-    slider_container.style.top = (82 + window.scrollY / window.innerHeight * 18) + 'vh';
-});*/
-
-document.querySelector(".signout-container").addEventListener("click", () => {
-    //sendLogOutRequest();
-});
 
 deletePlaylistButton.addEventListener("click", () => {
     deletePlaylist();
@@ -167,8 +144,6 @@ add_playlist.addEventListener("click", function () {
         playlist_list_container.style.gridRowStart = "2";
     }
 });
-
-//playlistData.addEventListener('click', handleSongClick, true);        
 
 document.getElementById("new-playlist-form").addEventListener('submit', function(e) {
     e.preventDefault();
@@ -227,13 +202,72 @@ edit_list.addEventListener("drop", (event) => {
      }
     reorder();
     sendNewPlaylistOrder(datajson[viewPlaylistIndex].data);
-
-    recolorPlaylist();
-    //displaySettings();
-    
-    
+    recolorPlaylist();   
 });
 
+inputElement.addEventListener("change", (e) => {
+    if (inputElement.files[0].type == 'audio/wav' || inputElement.files[0].type == 'audio/mpeg') {
+        if (inputElement.files.length) {
+            updateThumbnail(dropZoneElement, inputElement.files[0]);
+        }
+        computeLength(inputElement.files[0])
+            .then((result) => {
+                dur = result.duration;
+                songLength.value = result.duration;					
+            })
+            .catch ((error) => {
+                console.log(error);
+            });
+    } else {
+        document.querySelector(".drop-zone__prompt").textContent = "Drop file here or click to upload";
+        document.querySelector(".drop-zone__prompt").style.fontSize = "1em";
+        inputElement.value ="";
+    }
+    
+});
+    
+
+dropZoneElement.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropZoneElement.classList.add("drop-zone--over");
+});
+
+["dragleave", "dragend"].forEach((type) => {
+    dropZoneElement.addEventListener(type, (e) => {
+        dropZoneElement.classList.remove("drop-zone--over");
+    });
+});
+
+dropZoneElement.addEventListener("drop", (e) => {
+    e.preventDefault();
+    if (inputElement.files[0].type == 'audio/wav' || inputElement.files[0].type == 'audio/mpeg') {
+        if (e.dataTransfer.files.length) {
+            inputElement.files = e.dataTransfer.files;
+            updateThumbnail(dropZoneElement, e.dataTransfer.files[0]);
+        }
+
+        dropZoneElement.classList.remove("drop-zone--over");
+        computeLength(inputElement.files[0])
+            .then((result) => {
+                dur = result.duration;
+                songLength.value = result.duration;	
+            })
+            .catch ((error) => {
+                console.log(error);
+            });
+    } else {
+        inputElement.value = "";
+        document.querySelector(".drop-zone__prompt").textContent = "Drop file here or click to upload";
+        document.querySelector(".drop-zone__prompt").style.fontSize = "1em";
+    }
+
+});
+
+async function loadData() {
+    datajson = await getDJFromServer();
+    createPlaylistDisplay();
+    createCheckboxes();
+}
 
 async function addTracksData() {
     let y = document.querySelectorAll(".checkboxes:checked")
@@ -241,22 +275,15 @@ async function addTracksData() {
     y.forEach(element => {
         checkedArray.push(element.value);
     });
-    console.log(checkedArray);
-    console.log(artist_data.value);
-    console.log(trackName_data.value); 
-    console.log(document.getElementById("file").files[0]);
-    console.log(dur);
     let form_data = new FormData(document.getElementById("add_tracks_form"));
     let newPathAndID = await sendTrackData(form_data);
-    console.log(newPathAndID.pathFromServer);
     let songid = newPathAndID.songid;
-    console.log(songid);
    
     checkedArray.forEach(element => {
         let tempIndex = datajson.findIndex(o => o.name == element);
-        const reformattedDataObj = {                                   //reformats data from add_tracks to add to page and data structure
+        const reformattedDataObj = {                                  
         id: songid,
-        index: datajson[tempIndex].data.length,                      //NEEEDS TO BE CHANGED IM PRETTY SURE
+        index: datajson[tempIndex].data.length,                      
         name: trackName_data.value,
         artist: artist_data.value,
         image: "yeee.png",
@@ -286,7 +313,6 @@ function sendTrackData(formData) {
         ajax.contentType = 'application/json';
         ajax.onreadystatechange = function() {
             if (ajax.readyState == 4 && ajax.status == 200) {
-              console.log(ajax.responseText);
               resolve(JSON.parse(ajax.responseText));
              }
            };
@@ -320,8 +346,6 @@ function getDJFromServer() {
         let xmlhttp = new XMLHttpRequest();
         xmlhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
-                // if it worked, parse that string, make it back into an object
-                console.log(JSON.parse(this.responseText));
                 resolve (JSON.parse(this.responseText));
             }
         };
@@ -331,21 +355,16 @@ function getDJFromServer() {
 }
 
 function sendNewPlaylistOrder(track_listing) {
-    //return new Promise(resolve => {
     let ajax = new XMLHttpRequest();
     ajax.open("POST", "/Homepage/NewTrackOrder", true);    
     const formData = new FormData();
     track_listing.forEach((object) => {
         Object.entries(object).forEach(([key, value]) => {
-        formData.append(key, value);
+            formData.append(key, value);
         });
     });
     formData.append('playlistIdentifier', datajson[viewPlaylistIndex].name);
-    //ajax.addEventListener("load", (event) => {
-      //  console.log(event);
-    //});
-      ajax.send(formData);
-    //});
+    ajax.send(formData);
 }
 
 function sendDeletePlaylistRequest(name) {
@@ -377,19 +396,6 @@ function changeView(nextView, prevView) {
     
 }
 
-async function assignDJ() {
-    datajson = await getDJFromServer();
-    console.log("below assign");
-    console.log(datajson);
-    if(datajson.length > 0)
-        //track_list = datajson[currentPlaylist].data; 
-        console.log("in here");
-        //track_name.textContent = track_list[track_index].name;
-        //track_artist.textContent = track_list[track_index].artist;
-        //now_playing.textContent = datajson[currentPlaylist].name;
-        createCheckboxes();
-}
-
 async function getSong(path) {
     return new Promise(resolve => {
         let ajax = new XMLHttpRequest();
@@ -397,7 +403,6 @@ async function getSong(path) {
         formData.append('path', path);
         ajax.onreadystatechange = function() {
             if (ajax.readyState == 4 && ajax.status == 200) {
-              console.log(ajax.responseText);
               resolve(true);
              }
            };
@@ -411,34 +416,23 @@ async function preLoadTrack(track_index) {
 }
 
 async function loadTrack(track_index, track) {
-    // Clear the previous seek timer
-    console.log(track_list[track_index].name);
     clearInterval(updateTimer);
     resetValues();
-    // Load a new track
     track.src = 'public/uploads/' + track_list[track_index].path;
     track.load();
     let playAndRemove = () => {
-        console.log("playandremove triggered!");
         playTrack(track);
         track.removeEventListener("canplaythrough", playAndRemove);
-
     }
     track.addEventListener("canplaythrough", playAndRemove);
     
-    // Update details of the track
     track_name.textContent = track_list[track_index].name;
     track_artist.textContent = track_list[track_index].artist;
     now_playing.textContent = datajson[currentPlaylist].name;
     
-    // Set an interval of 1000 milliseconds
-    // for updating the seek slider
     updateTimer = setInterval(handleTime, 1000);
     track.currentTime = track_list[track_index].ts;
     
-    //random_bg_color();
-    //top_div.style.backgroundImage = "url(" + track_list[track_index].image + ")";
-    //getFadingTrack().src = track_list[getNextTrack()].path;
     assignFadingTrack = true;
 }
 
@@ -459,14 +453,10 @@ function getTrackNotInUse() {
 }
 function handleTime() {
     seekUpdate(getCurrentTrack());   
-    console.log(fading);
     if (fading) {
         getFadingTrack().volume = Math.max(getFadingTrack().volume*0.7, .1);
         getCurrentTrack().volume = Math.min(getCurrentTrack().volume * 1.5, 1);
-        console.log("3");
         if (fading && getFadingTrack().currentTime >= fadingTrackTe - 0.6) {
-            console.log("2");
-            console.log(getFadingTrack().src);
             getFadingTrack().pause();
             getFadingTrack().currentTime = 0;
             fading = false;
@@ -474,10 +464,9 @@ function handleTime() {
             preLoadFlag = true;
         }
     } else if (getCurrentTrack().currentTime >= track_list[track_index].te - faderLength) {
-        console.log("1");
         fading = true;
         fadingTrackTe = track_list[track_index].te;
-        currentAudio = !currentAudio;  //switches which track will be used
+        currentAudio = !currentAudio; 
         getFadingTrack().volume *= 0.7;
         nextTrack(false);
         getCurrentTrack().volume = 0.2;
@@ -495,31 +484,25 @@ function getNextTrack() {
         track_index_helper += 1;
     else 
         track_index_helper = 0;
-    //console.log(track_list[track_id_finder(track_index_helper)]);
-    console.log(track_id_finder(track_index_helper));
     return track_id_finder(track_index_helper);
 }
 
 function seekUpdate(track) {
     let seekPosition = 0;
-    // Check if the current track duration is a legible number
     if (!isNaN(curr_track.duration)) {
-        seekPosition = track.currentTime * (100 /  track_list[track_index].te); //track.duration);
+        seekPosition = track.currentTime * (100 /  track_list[track_index].te);
         seek_slider.value = seekPosition;
     
-        // Calculate the time left and the total duration
         let currentMinutes = Math.floor(track.currentTime / 60);
         let currentSeconds = Math.floor(track.currentTime - currentMinutes * 60);
-        let durationMinutes = Math.floor(track_list[track_index].te / 60);   //track.duration / 60);
+        let durationMinutes = Math.floor(track_list[track_index].te / 60); 
         let durationSeconds = Math.floor(track_list[track_index].te - durationMinutes * 60);
     
-        // Add a zero to the single digit time values
         if (currentSeconds < 10) { currentSeconds = "0" + currentSeconds; }
         if (durationSeconds < 10) { durationSeconds = "0" + durationSeconds; }
         if (currentMinutes < 10) { currentMinutes = "0" + currentMinutes; }
         if (durationMinutes < 10) { durationMinutes = "0" + durationMinutes; }
     
-        // Display the updated duration
         curr_time.textContent = currentMinutes + ":" + currentSeconds;
         total_duration.textContent = durationMinutes + ":" + durationSeconds;
     }
@@ -532,7 +515,6 @@ function getCurrentTrack() {
         return other_track;
 }
 
-// Function to reset all values to their default
 function resetValues() {
     curr_time.textContent = "00:00";
     total_duration.textContent = "00:00";
@@ -540,8 +522,6 @@ function resetValues() {
 }
 
 function playpauseTrack() {
-    // Switch between playing and pausing
-    // depending on the current state
     if (!isPlaying) 
         playTrack(getCurrentTrack());
     else 
@@ -549,50 +529,34 @@ function playpauseTrack() {
 }
     
 function playTrack(trackToUse) {
-    // Play the loaded track
-        console.log(trackToUse.src);
-        trackToUse.curr_time = 0;
-        trackToUse.play();
-        console.log("belowplay");
-        isPlaying = true;        
-        // Replace icon with the pause icon
-        playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
-        
+    trackToUse.curr_time = 0;
+    trackToUse.play();
+    isPlaying = true;        
+    playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
 }
     
 function pauseTrack() {
-    // Pause the loaded track
     getCurrentTrack().pause();
-    isPlaying = false;
-    
-    // Replace icon with the play icon
+    isPlaying = false;    
     playpause_btn.innerHTML = '<i class="fa fa-play-circle fa-5x"></i>';
 }
     
 async function nextTrack(resetFade) {
     let trackToUse = getCurrentTrack();          
     let track_index_helper = track_list[track_index].index;
-    console.log(trackToUse);
     if (track_index_helper < track_list.length - 1)
         track_index_helper += 1;
     else track_index_helper = 0;
     
     track_index = track_id_finder(track_index_helper);
-    // Load and play the new track
     if (resetFade) {
         fading = false;
         await preLoadTrack(track_index);
-
     } 
     loadTrack(track_index, trackToUse);
-    console.log("between");
-    //playTrack(trackToUse); 
-    console.log("bottomofnexttrack");  
 }
     
-async function prevTrack(resetFade) {
-    // Go back to the last track if the
-    // current one is the first in the track list                        
+async function prevTrack(resetFade) {                     
     let track_index_helper = track_list[track_index].index; 
     if (track_index_helper > 0)
         track_index_helper -= 1;
@@ -600,21 +564,17 @@ async function prevTrack(resetFade) {
         track_index_helper = track_list.length - 1;
 
     track_index = track_id_finder(track_index_helper);
-    // Load and play the new track
     getCurrentTrack().pause();
     if (resetFade) {
         fading = false;
     }
     await preLoadTrack(track_index);
     loadTrack(track_index, getCurrentTrack());
-    //playTrack(getCurrentTrack());
-    console.log("bot of prev");
 }
 
 function seekTo() {
     let track = getCurrentTrack();
     let seekto = track_list[track_index].te * (seek_slider.value / 100);  
-    // Set the current track position to the calculated seek position
     track.currentTime = seekto;
 }
     
@@ -630,29 +590,11 @@ function handleListClick(index) {
     }
 }
 
-function random_bg_color() {
-    let red = Math.floor(Math.random() * 256) + 64;
-    let green = Math.floor(Math.random() * 256) + 64;
-    let blue = Math.floor(Math.random() * 256) + 64;
-    let red2 = Math.floor(Math.random() * 256) + 64;
-    let green2 = Math.floor(Math.random() * 256) + 64;
-    let blue2 = Math.floor(Math.random() * 256) + 64;
-
-    // Construct a color withe the given values
-    let bgColor = "rgb(" + red + ", " + green + ", " + blue + ")";
-    let bgColor2 = "rgb(" + red2 + ", " + green2 + ", " + blue2 + ")";
-
-    // Set the background to the new color
-    document.body.style.background = "linear-gradient("+bgColor+","+bgColor2+")";
-}
-
 const initSortableList = (e) => {
     e.preventDefault();
     const draggingItem = document.querySelector(".dragging");
-    // Getting all items except currently dragging and making array of them
     let siblings = [...edit_list.querySelectorAll(".edit-songs-item:not(.dragging)")];
     let nextSibling = siblings.find(sibling => {
-        //Logic for scrolling
         if ((e.clientY > (edit_container.offsetHeight + edit_container.offsetTop) * 0.8)) {
             if (edit_container.scrollTop < edit_list.clientHeight - edit_container.offsetHeight) {
                 edit_container.scrollTop += 1;
@@ -666,7 +608,6 @@ const initSortableList = (e) => {
         }  
         return e.clientY + edit_container.scrollTop <= sibling.offsetTop + sibling.offsetHeight + window.innerHeight / 100 * 1;
     });
-    // Inserting the dragging item before the found sibling
     edit_list.insertBefore(draggingItem, nextSibling);
 }
 edit_list.addEventListener("dragover", initSortableList);
@@ -690,7 +631,6 @@ function handleSaveButton(playlistIndex) {
 
 
 function recolorPlaylist() {
-    //recolor playlist so it is always alternating
     for(i = 0; i < edit_list.childNodes.length; i++) {
         if (i %2 == 0)
             edit_list.childNodes[i].style.backgroundColor = 'black';
@@ -755,7 +695,6 @@ function changeListTextColor(index) {
 }
 
 let handleSongClick = async function(event) {     
-    console.log(event);
     if (event != undefined && event.target.name >= 0) {
         fading = false;
         other_track.pause();
@@ -763,11 +702,8 @@ let handleSongClick = async function(event) {
         track_list = datajson[viewPlaylistIndex].data;
         currentPlaylist = viewPlaylistIndex;          
         track_index = track_index_finder(event.target.name);
-        //curr_track.pause();
-        //other_track.pause();
         await preLoadTrack(track_index);
         loadTrack(track_index, getCurrentTrack());
-        //playTrack(getCurrentTrack());
     }
 }
 
@@ -777,7 +713,6 @@ function displaySongs(index) {
         playlistData.removeChild(playlistData.lastChild);
     }
     let displayingList = datajson[index].data;
-    console.log(displayingList);
     for (let i = 0; i < displayingList.length; i++) {
         const elem = displayingList.find(o => o.index === i);
         let li = document.createElement('li');
@@ -832,150 +767,147 @@ function displaySettings() {
     }
 }
 
-function createSettingsFields(index) {
+function createSettingsFields(index) {          //this function is huge
 
-for (let i = 0; i < edit_list_items.length; i++) {
-    console.log(datajson);
-    console.log(index);
-    console.log(i);
-    let songobj = datajson[index].data.find(o => o.index == i);
-    let timestart = songobj.ts;
-    let timeend = songobj.te;
-    let songid = songobj.id;
+    for (let i = 0; i < edit_list_items.length; i++) {
+        let songobj = datajson[index].data.find(o => o.index == i);
+        let timestart = songobj.ts;
+        let timeend = songobj.te;
+        let songid = songobj.id;
 
-    const tsInputMin = document.createElement('input');
-    tsInputMin.type = "text";
-    tsInputMin.classList ="tsmin";
-    tsInputMin.value = Math.floor(timestart / 60);
-    if (tsInputMin.value < 10)
-        tsInputMin.value = "0" + tsInputMin.value;
-    tsInputMin.name = "tsmin" + songid;
-    tsInputMin.setAttribute("Form", "settings_form");        //this one
-    tsInputMin.maxLength = 2;
-    const tsInputSec = document.createElement('input');
-    tsInputSec.type = "text";
-    tsInputSec.classList ="tssec";
-    tsInputSec.value = Math.floor(timestart % 60);
-    if (tsInputSec.value < 10)
-        tsInputSec.value = "0" + tsInputSec.value;
-    tsInputSec.name = "tssec" + songid;
-    tsInputSec.setAttribute("Form", "settings_form");        //this one
-    tsInputSec.maxLength = 2;
-    const teInputMin = document.createElement('input');
-    teInputMin.type = "text";
-    teInputMin.name = "temin" + songid;
-    teInputMin.setAttribute("Form", "settings_form");
-    teInputMin.classList = "temin";
-    teInputMin.maxLength = 2; 
-    teInputMin.value = Math.floor(timeend / 60);
-    if (teInputMin.value < 10)
-        teInputMin.value = "0" + teInputMin.value;
-    const teInputSec = document.createElement('input');
-    teInputSec.type = "text";
-    teInputSec.name = "tesec" + songid;
-    teInputSec.setAttribute("Form", "settings_form");
-    teInputSec.classList = "tesec";
-    teInputSec.maxLength = 2;
+        const tsInputMin = document.createElement('input');
+        tsInputMin.type = "text";
+        tsInputMin.classList ="tsmin";
+        tsInputMin.value = Math.floor(timestart / 60);
+        if (tsInputMin.value < 10)
+            tsInputMin.value = "0" + tsInputMin.value;
+        tsInputMin.name = "tsmin" + songid;
+        tsInputMin.setAttribute("Form", "settings_form"); 
+        tsInputMin.maxLength = 2;
+        const tsInputSec = document.createElement('input');
+        tsInputSec.type = "text";
+        tsInputSec.classList ="tssec";
+        tsInputSec.value = Math.floor(timestart % 60);
+        if (tsInputSec.value < 10)
+            tsInputSec.value = "0" + tsInputSec.value;
+        tsInputSec.name = "tssec" + songid;
+        tsInputSec.setAttribute("Form", "settings_form");        
+        tsInputSec.maxLength = 2;
+        const teInputMin = document.createElement('input');
+        teInputMin.type = "text";
+        teInputMin.name = "temin" + songid;
+        teInputMin.setAttribute("Form", "settings_form");
+        teInputMin.classList = "temin";
+        teInputMin.maxLength = 2; 
+        teInputMin.value = Math.floor(timeend / 60);
+        if (teInputMin.value < 10)
+            teInputMin.value = "0" + teInputMin.value;
+        const teInputSec = document.createElement('input');
+        teInputSec.type = "text";
+        teInputSec.name = "tesec" + songid;
+        teInputSec.setAttribute("Form", "settings_form");
+        teInputSec.classList = "tesec";
+        teInputSec.maxLength = 2;
+        
+        const colon = document.createElement("span");
+        colon.textContent = ":";
+        colon.classList = "tscolon";
+
+        const colon2 = document.createElement("span");
+        colon2.textContent = ":";
+        colon2.classList = "tecolon";
+        const hyphen = document.createElement("span");
+        hyphen.textContent = "-";
+        hyphen.classList = "hyphen";
+        let deleteIcon = document.createElement("i");
+        deleteIcon.classList = "fas fa-minus-circle";
+        deleteIcon.style.color = "#F072A9";
+        deleteIcon.id = "delete-song-" + songid;
+        let listSpan = document.createElement("span");
+        listSpan.classList = "list-span";
+        teInputSec.value = Math.floor(timeend % 60);
+        if (teInputSec.value < 10)
+            teInputSec.value = "0" + teInputSec.value;
     
-    const colon = document.createElement("span");
-    colon.textContent = ":";
-    colon.classList = "tscolon";
+        listSpan.appendChild(tsInputMin);
+        listSpan.appendChild(colon);
+        listSpan.appendChild(tsInputSec);
+        listSpan.appendChild(hyphen);
+        listSpan.appendChild(teInputMin);
+        listSpan.appendChild(colon2);
+        listSpan.appendChild(teInputSec);
+        edit_list_items[i].appendChild(deleteIcon);
+        edit_list_items[i].appendChild(listSpan);
+        const regex = new RegExp("^[0-9]*$");
 
-    const colon2 = document.createElement("span");
-    colon2.textContent = ":";
-    colon2.classList = "tecolon";
-    const hyphen = document.createElement("span");
-    hyphen.textContent = "-";
-    hyphen.classList = "hyphen";
-    let deleteIcon = document.createElement("i");
-    deleteIcon.classList = "fas fa-minus-circle";
-    deleteIcon.style.color = "#F072A9";
-    deleteIcon.id = "delete-song-" + songid;
-    let listSpan = document.createElement("span");
-    listSpan.classList = "list-span";
-    teInputSec.value = Math.floor(timeend % 60);
-    if (teInputSec.value < 10)
-        teInputSec.value = "0" + teInputSec.value;
- 
-    listSpan.appendChild(tsInputMin);
-    listSpan.appendChild(colon);
-    listSpan.appendChild(tsInputSec);
-    listSpan.appendChild(hyphen);
-    listSpan.appendChild(teInputMin);
-    listSpan.appendChild(colon2);
-    listSpan.appendChild(teInputSec);
-    edit_list_items[i].appendChild(deleteIcon);
-    edit_list_items[i].appendChild(listSpan);
-    const regex = new RegExp("^[0-9]*$");
+        deleteIcon.addEventListener("click", (event) => {       
+            let obj = datajson[viewPlaylistIndex].data[dataJsonIndexFinder(viewPlaylistIndex, Number(event.target.id.substring(12)))];                                            
+            let result = confirm("Are you sure you want to delete " + obj.name + " from " + datajson[viewPlaylistIndex].name + "? If it does not belong to any other playlist, it will be deleted from the database entirely.");
+            if (result) {
+                sendDeleteSongRequest(Number(event.target.id.substring(12)), datajson[viewPlaylistIndex].name, datajson[viewPlaylistIndex].data.length, obj.path);
+                deleteSongFromPlaylist(Number(event.target.id.substring(12)), viewPlaylistIndex);
 
-    deleteIcon.addEventListener("click", (event) => {       
-        let obj = datajson[viewPlaylistIndex].data[dataJsonIndexFinder(viewPlaylistIndex, Number(event.target.id.substring(12)))];                                             //change
-        let result = confirm("Are you sure you want to delete " + obj.name + " from " + datajson[viewPlaylistIndex].name + "? If it does not belong to any other playlist, it will be deleted from the database entirely.");
-        if (result) {
-            sendDeleteSongRequest(Number(event.target.id.substring(12)), datajson[viewPlaylistIndex].name, datajson[viewPlaylistIndex].data.length, obj.path);
-            deleteSongFromPlaylist(Number(event.target.id.substring(12)), viewPlaylistIndex);
+            }
+        });
+        
+        tsInputMin.addEventListener("beforeinput", (event) => {
+            if (event.data != null && !regex.test(event.data)) 
+                event.preventDefault();
+        });
 
-        }
-    });
-    
-    tsInputMin.addEventListener("beforeinput", (event) => {
-        if (event.data != null && !regex.test(event.data)) 
-            event.preventDefault();
-    });
+        tsInputSec.addEventListener("beforeinput", (event) => {
+            if (event.data != null && !regex.test(event.data)) 
+                event.preventDefault();
+        });
 
-    tsInputSec.addEventListener("beforeinput", (event) => {
-        if (event.data != null && !regex.test(event.data)) 
-            event.preventDefault();
-    });
+        teInputMin.addEventListener("beforeinput", (event) => {
+            if (event.data != null && !regex.test(event.data)) 
+                event.preventDefault();
+        });
 
-    teInputMin.addEventListener("beforeinput", (event) => {
-        if (event.data != null && !regex.test(event.data)) 
-            event.preventDefault();
-    });
+        teInputSec.addEventListener("beforeinput", (event) => {
+            if (event.data != null && !regex.test(event.data)) 
+                event.preventDefault();
+        });
 
-    teInputSec.addEventListener("beforeinput", (event) => {
-        if (event.data != null && !regex.test(event.data)) 
-            event.preventDefault();
-    });
+        tsInputMin.addEventListener('focusout', function(e) {       
+            let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
+            let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
+            if (start + faderLength >= end || start) {
+                tsInputMin.value = "00";
+                tsInputSec.value = "00";
+            }
+            handleSaveButton(viewPlaylistIndex);
+        });
 
-    tsInputMin.addEventListener('focusout', function(e) {       
-        let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
-        let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-        if (start + faderLength >= end || start) {
-            tsInputMin.value = "00";
-            tsInputSec.value = "00";
-        }
-        handleSaveButton(viewPlaylistIndex);
-    });
-
-    tsInputSec.addEventListener('focusout', function(e) {
-        let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
-        let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-        if (start + faderLength >= end || formatNumber(tsInputSec.value) > 59) {
-            tsInputMin.value = "00";
-            tsInputSec.value = "00";
-        }
-        handleSaveButton(viewPlaylistIndex);
-    });
-    teInputMin.addEventListener('focusout', function() {   
-        let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
-        let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-        if (start + faderLength >= end || end > songobj.duration) {
-            teInputMin.value = reverseFormatNumber(Math.floor(songobj.duration / 60));
-            teInputSec.value = reverseFormatNumber(Math.floor(songobj.duration % 60));
-        } 
-        handleSaveButton(viewPlaylistIndex);
-    });
-    teInputSec.addEventListener('focusout', function() {    
-        let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
-        let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-        if (start + faderLength >= end || end > songobj.duration || formatNumber(teInputSec.value) > 59) {
-            teInputMin.value = reverseFormatNumber(Math.floor(songobj.duration / 60));
-            teInputSec.value = reverseFormatNumber(Math.floor(songobj.duration % 60));
-        }
-        handleSaveButton(viewPlaylistIndex);
-    });
-}
+        tsInputSec.addEventListener('focusout', function(e) {
+            let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
+            let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
+            if (start + faderLength >= end || formatNumber(tsInputSec.value) > 59) {
+                tsInputMin.value = "00";
+                tsInputSec.value = "00";
+            }
+            handleSaveButton(viewPlaylistIndex);
+        });
+        teInputMin.addEventListener('focusout', function() {   
+            let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
+            let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
+            if (start + faderLength >= end || end > songobj.duration) {
+                teInputMin.value = reverseFormatNumber(Math.floor(songobj.duration / 60));
+                teInputSec.value = reverseFormatNumber(Math.floor(songobj.duration % 60));
+            } 
+            handleSaveButton(viewPlaylistIndex);
+        });
+        teInputSec.addEventListener('focusout', function() {    
+            let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
+            let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
+            if (start + faderLength >= end || end > songobj.duration || formatNumber(teInputSec.value) > 59) {
+                teInputMin.value = reverseFormatNumber(Math.floor(songobj.duration / 60));
+                teInputSec.value = reverseFormatNumber(Math.floor(songobj.duration % 60));
+            }
+            handleSaveButton(viewPlaylistIndex);
+        });
+    }
     playlistIdentifier.value = datajson[index].name;
 }
 
@@ -997,7 +929,6 @@ function deleteSongFromPlaylist(id, djIndex) {
         
     }
     datajson[djIndex].data = replacementArray;
-    console.log(datajson[djIndex].data);
     displaySongs(viewPlaylistIndex);
     changeListTextColor(viewPlaylistIndex);
     addDrag();
@@ -1021,18 +952,15 @@ function deletePlaylistHelper(index) {
         }
     }
     datajson = newArray;
-    console.log(newArray);
-    viewPlaylistIndex = 0;
-    handleListClick(0); //this neeed to change
+    viewPlaylistIndex = 0; //this needs work
+    handleListClick(0);
     if (index === currentPlaylist) {
         currentPlaylist = 0;
         track_list = datajson[0].data;
         curr_track.pause();
         other_track.pause();
     }
-    console.log(index);
     playlist_list.removeChild(document.querySelector(".playlist-list-item" + index));
-    console.log(datajson.length);
     for (let i = index + 1; i < datajson.length+1; i++) {
         let num = i - 1;
         let element = document.querySelector(".playlist-list-item" + i);
@@ -1081,136 +1009,56 @@ function convertToSeconds(min, sec) {
 }
 
 
+function computeLength(file) {
+    return new Promise((resolve) => {
+        let objectURL = URL.createObjectURL(file);
+        let mySound = new Audio();
+        mySound.src = objectURL;
+        mySound.addEventListener(
+        "canplaythrough",
+        () => {
+            URL.revokeObjectURL(objectURL);
+            resolve({
+            file,
+            duration: mySound.duration
+            });
+        },
+        false,
+        );
+        
 
+    });  
+}
 
-	/*window.addEventListener("resize", (event) => {
-		let nameList = document.querySelectorAll(".container");
-		nameList.forEach((element, index) => {
-			console.log(element.textContent);
-			if (playlist_names[index].length * 15 > window.innerWidth) {
-				element.textContent = playlist_names[index].substring(0, Math.floor(window.innerWidth / 14));
-			} else {
-				element.textContent = playlist_names[index];
-			}
-		});
-	});*/
-
-    function computeLength(file) {
-        console.log(file);
-		return new Promise((resolve) => {
-			let objectURL = URL.createObjectURL(file);
-            let mySound = new Audio();
-            mySound.src = objectURL;
-            //mySound.load();
-			mySound.addEventListener(
-			"canplaythrough",
-			() => {
-				URL.revokeObjectURL(objectURL);
-				console.log(mySound.duration + "duration");
-				resolve({
-				file,
-				duration: mySound.duration
-				});
-			},
-			false,
-			);
-            console.log("bottom");
-            
-
-		});  
-	}
-
-	function createCheckboxes() {
-        while(checkboxes_container.firstChild) {
-            checkboxes_container.removeChild(checkboxes_container.lastChild);
-        }
-
-		datajson.forEach((element, index) => {
-			const label = document.createElement('label');
-			label.classList = "container"
-			if (element.name.length * 15 > window.innerWidth) {
-				label.textContent = element.name.substring(0, Math.floor(window.innerWidth / 14));
-			} else {
-				label.textContent = element.name;
-			}
-			const check_box = document.createElement("input");
-			check_box.type = "checkbox";
+function createCheckboxes() {
+    while(checkboxes_container.firstChild) {
+        checkboxes_container.removeChild(checkboxes_container.lastChild);
+    }
+    if (datajson.length > 0) {
+        datajson.forEach((element, index) => {
+            const label = document.createElement('label');
+            label.classList = "container"
+            if (element.name.length * 15 > window.innerWidth) {
+                label.textContent = element.name.substring(0, Math.floor(window.innerWidth / 14));
+            } else {
+                label.textContent = element.name;
+            }
+            const check_box = document.createElement("input");
+            check_box.type = "checkbox";
             check_box.className = "checkboxes";
-			check_box.name = "checkbox[]";
-			check_box.value = element.name;
+            check_box.name = "checkbox[]";
+            check_box.value = element.name;
             check_box.setAttribute("form", "add_tracks_form");
-			check_box.onclick = "toggleCheckValue(index)";
-			const spanCheckmark = document.createElement("span");
-			spanCheckmark.classList = "checkmark";
-			label.appendChild(check_box);
-			label.appendChild(spanCheckmark);
-			checkboxes_container.appendChild(label);
-			
-		});
-	}
-
-	
-	
-
-	inputElement.addEventListener("change", (e) => {
-        if (inputElement.files[0].type == 'audio/wav' || inputElement.files[0].type == 'audio/mpeg') {
-            if (inputElement.files.length) {
-                updateThumbnail(dropZoneElement, inputElement.files[0]);
-            }
-            computeLength(inputElement.files[0])
-                .then((result) => {
-                    console.log("in res");
-                    dur = result.duration;
-                    songLength.value = result.duration;					//-----duration of each track
-                })
-                .catch ((error) => {
-                    console.log(error);
-                });
-        } else {
-            document.querySelector(".drop-zone__prompt").textContent = "Drop file here or click to upload";
-            document.querySelector(".drop-zone__prompt").style.fontSize = "1em";
-            inputElement.value ="";
-        }
-		
-	});
-    
-
-	dropZoneElement.addEventListener("dragover", (e) => {
-		e.preventDefault();
-		dropZoneElement.classList.add("drop-zone--over");
-	});
-
-	["dragleave", "dragend"].forEach((type) => {
-		dropZoneElement.addEventListener(type, (e) => {
-			dropZoneElement.classList.remove("drop-zone--over");
-		});
-	});
-
-	dropZoneElement.addEventListener("drop", (e) => {
-		e.preventDefault();
-        if (inputElement.files[0].type == 'audio/wav' || inputElement.files[0].type == 'audio/mpeg') {
-            if (e.dataTransfer.files.length) {
-                inputElement.files = e.dataTransfer.files;
-                updateThumbnail(dropZoneElement, e.dataTransfer.files[0]);
-            }
-
-            dropZoneElement.classList.remove("drop-zone--over");
-            computeLength(inputElement.files[0])
-                .then((result) => {
-                    dur = result.duration;
-                    songLength.value = result.duration;					//-----duration of each track
-                })
-                .catch ((error) => {
-                    console.log(error);
-                });
-        } else {
-            inputElement.value = "";
-            document.querySelector(".drop-zone__prompt").textContent = "Drop file here or click to upload";
-            document.querySelector(".drop-zone__prompt").style.fontSize = "1em";
-        }
-
-	});
-
+            check_box.onclick = "toggleCheckValue(index)";
+            const spanCheckmark = document.createElement("span");
+            spanCheckmark.classList = "checkmark";
+            label.appendChild(check_box);
+            label.appendChild(spanCheckmark);
+            checkboxes_container.appendChild(label);
+            
+        });
+    }
+}
 
 /**
  * Updates the thumbnail on a drop zone element.

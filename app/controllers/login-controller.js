@@ -12,7 +12,6 @@ const serveLoginPage = (req, res) => {
 
 
 const handleLoginAttempt = async (req, res) => {
-    //get row from db that matches username
     let dbrow = await checkDatabaseForUsername(req.body.username);
     
     if (dbrow == 0) {
@@ -39,10 +38,8 @@ const logoutRequest = (req, res) => {
     loggedInUsers.splice(loggedInUsers.indexOf(req.session.user), 1);
     req.session.user = null;
     req.session.save(function (err) {
-        if (err) next(err)
-
-        // regenerate the session, which is good practice to help
-        // guard against forms of session fixation
+        if (err) 
+            next(err)
         req.session.regenerate(function (err) {
             if (err) next(err)
             res.redirect('/Login');

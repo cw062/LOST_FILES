@@ -6,27 +6,6 @@ submit_button = document.querySelector('.submit-button');
 bottom_elements = document.querySelector(".bottom-elements");
 
 
-function postFunction() {
-    let ajax = new XMLHttpRequest();
-    let form_data = new FormData(document.getElementById("signup-form"));
-    ajax.open("POST", "/usernamePost", true);
-    ajax.onreadystatechange = function() {
-        if (ajax.readyState === XMLHttpRequest.DONE) {
-            if (ajax.status === 200) {
-                // Successful response from the server
-                var response = JSON.parse(ajax.responseText);
-                displayUsernameMessage(response.status);
-                // Here, you can access the response data and perform further actions
-            } else {
-                // Error occurred while making the request
-                console.error('Error:', ajax.status);
-            }
-        }
-    };
-    ajax.send(form_data);
-    
-}
-
 function displayUsernameMessage(response) {
     if (response === true) {
         user_label.textContent = "Username already taken";
@@ -83,7 +62,6 @@ pass_field.addEventListener('focusout', function () {
 
 user_field.addEventListener('input', function () {
     if (user_field.value.length > 0) {
-        //postFunction();
         user_field.style.borderBottom = '2px solid rgba(84, 156, 48, 1)';
         if (pass_field.value.length > 0 ) {
             submit_button.style.visibility = 'visible';
