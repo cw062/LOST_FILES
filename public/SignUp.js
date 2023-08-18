@@ -1,9 +1,9 @@
-user_label = document.querySelector(".username-label");
-user_field = document.querySelector(".username");
-pass_label = document.querySelector(".password-label");
-pass_field = document.querySelector(".pass");
-submit_button = document.querySelector('.submit-button');
-bottom_elements = document.querySelector(".bottom-elements");
+const user_label = document.querySelector(".username-label");
+const user_field = document.querySelector(".username");
+const pass_label = document.querySelector(".password-label");
+const pass_field = document.querySelector(".pass");
+const submit_button = document.querySelector('.submit-button');
+const bottom_elements = document.querySelector(".bottom-elements");
 
 
 function displayUsernameMessage(response) {

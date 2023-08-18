@@ -7,7 +7,7 @@ const app = express();
 const fileupload = require('express-fileupload');
 const cors = require('cors');
 const path = require('path');
-const public = path.join(__dirname, '../public');
+const publicFolder = path.join(__dirname, '../public');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const TWO_HOURS = 1000 * 60 * 60 * 2;
@@ -28,7 +28,7 @@ const homepageRoutes = require('../app/routes/homepage-routes');
 
 app.set('view engine', 'ejs');
 
-app.use('/', express.static(public));
+app.use('/', express.static(publicFolder));
 app.use(express.static(path.join(__dirname, '../')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

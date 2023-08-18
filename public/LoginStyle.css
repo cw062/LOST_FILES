@@ -40,7 +40,7 @@ and (max-device-width: 500px) {
     display: flex;
     justify-content: center;
     font-size: 2em;
-    font-family: courier;
+    font-family: courier, sans-serif;
 }
 
 .username-label {
@@ -56,7 +56,7 @@ and (max-device-width: 500px) {
     opacity: .5;
     margin-left: 1vw;
     margin-right: 1vw;
-    font-family: courier;
+    font-family: courier, sans-serif;
 }
 
 .username {
@@ -103,7 +103,7 @@ and (max-device-width: 500px) {
     opacity: .5;
     margin-left: 1vw;
     margin-right: 1vw;
-    font-family: courier;
+    font-family: courier, sans-serif;
 }
 
 .submit-button {
@@ -112,19 +112,17 @@ and (max-device-width: 500px) {
     top:13vh;
     opacity: 0;
     visibility: hidden;
-    transition-duration: 1500ms;
-    transition-property: opacity;
     padding: 15px 40px;
     background: white;
     border:0;
     color: rgb(255, 106, 106);
     text-transform: uppercase;
-    font-family: helvetica;
+    font-family: helvetica, sans-serif;
     font-size: 1em;
     letter-spacing: 3px;
     transition:         all .4s cubic-bezier(0.645, 0.045, 0.355, 1);
     cursor: pointer;
-  justify-content: center;
+    justify-content: center;
 }
   
   .submit-button::after,
@@ -213,13 +211,3 @@ and (max-device-width: 500px) {
   border: 1px solid #770000;
 }
 
-.error-message {
-}
-
-.username {
-  font-size: 1em;
-}
-
-.pass {
-  font-size: 1em;
-}
