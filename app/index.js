@@ -24,6 +24,7 @@ const options = {
 const sessionStore = new MySQLStore(options);
 const loginRoutes = require('../app/routes/login-routes');
 const signupRoutes = require('../app/routes/signup-routes');
+const homepageRoutes = require('../app/routes/homepage-routes');
 
 app.set('view engine', 'ejs');
 
@@ -47,9 +48,10 @@ app.use(
     }
   })
 );
-
-app.use('/Login', loginRoutes);
+app.use('/Homepage', homepageRoutes);
 app.use('/Signup', signupRoutes);
+app.use('/', loginRoutes);
+
 module.exports = app;
 
 

@@ -4,16 +4,16 @@ const { storeUserInfo, checkDatabaseForUsername } = require('../database/access-
 const serveSignupPage = (req, res) => {
     res.render('SignUp');
 };
-let loggedInUsers = [];
+
 const handleSignup = async (req, res) => {
     let hashAndSalt = await hashPassword(req.body.pass);
     let result = await storeUserInfo(req.body.username, hashAndSalt.hash, hashAndSalt.salt);    //true for succcess, false for fail
     if (result) {
-      isLoggedin = true;
+      //isLoggedin = true;
       //need to get created uid and assign it to activeuid
       let dbrow = await checkDatabaseForUsername(req.body.username);
       req.session.user = dbrow[0].uid;
-      loggedInUsers.push(req.session.user);
+      //loggedInUsers.push(req.session.user);
       createLocalFolder(req.session.user);
       res.redirect('../');
     } else {

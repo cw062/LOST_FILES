@@ -175,7 +175,7 @@ and (max-device-width: 500px) {
 .signup {
     position: relative;
 
-    margin-left: 1vw;
+    justify-content: center;
     text-decoration: none;
     color: black;
     opacity: .5;
@@ -189,30 +189,13 @@ and (max-device-width: 500px) {
     opacity: 1;
 }
 
-.forgotpass {
-    position: relative;
- 
-    text-decoration: none;
-    color: black;
-    opacity: .5;
-    transition-duration: 500ms;
-    transition-property: opacity;
-    width: 50%;
-    justify-content: end;
-    display: flex;
-    
-}
-
-.forgotpass:hover {
-    opacity: 1;
-}
-
 .bottom-elements {
     display: flex;
     position: relative;
     top: 10vh;
     transition-duration: 500ms;
     transition-property: top;
+    justify-content: center;
 }
 
 .error-message-container {

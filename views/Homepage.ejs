@@ -22,7 +22,7 @@
       <ul class="playlist-list">
       </ul>
     </div>
-    <form action="/logoutRequest" method="POST" id="logoutForm" name="logoutForm" class="logout-form"></form>
+    <form action="/Logout" method="POST" id="logoutForm" name="logoutForm" class="logout-form"></form>
       <div class="signout-container">
         <input class="signout-text" type="submit" name="sigout-text" value="Log Out" form="logoutForm">
       </div>
@@ -51,10 +51,10 @@
       <span class="upload-track-title">Upload Track</span>
       <span class="enter-info-title">Enter Track Info</span>
       <div class="text-input-container">
-        <label for="field1" class="label1"><span class="track-span">Track Name</span><input type="text" class="track-input-field" name="nameData" form="add_tracks_form" value="" /></label>
+        <label for="field1" class="label1"><span class="track-span">Track Name</span><input type="text" id="field1" class="track-input-field" name="nameData" form="add_tracks_form" value="" /></label>
       </div>
       <div class="text-input-container2">
-        <label for="field2" class="label2"><span class="artist-span">Artist Name</span><input type="text" class="artist-input-field" name="artistData" form="add_tracks_form" value="" /></label>
+        <label for="field2" class="label2"><span class="artist-span">Artist Name</span><input type="text" id="field2" class="artist-input-field" name="artistData" form="add_tracks_form" value="" /></label>
       </div>
       <input type="hidden" id="duration" value="0" form="add_tracks_form" name="duration"/>
       <span class="select-playlists-title">Select Playlists To Add To</span>

@@ -46,7 +46,7 @@ let top_button = document.querySelector(".top-button");
 let bottom_button = document.querySelector(".bottom-button");
 let dropZoneElement = document.querySelector(".drop-zone");
 let inputElement = document.querySelector(".drop-zone__input");
-let deletePlaylistButton = document.createElement("delete-playlist-circle");
+let deletePlaylistButton = document.getElementById("delete-playlist-circle");
 let playlistDisplaying = false;
 let track_index = 0;
 let isPlaying = false;    //keeps track of if any audio is playing 
@@ -82,6 +82,7 @@ let playlistPlayingIndex = 0;
 //event listeners----------------------------------------------------------------------------------------------------------------------event listeners
 window.addEventListener("DOMContentLoaded", function () {
     async function ad() {
+        console.log("inad");
         await assignDJ();
         console.log(datajson);
         createPlaylistDisplay();
@@ -90,13 +91,6 @@ window.addEventListener("DOMContentLoaded", function () {
         }
     }
     ad();
-   /*     track_list = datajson[currentPlaylist].data; 
-        track_name.textContent = track_list[track_index].name;
-        track_artist.textContent = track_list[track_index].artist;
-        now_playing.textContent = datajson[currentPlaylist].name;
-        createCheckboxes();
-    }*/
-
 });
 
 function createPlaylistDisplay() {
@@ -180,12 +174,15 @@ document.getElementById("new-playlist-form").addEventListener('submit', function
     e.preventDefault();
     let ajax = new XMLHttpRequest();
     let form_data = new FormData(document.getElementById("new-playlist-form"));
-    ajax.open("POST", "/ajaxpost", true);
+    ajax.open("POST", "/Homepage/NewPlaylist", true);
     ajax.send(form_data);
     document.querySelector('.new-playlist').value = "";
     add_button_clicked = false;
-    playlist_list_container.style.top = '8vh';
-    add_playlist.style.transform = 'rotate(90deg)';
+    add_button_clicked = false;
+    document.querySelector(".top-grid-left").style.gridTemplateRows = '1fr 6fr 1fr';
+    new_playlist.style.display = 'none';
+    playlist_list_container.style.gridRowStart = "2";
+    add_playlist.style.transform = 'rotate(90deg)';    
     bvl.style.backgroundColor = 'white';
     bhl.style.backgroundColor = 'white';
     
@@ -250,9 +247,10 @@ async function addTracksData() {
     console.log(document.getElementById("file").files[0]);
     console.log(dur);
     let form_data = new FormData(document.getElementById("add_tracks_form"));
-    let newPath = await sendTrackData(form_data);
-    console.log(newPath.pathFromServer);
-   let songid = await getSidFromServer();
+    let newPathAndID = await sendTrackData(form_data);
+    console.log(newPathAndID.pathFromServer);
+    let songid = newPathAndID.songid;
+    console.log(songid);
    
     checkedArray.forEach(element => {
         let tempIndex = datajson.findIndex(o => o.name == element);
@@ -262,7 +260,7 @@ async function addTracksData() {
         name: trackName_data.value,
         artist: artist_data.value,
         image: "yeee.png",
-        path: newPath.pathFromServer,
+        path: newPathAndID.pathFromServer,
         ts: 0,
         te: Math.floor(dur)
         };
@@ -292,7 +290,7 @@ function sendTrackData(formData) {
               resolve(JSON.parse(ajax.responseText));
              }
            };
-        ajax.open("POST", "/add_tracks", true);
+        ajax.open("POST", "/Homepage/AddTrack", true);
         ajax.send(formData);
     });
 }
@@ -300,28 +298,14 @@ function sendTrackData(formData) {
 function postFunction() {
     let ajax = new XMLHttpRequest();
     let form_data = new FormData(document.getElementById("settings_form"));
-    ajax.open("POST", "/ajaxpost", true);
+    ajax.open("POST", "/Homepage/UpdateTime", true);
     ajax.send(form_data);
 
 }
 
-function getSidFromServer() {
-    return new Promise(resolve => {
-        let xmlhttp = new XMLHttpRequest();
-        xmlhttp.onreadystatechange = function() {
-            if (this.readyState == 4 && this.status == 200) {
-                // if it worked, parse that string, make it back into an object
-                resolve (JSON.parse(this.responseText).id);
-            }
-        };
-        xmlhttp.open("GET", "/sendSongId", true);
-        xmlhttp.send();
-    });
-}
-
 function sendDeleteSongRequest(songid, playlistName, playlistLength, path) {
     let ajax = new XMLHttpRequest();
-    ajax.open("POST", "/postDeleteSong", true);
+    ajax.open("POST", "/Homepage/DeleteSong", true);
     ajax.contentType = 'application/json'
     const formData = new FormData();
     formData.append('songid', songid);
@@ -337,10 +321,11 @@ function getDJFromServer() {
         xmlhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
                 // if it worked, parse that string, make it back into an object
+                console.log(JSON.parse(this.responseText));
                 resolve (JSON.parse(this.responseText));
             }
         };
-        xmlhttp.open("GET", "/sendDJ", true);
+        xmlhttp.open("GET", "/Homepage/GetAllData", true);
         xmlhttp.send();
     });
 }
@@ -348,7 +333,7 @@ function getDJFromServer() {
 function sendNewPlaylistOrder(track_listing) {
     //return new Promise(resolve => {
     let ajax = new XMLHttpRequest();
-    ajax.open("POST", "/postNewTrackList", true);    
+    ajax.open("POST", "/Homepage/NewTrackOrder", true);    
     const formData = new FormData();
     track_listing.forEach((object) => {
         Object.entries(object).forEach(([key, value]) => {
@@ -365,19 +350,10 @@ function sendNewPlaylistOrder(track_listing) {
 
 function sendDeletePlaylistRequest(name) {
     let ajax = new XMLHttpRequest();
-    ajax.open("POST", "/postDeletePlaylist", true);
+    ajax.open("POST", "/Homepage/DeletePlaylist", true);
     ajax.contentType = 'application/json'
     const formData = new FormData();
     formData.append('name', name);
-    ajax.send(formData);
-}
-
-function sendLogOutRequest() {
-    let ajax = new XMLHttpRequest();
-    ajax.open("POST", "/logoutRequest", true);
-    ajax.contentType = 'application/json'
-    const formData = new FormData();
-    formData.append('logout', true);
     ajax.send(formData);
 }
 
@@ -403,6 +379,8 @@ function changeView(nextView, prevView) {
 
 async function assignDJ() {
     datajson = await getDJFromServer();
+    console.log("below assign");
+    console.log(datajson);
     if(datajson.length > 0)
         //track_list = datajson[currentPlaylist].data; 
         console.log("in here");
@@ -423,7 +401,7 @@ async function getSong(path) {
               resolve(true);
              }
            };
-        ajax.open("POST", "/getSong", true);
+        ajax.open("POST", "/Homepage/GetSong", true);
         ajax.send(formData);
     });
 }

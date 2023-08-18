@@ -40,6 +40,10 @@ body {
     scrollbar-width: none;
   }
 
+  .top-grid-right::-webkit-scrollbar {
+    display: none;
+  }
+
   .gradient-border {
     background-image: linear-gradient(black, red, black);
     position: absolute;
@@ -1026,6 +1030,8 @@ input[type="range"]::-ms-fill-upper {
     display: none;
   }
 
+
+
   .checkboxes-main-container {
     grid-row-start: 2;
     grid-column-start: 2;
@@ -1034,6 +1040,15 @@ input[type="range"]::-ms-fill-upper {
     scrollbar-width: thin;
     scrollbar-color: #F072A9 black;
     border-left: 2px solid #F072A9;
+  }
+
+  .checkboxes-main-container::-webkit-scrollbar {
+    background: black;
+    width: 0.5vw;
+  }
+
+  .checkboxes-main-container::-webkit-scrollbar-thumb {
+    background: #F072A9;
   }
 
   .input-field {

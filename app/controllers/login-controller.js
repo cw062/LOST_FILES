@@ -26,7 +26,7 @@ const handleLoginAttempt = async (req, res) => {
     }
     else {
         req.session.user = dbrow[0].uid;
-        //loggedInUsers.push(req.session.user);
+        loggedInUsers.push(req.session.user);
         req.session.save(function (err) {
             if (err)
             return next(err)
@@ -35,8 +35,34 @@ const handleLoginAttempt = async (req, res) => {
     }
 }
 
+const logoutRequest = (req, res) => {
+    loggedInUsers.splice(loggedInUsers.indexOf(req.session.user), 1);
+    req.session.user = null;
+    req.session.save(function (err) {
+        if (err) next(err)
+
+        // regenerate the session, which is good practice to help
+        // guard against forms of session fixation
+        req.session.regenerate(function (err) {
+            if (err) next(err)
+            res.redirect('/Login');
+        });
+    });
+}
+
+const initialRequest = (req, res) => {
+    if (loggedInUsers.includes(req.session.user)) {
+        res.render('Homepage');  
+      } else {
+        res.redirect('/Login');
+      }   
+}
+
 
 module.exports = {
     serveLoginPage,
-    handleLoginAttempt
+    handleLoginAttempt,
+    logoutRequest,
+    initialRequest
+
 };
