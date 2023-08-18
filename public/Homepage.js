@@ -445,12 +445,6 @@ function getFadingTrack() {
     return curr_track;
 }
 
-function getTrackNotInUse() {
-    if(currentAudio)
-    return other_track;
-    else
-    return curr_track;
-}
 function handleTime() {
     seekUpdate(getCurrentTrack());   
     if (fading) {
@@ -631,7 +625,7 @@ function handleSaveButton(playlistIndex) {
 
 
 function recolorPlaylist() {
-    for(i = 0; i < edit_list.childNodes.length; i++) {
+    for(let i = 0; i < edit_list.childNodes.length; i++) {
         if (i %2 == 0)
             edit_list.childNodes[i].style.backgroundColor = 'black';
         else {
