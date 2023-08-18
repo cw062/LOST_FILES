@@ -46,7 +46,6 @@ const updateTimeValues = (req, res) => {
 }
 
 const getSong = async (req, res) => {
-    console.log(JSON.parse(JSON.stringify(req.body)).path);
     const song = await downloadS3(JSON.parse(JSON.stringify(req.body)).path);
     let response = await writeSongToTempStorage(JSON.parse(JSON.stringify(req.body)).path, song.Body);
     res.json({success: response});

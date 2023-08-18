@@ -1,23 +1,20 @@
-user_label = document.querySelector(".username-label");
-user_field = document.querySelector(".username");
-pass_label = document.querySelector(".password-label");
-pass_field = document.querySelector(".pass");
-submit_button = document.querySelector('.submit-button');
-bottom_elements = document.querySelector(".bottom-elements");
-login_title = document.querySelector(".login-title");
-error_message = document.querySelector(".error-message-container");
+const user_label = document.querySelector(".username-label");
+const user_field = document.querySelector(".username");
+const pass_label = document.querySelector(".password-label");
+const pass_field = document.querySelector(".pass");
+const submit_button = document.querySelector('.submit-button');
+const bottom_elements = document.querySelector(".bottom-elements");
+const login_title = document.querySelector(".login-title");
+const error_message = document.querySelector(".error-message-container");
 
 window.addEventListener('DOMContentLoaded', (event) => {
-  /*  if (serverdata != "No message") {
-        console.log(serverdata);
-        displayErrorMessage();
-    } */
     if (user_field.value.length > 0) {
         user_field.style.borderBottom = '2px solid rgba(84, 156, 48, 1)';
         user_label.style.top = '4vh';
         user_label.style.opacity = 1;
     }
 });
+
 user_field.addEventListener('focusin', function () {
     user_label.style.top = '4vh';
     if (user_field.value.length == 0) {

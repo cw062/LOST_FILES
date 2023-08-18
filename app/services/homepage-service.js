@@ -79,7 +79,6 @@ const insertTrackIntoDbHelper = async (dataobj, activeUid) => {
 const getDataFromDbHelper = async (uid) => {  
     let playlistData = [];
     let obj = await getPlaylistListFromDb(uid);   //list of all playlists for user (gets the name of playlist)
-    console.log(obj);
     for(let i = 0; i < obj.length; i++) {
         playlistData.push({
             name: obj[i].name,

@@ -8,6 +8,11 @@
             <div class="signup-title">
                 <span>Sign Up</span>
             </div>
+            <% if (data != 'No message') {%>
+                <div class="error-message-container">
+                    <span class="error-message"><%= data %></span>
+                </div>
+            <% } %>
             <form action="/Signup" method="POST" id="signup-form" name="signup_form"></form>
             <label for="username" class="username-label" >Username</label>
             <input type="text" id="username" class="username" name="username"  form="signup-form">

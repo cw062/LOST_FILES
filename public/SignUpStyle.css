@@ -105,7 +105,7 @@
     letter-spacing: 3px;
     transition:         all .4s cubic-bezier(0.645, 0.045, 0.355, 1);
     cursor: pointer;
-  justify-content: center;
+   justify-content: center;
   
 }
   
@@ -193,6 +193,21 @@
     transition-duration: 500ms;
     transition-property: top;
     justify-content: center;
+}
+
+.error-message-container {
+  position: relative;
+  top: 2vh;
+  left: 1vw;
+  width: 94%;
+  height: 4vh;
+  background-color: #ffcdd9;
+  border-radius: 10px;
+  justify-content: center;
+  display: flex;
+  align-items: center;
+  color: #770000;
+  border: 1px solid #770000;
 }
 
 

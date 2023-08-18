@@ -63,7 +63,6 @@ const insertTrackData = (name, artist, path, duration, activeUid) => {
           console.log(err);
           resolve(-1);
         } else {
-          console.log('insertId: ' + result.insertId);
           resolve(result.insertId);
         }
       });
@@ -175,22 +174,17 @@ const selectFromPlaylistData = (sid) => {
 }
 //gets all of the playlist names for the active user
 const getPlaylistListFromDb = (uid) => {
-  console.log(uid + "uid");
   return new Promise(resolve => {
     pool.getConnection(function(err, connection) {
-      console.log("enter pool");
       if(err) {
         console.error("Database connection failed" + err.stack);
         return;
       }
       let values = [uid];
-      console.log("herher");
       connection.query('SELECT * FROM Playlist WHERE uid = ?', [values], function (err, result) {
         if(err) {
-          console.log("err");
+          console.log(err);
         } else {
-          console.log(result);
-          console.log("jeelo");
           resolve(result);
         }
       });
@@ -210,7 +204,6 @@ const updateTimeValues = (ts, te, song_index, pid) => {
         if(err) {
           console.log(err);
         } else {
-          console.log(result);
           resolve(result);
         }
       });
@@ -230,7 +223,6 @@ const updateOrderInDB = (id, index, pid) => {
         if(err) {
           console.log(err);
         } else {
-          console.log(result);
           resolve(result);
         }
       });
@@ -251,7 +243,6 @@ const updateSongIndex = (uid, pid, song_index) => {
         if(err) {
           console.log(err);
         } else {
-          console.log(result);
           resolve(result);
         }
       });
@@ -288,12 +279,10 @@ const deleteSongfromPlaylistData = (activeUid, songid, pid) => {
         return;
       }
       let values = [pid, activeUid, songid];
-      console.log(values);
       connection.query('DELETE FROM Playlist_Data WHERE (pid, uid, sid) = (?);', [values], function (err, result) {
         if(err) {
           console.log(err);
         } else {
-          console.log(result);
           resolve(result);
         }
       });
@@ -310,12 +299,10 @@ const deleteSongFromTracks = (track_id) => {
         return;
       }
       let values = [track_id];
-      console.log(values);
       connection.query('DELETE FROM Tracks WHERE track_id = ?;', [values], function (err, result) {
         if(err) {
           console.log(err);
         } else {
-          console.log(result);
           resolve(result);
         }
       });
@@ -332,12 +319,10 @@ const deletePlaylistFromPlaylistData = (pid, uid) => {
         return;
       }
       let values = [pid, uid];
-      console.log(values);
       connection.query('DELETE FROM Playlist_Data WHERE (pid, uid) = (?);', [values], function (err, result) {
         if(err) {
           console.log(err);
         } else {
-          console.log(result);
           resolve(result);
         }
       });
@@ -358,7 +343,6 @@ const deletePlaylistFromPlaylist = (pid, uid) => {
         if(err) {
           console.log(err);
         } else {
-          console.log(result);
           resolve(result);
         }
       });

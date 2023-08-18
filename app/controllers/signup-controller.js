@@ -1,23 +1,22 @@
 const express = require('express');
 const { hashPassword, createLocalFolder } = require('../services/signup-services');
 const { storeUserInfo, checkDatabaseForUsername } = require('../database/access-database');
+
 const serveSignupPage = (req, res) => {
-    res.render('SignUp');
+    res.render('SignUp', {data: 'No message'});
 };
 
 const handleSignup = async (req, res) => {
     let hashAndSalt = await hashPassword(req.body.pass);
-    let result = await storeUserInfo(req.body.username, hashAndSalt.hash, hashAndSalt.salt);    //true for succcess, false for fail
+    let result = await storeUserInfo(req.body.username, hashAndSalt.hash, hashAndSalt.salt);    
     if (result) {
-      //isLoggedin = true;
-      //need to get created uid and assign it to activeuid
       let dbrow = await checkDatabaseForUsername(req.body.username);
       req.session.user = dbrow[0].uid;
-      //loggedInUsers.push(req.session.user);
+      req.session.newUser = true;
       createLocalFolder(req.session.user);
       res.redirect('../');
     } else {
-      res.render('Signup', {root: __dirname});
+      res.render('Signup', {data: 'Username Already Taken'});
     }
 }
 

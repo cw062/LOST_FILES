@@ -200,7 +200,7 @@ and (max-device-width: 500px) {
 
 .error-message-container {
   position: relative;
-  top: 0vh;
+  top: 2vh;
   left: 1vw;
   width: 94%;
   height: 4vh;
@@ -211,7 +211,6 @@ and (max-device-width: 500px) {
   align-items: center;
   color: #770000;
   border: 1px solid #770000;
-  visibility: hidden;
 }
 
 .error-message {
