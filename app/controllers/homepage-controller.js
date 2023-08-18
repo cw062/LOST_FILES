@@ -8,9 +8,9 @@ const { uploadS3,
         insertTimeValuesIntoDbHelper,
         getDataFromDbHelper,
         insertTrackIntoDbHelper, 
-        writeSongToTempStorage } = require('../services/homepage-service');
+        writeSongToTempStorage,
+        deleteSongFromTempStorage } = require('../services/homepage-service');
 const { insertPlaylistIntoDB } = require('../database/access-database'); 
-
 const renderHomepage = (req, res) => {
     res.render('Homepage');
 }
@@ -46,9 +46,15 @@ const updateTimeValues = (req, res) => {
 }
 
 const getSong = async (req, res) => {
-    const song = await downloadS3(JSON.parse(JSON.stringify(req.body)).path);
-    let response = await writeSongToTempStorage(JSON.parse(JSON.stringify(req.body)).path, song.Body);
-    res.json({success: response});
+    const newPath = JSON.parse(JSON.stringify(req.body)).path;
+    if (newPath != req.session.path) {
+        if(req.session.path != undefined)
+            deleteSongFromTempStorage(req.session.path);
+        req.session.path = newPath;
+        const song = await downloadS3(newPath);
+        let response = await writeSongToTempStorage(JSON.parse(JSON.stringify(req.body)).path, song.Body);
+    }
+    res.json({success: true});
 }
 
 const newTrackOrder = (req, res) => {

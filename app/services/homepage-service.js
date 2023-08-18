@@ -163,6 +163,12 @@ const writeSongToTempStorage = async (path, song) => {
     });
 }
 
+const deleteSongFromTempStorage = (path) => {
+    fs.unlink(process.cwd() + '/public/uploads/' + path, function (err) {
+        return !(err)
+      });
+}
+
 function formatNumber(x) {
     if (x.length == 1) {
       return Number(x);
@@ -188,5 +194,6 @@ module.exports = {
     insertTimeValuesIntoDbHelper,
     getDataFromDbHelper,
     insertTrackIntoDbHelper,
-    writeSongToTempStorage
+    writeSongToTempStorage,
+    deleteSongFromTempStorage
 };
