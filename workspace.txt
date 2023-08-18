@@ -190,6 +190,18 @@ async function loadTrack(track_index, track) {
 
     songs still play a little slow
     might need to switch off of using wav bc they are so big
-    create a folder in public/uploads/userid on sign up
-    need delete playlist from s3 and it is not finished in mysql either
-    -probably want to develop a cache of sorts, code above
+    probably want to develop a cache of sorts, code above
+    -deleting the last playlist doesnt delete it from view. probably bcuz the template thing i wrote
+
+    @media only screen
+and (min-device-width: 300px)
+and (max-device-width: 500px)
+
+@media only screen 
+and (min-device-width: 500px)
+
+
+<% data.json.forEach(function callback(element, index) { %>
+          <li class="playlist-list-item<%=index%>" onclick="handleListClick( <%= index %> )"><%= element.name %></li>
+        <% }); %>
+
