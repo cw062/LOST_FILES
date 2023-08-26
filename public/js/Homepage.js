@@ -64,6 +64,12 @@ let preLoadFlag = true;
 let dur = 0;
 let currentView = 'Play';
 let canUpload = true;
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let sourceOne = audioContext.createBufferSource();
+let sourceTwo = audioContext.createBufferSource();
+let sourceTime = 0;
+
+
 
 
 let playlistIdentifier = document.createElement('input');
@@ -71,8 +77,6 @@ playlistIdentifier.type = "hidden";
 playlistIdentifier.value = "";
 playlistIdentifier.name = "playlistIdentifier";
 document.getElementById("settings_form").appendChild(playlistIdentifier);
-let curr_track = document.createElement('audio');
-let other_track = document.createElement('audio');    
 let playlistPlayingIndex = 0;
 
 //event listeners
@@ -324,7 +328,7 @@ function sendTrackData(formData) {
 function postFunction() {
     let ajax = new XMLHttpRequest();
     let form_data = new FormData(document.getElementById("settings_form"));
-    ajax.open("POST", "/Homepage/UpdateTime", true);
+    ajax.open("POST", "/Homepage/UpdateTimeValues", true);
     ajax.send(form_data);
 
 }
@@ -415,39 +419,99 @@ async function preLoadTrack(track_index) {
     await getSong(track_list[track_index].path);
 }
 
-async function loadTrack(track_index, track) {
+async function loadTrack(track_index) {
     clearInterval(updateTimer);
     resetValues();
-    track.src = 'public/uploads/' + track_list[track_index].path;
-    track.load();
-    let playAndRemove = () => {
-        playTrack(track);
-        track.removeEventListener("canplaythrough", playAndRemove);
+    sourceTime = track_list[track_index].ts;
+    if (currentAudio) {
+        await loadSourceOne(track_index);
+    } else {
+        await loadSourceTwo(track_index);
     }
-    track.addEventListener("canplaythrough", playAndRemove);
-    
+
     track_name.textContent = track_list[track_index].name;
     track_artist.textContent = track_list[track_index].artist;
     now_playing.textContent = datajson[currentPlaylist].name;
     
-    updateTimer = setInterval(handleTime, 1000);
-    track.currentTime = track_list[track_index].ts;
-    
+    updateTimer = setInterval(handleTime, 1000);    
     assignFadingTrack = true;
 }
 
-
-
-function getFadingTrack() {
-    if (currentAudio)
-    return other_track;
+function stopSource() {
+    if(currentAudio)
+        sourceOne.stop();
     else
-    return curr_track;
+        sourceTwo.stop();
 }
 
+async function loadSourceOne(track_index) {
+    sourceOne = audioContext.createBufferSource();
+    try {
+        const response = await fetch('public/uploads/' + track_list[track_index].path);
+        const buffer = await response.arrayBuffer();
+        const decodedAudioBuffer = await audioContext.decodeAudioData(buffer);
+        sourceOne.buffer = decodedAudioBuffer;
+
+        // Connect and start playback
+        sourceOne.connect(audioContext.destination);
+        sourceOne.start(0, track_list[track_index].ts);
+    } catch (error) {
+        console.error('Error loading or decoding audio:', error);
+    }
+}
+
+async function loadSourceTwo(track_index) {
+    sourceTwo = audioContext.createBufferSource();
+    try {
+        const response = await fetch('public/uploads/' + track_list[track_index].path);
+        const buffer = await response.arrayBuffer();
+        const decodedAudioBuffer = await audioContext.decodeAudioData(buffer);
+        sourceTwo.buffer = decodedAudioBuffer;
+
+        // Connect and start playback
+        sourceTwo.connect(audioContext.destination);
+        sourceTwo.start(0, track_list[track_index].ts);
+    } catch (error) {
+        console.error('Error loading or decoding audio:', error);
+    }
+}
+
+async function createGainNodes() {
+    const currentGain = audioContext.createGain();
+    const nextGain = audioContext.createGain();
+    if (currentAudio) {
+        sourceOne.connect(currentGain);
+        sourceTwo.connect(nextGain);
+    } else {
+        sourceOne.connect(nextGain);
+        sourceTwo.connect(currentGain);
+    }
+    nextGain.connect(audioContext.destination);
+    currentGain.connect(audioContext.destination);
+    currentGain.gain.setValueAtTime(0, audioContext.currentTime);
+    await nextTrack();
+    currentGain.gain.linearRampToValueAtTime(-1, audioContext.currentTime + 10);
+    nextGain.gain.setValueAtTime(-1, audioContext.currentTime);
+    nextGain.gain.linearRampToValueAtTime(1, audioContext.currentTime + 10);
+}
+
+let flag = false;
+let otherflag = true;
 function handleTime() {
-    seekUpdate(getCurrentTrack());   
-    if (fading) {
+    if (isPlaying) {
+        sourceTime += 1;
+        seekUpdate(); 
+        if (sourceTime >= track_list[track_index].te - faderLength - 10 && otherflag) {
+            preLoadTrack(getNextTrack());
+            otherflag = false;
+        }
+        if (sourceTime >= track_list[track_index].te - faderLength && !flag) {
+            createGainNodes();
+            flag = true;
+            let updatetimer;
+        }
+    }
+   /* if (fading) {
         getFadingTrack().volume = Math.max(getFadingTrack().volume*0.7, .1);
         getCurrentTrack().volume = Math.min(getCurrentTrack().volume * 1.5, 1);
         if (fading && getFadingTrack().currentTime >= fadingTrackTe - 0.6) {
@@ -469,7 +533,7 @@ function handleTime() {
     if(getCurrentTrack().currentTime > track_list[track_index].te - 20 && preLoadFlag) {
         preLoadTrack(getNextTrack());
         preLoadFlag = false;
-    }
+    } */
 }
 
 function getNextTrack() {
@@ -480,17 +544,18 @@ function getNextTrack() {
         track_index_helper = 0;
     return track_id_finder(track_index_helper);
 }
-
-function seekUpdate(track) {
+function seekUpdate() {
     let seekPosition = 0;
-    if (!isNaN(curr_track.duration)) {
-        seekPosition = track.currentTime * (100 /  track_list[track_index].te);
+    console.log(sourceTime);
+    displayTime = sourceTime - track_list[track_index].ts
+    if (!isNaN(track_list[track_index].te)) {
+        seekPosition = Number(displayTime * (100 /  (track_list[track_index].te - track_list[track_index].ts)));
         seek_slider.value = seekPosition;
     
-        let currentMinutes = Math.floor(track.currentTime / 60);
-        let currentSeconds = Math.floor(track.currentTime - currentMinutes * 60);
-        let durationMinutes = Math.floor(track_list[track_index].te / 60); 
-        let durationSeconds = Math.floor(track_list[track_index].te - durationMinutes * 60);
+        let currentMinutes = Math.floor((displayTime) / 60);
+        let currentSeconds = Math.floor(displayTime - currentMinutes * 60);
+        let durationMinutes = Math.floor((track_list[track_index].te - track_list[track_index].ts) / 60); 
+        let durationSeconds = Math.floor(track_list[track_index].te - track_list[track_index].ts - durationMinutes * 60);
     
         if (currentSeconds < 10) { currentSeconds = "0" + currentSeconds; }
         if (durationSeconds < 10) { durationSeconds = "0" + durationSeconds; }
@@ -501,42 +566,27 @@ function seekUpdate(track) {
         total_duration.textContent = durationMinutes + ":" + durationSeconds;
     }
 }
-    
-function getCurrentTrack() {
-    if (currentAudio)
-        return curr_track;
-    else
-        return other_track;
-}
 
 function resetValues() {
+    sourceTime = 0;
     curr_time.textContent = "00:00";
     total_duration.textContent = "00:00";
     seek_slider.value = 0;
 }
 
 function playpauseTrack() {
-    if (!isPlaying) 
-        playTrack(getCurrentTrack());
-    else 
-        pauseTrack();
-}
-    
-function playTrack(trackToUse) {
-    trackToUse.curr_time = 0;
-    trackToUse.play();
-    isPlaying = true;        
-    playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
-}
-    
-function pauseTrack() {
-    getCurrentTrack().pause();
-    isPlaying = false;    
-    playpause_btn.innerHTML = '<i class="fa fa-play-circle fa-5x"></i>';
+    if (!isPlaying) {
+        audioContext.resume();    
+        isPlaying = true;
+        playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
+    } else {
+        audioContext.suspend();    
+        isPlaying = false;
+        playpause_btn.innerHTML = '<i class="fa fa-play-circle fa-5x"></i>';
+    }
 }
     
 async function nextTrack(resetFade) {
-    let trackToUse = getCurrentTrack();          
     let track_index_helper = track_list[track_index].index;
     if (track_index_helper < track_list.length - 1)
         track_index_helper += 1;
@@ -546,8 +596,10 @@ async function nextTrack(resetFade) {
     if (resetFade) {
         fading = false;
         await preLoadTrack(track_index);
+        stopSource();
     } 
-    loadTrack(track_index, trackToUse);
+    //await preLoadTrack(track_index);
+    await loadTrack(track_index);
 }
     
 async function prevTrack(resetFade) {                     
@@ -558,18 +610,31 @@ async function prevTrack(resetFade) {
         track_index_helper = track_list.length - 1;
 
     track_index = track_id_finder(track_index_helper);
-    getCurrentTrack().pause();
     if (resetFade) {
         fading = false;
     }
+    stopSource();
     await preLoadTrack(track_index);
-    loadTrack(track_index, getCurrentTrack());
+    loadTrack(track_index);
+}
+
+function getSourceOne() {
+    return sourceOne;
 }
 
 function seekTo() {
-    let track = getCurrentTrack();
-    let seekto = track_list[track_index].te * (seek_slider.value / 100);  
-    track.currentTime = seekto;
+    let seekto = track_list[track_index].ts + (track_list[track_index].te - track_list[track_index].ts) * (seek_slider.value / 100);  
+    if (track_list[track_index].ts >= 2)
+     seekto -= 2;
+    sourceOne.stop();
+    const buf = sourceOne.buffer;
+    sourceOne.disconnect();
+    sourceOne = audioContext.createBufferSource();
+    sourceOne.buffer = buf;
+    sourceOne.connect(audioContext.destination);
+    sourceOne.start(0, seekto);
+    sourceTime = parseInt(seekto);
+        
 }
     
 function handleListClick(index) {
@@ -691,13 +756,15 @@ function changeListTextColor(index) {
 let handleSongClick = async function(event) {     
     if (event != undefined && event.target.name >= 0) {
         fading = false;
-        other_track.pause();
-        curr_track.pause();
+
         track_list = datajson[viewPlaylistIndex].data;
         currentPlaylist = viewPlaylistIndex;          
         track_index = track_index_finder(event.target.name);
+        if (isPlaying)
+            stopSource();
         await preLoadTrack(track_index);
-        loadTrack(track_index, getCurrentTrack());
+        loadTrack(track_index);
+        isPlaying = true;
     }
 }
 
@@ -951,8 +1018,8 @@ function deletePlaylistHelper(index) {
     if (index === currentPlaylist) {
         currentPlaylist = 0;
         track_list = datajson[0].data;
-        curr_track.pause();
-        other_track.pause();
+        //curr_track.pause();
+        //other_track.pause();
     }
     playlist_list.removeChild(document.querySelector(".playlist-list-item" + index));
     for (let i = index + 1; i < datajson.length+1; i++) {

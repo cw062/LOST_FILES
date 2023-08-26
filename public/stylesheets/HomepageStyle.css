@@ -133,6 +133,7 @@ body {
   transition: opacity .2s;
   width: 90%;
   border-radius: 10px;
+  border: 1px solid #F072A9;
 }
   
   Modify the appearance of the slider thumb 
@@ -155,6 +156,8 @@ body {
     left: 7vw;
     -webkit-appearance: none;
     background-color: black;
+    border: 1px solid #F072A9;
+
   }
   
   input[type='range']::-webkit-slider-runnable-track {
