@@ -68,6 +68,7 @@ const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 let sourceOne = audioContext.createBufferSource();
 let sourceTwo = audioContext.createBufferSource();
 let sourceTime = 0;
+let seekedToEnd = false;
 
 
 
@@ -419,14 +420,16 @@ async function preLoadTrack(track_index) {
     await getSong(track_list[track_index].path);
 }
 
-async function loadTrack(track_index) {
+async function loadTrack(track_index, createNextGain) {
     clearInterval(updateTimer);
     resetValues();
     sourceTime = track_list[track_index].ts;
+    otherflag = true;
+    let x;
     if (currentAudio) {
-        await loadSourceOne(track_index);
+        x = await loadSourceOne(track_index, createNextGain);
     } else {
-        await loadSourceTwo(track_index);
+        x = await loadSourceTwo(track_index, createNextGain);
     }
 
     track_name.textContent = track_list[track_index].name;
@@ -435,16 +438,32 @@ async function loadTrack(track_index) {
     
     updateTimer = setInterval(handleTime, 1000);    
     assignFadingTrack = true;
+    return x;
 }
 
 function stopSource() {
-    if(currentAudio)
-        sourceOne.stop();
-    else
+
+    if(!currentAudio) {
         sourceTwo.stop();
+    }
+    else {
+        sourceOne.stop();
+    }
 }
 
-async function loadSourceOne(track_index) {
+function stopPrevSource() {
+    if(currentAudio) {
+        sourceTwo.stop();
+        sourceTwo.disconnect();
+    }
+    else {
+        console.log("called correct one");
+        sourceOne.stop();
+        sourceOne.disconnect();
+    }
+}
+
+async function loadSourceOne(track_index, createNextGain) {
     sourceOne = audioContext.createBufferSource();
     try {
         const response = await fetch('public/uploads/' + track_list[track_index].path);
@@ -455,12 +474,22 @@ async function loadSourceOne(track_index) {
         // Connect and start playback
         sourceOne.connect(audioContext.destination);
         sourceOne.start(0, track_list[track_index].ts);
+        if (!createNextGain) {
+            const nextGain = audioContext.createGain();
+            sourceOne.connect(nextGain);
+            nextGain.connect(audioContext.destination);
+            nextGain.gain.value = -1;
+            nextGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + faderLength);
+        }
+        playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
+        return "loaded source one";
+
     } catch (error) {
         console.error('Error loading or decoding audio:', error);
     }
 }
 
-async function loadSourceTwo(track_index) {
+async function loadSourceTwo(track_index, createNextGain) {
     sourceTwo = audioContext.createBufferSource();
     try {
         const response = await fetch('public/uploads/' + track_list[track_index].path);
@@ -469,8 +498,19 @@ async function loadSourceTwo(track_index) {
         sourceTwo.buffer = decodedAudioBuffer;
 
         // Connect and start playback
+        console.log("getsourceTwo");
         sourceTwo.connect(audioContext.destination);
         sourceTwo.start(0, track_list[track_index].ts);
+        if (!createNextGain) {
+            const nextGain = audioContext.createGain();
+            sourceTwo.connect(nextGain);
+            nextGain.connect(audioContext.destination);
+            nextGain.gain.value = -1;
+            nextGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + faderLength);
+        }
+        playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
+        return "loaded source two";
+
     } catch (error) {
         console.error('Error loading or decoding audio:', error);
     }
@@ -478,62 +518,45 @@ async function loadSourceTwo(track_index) {
 
 async function createGainNodes() {
     const currentGain = audioContext.createGain();
-    const nextGain = audioContext.createGain();
     if (currentAudio) {
         sourceOne.connect(currentGain);
-        sourceTwo.connect(nextGain);
     } else {
-        sourceOne.connect(nextGain);
         sourceTwo.connect(currentGain);
     }
-    nextGain.connect(audioContext.destination);
     currentGain.connect(audioContext.destination);
-    currentGain.gain.setValueAtTime(0, audioContext.currentTime);
-    await nextTrack();
-    currentGain.gain.linearRampToValueAtTime(-1, audioContext.currentTime + 10);
-    nextGain.gain.setValueAtTime(-1, audioContext.currentTime);
-    nextGain.gain.linearRampToValueAtTime(1, audioContext.currentTime + 10);
+    currentGain.gain.value = 0;
+    currentAudio = !currentAudio;
+    await nextTrack(false);
+    //console.log(x);
+    //console.log(nextGain.gain.value);
+    //nextGain.gain.value = 0;
+    //nextGain.gain.linearRampToValueAtTime(-1, audioContext.currentTime + 1);
+    //console.log(nextGain.gain.value);
+    //nextGain.gain.setValueAtTime(-1, audioContext.currentTime); //trying to get this to start the fading track on mute
+    currentGain.gain.linearRampToValueAtTime(-1, audioContext.currentTime + faderLength);
 }
 
 let flag = false;
 let otherflag = true;
 function handleTime() {
-    if (isPlaying) {
+    if (isPlaying && !seekedToEnd) {
+        if (sourceTime - track_list[track_index].ts > faderLength && fading) {
+            console.log("called");
+            stopPrevSource();
+            fading = false;
+        }
         sourceTime += 1;
         seekUpdate(); 
         if (sourceTime >= track_list[track_index].te - faderLength - 10 && otherflag) {
             preLoadTrack(getNextTrack());
             otherflag = false;
         }
-        if (sourceTime >= track_list[track_index].te - faderLength && !flag) {
+        if (sourceTime >= track_list[track_index].te - faderLength && !fading) {
             createGainNodes();
-            flag = true;
+            fading = true;
             let updatetimer;
         }
     }
-   /* if (fading) {
-        getFadingTrack().volume = Math.max(getFadingTrack().volume*0.7, .1);
-        getCurrentTrack().volume = Math.min(getCurrentTrack().volume * 1.5, 1);
-        if (fading && getFadingTrack().currentTime >= fadingTrackTe - 0.6) {
-            getFadingTrack().pause();
-            getFadingTrack().currentTime = 0;
-            fading = false;
-            getCurrentTrack().volume = 1;
-            preLoadFlag = true;
-        }
-    } else if (getCurrentTrack().currentTime >= track_list[track_index].te - faderLength) {
-        fading = true;
-        fadingTrackTe = track_list[track_index].te;
-        currentAudio = !currentAudio; 
-        getFadingTrack().volume *= 0.7;
-        nextTrack(false);
-        getCurrentTrack().volume = 0.2;
-    }
-
-    if(getCurrentTrack().currentTime > track_list[track_index].te - 20 && preLoadFlag) {
-        preLoadTrack(getNextTrack());
-        preLoadFlag = false;
-    } */
 }
 
 function getNextTrack() {
@@ -544,10 +567,10 @@ function getNextTrack() {
         track_index_helper = 0;
     return track_id_finder(track_index_helper);
 }
-function seekUpdate() {
+function seekUpdate() {  
     let seekPosition = 0;
     console.log(sourceTime);
-    displayTime = sourceTime - track_list[track_index].ts
+    const displayTime = sourceTime - track_list[track_index].ts
     if (!isNaN(track_list[track_index].te)) {
         seekPosition = Number(displayTime * (100 /  (track_list[track_index].te - track_list[track_index].ts)));
         seek_slider.value = seekPosition;
@@ -594,12 +617,21 @@ async function nextTrack(resetFade) {
     
     track_index = track_id_finder(track_index_helper);
     if (resetFade) {
+        console.log("in resetfade");
         fading = false;
         await preLoadTrack(track_index);
-        stopSource();
-    } 
-    //await preLoadTrack(track_index);
-    await loadTrack(track_index);
+        if (isPlaying) {
+            stopSource();
+            await loadTrack(track_index, resetFade);
+        } else {
+            stopSource();
+            await loadTrack(track_index, resetFade);
+            audioContext.resume();
+            isPlaying = true;
+        }
+    } else 
+        await loadTrack(track_index, resetFade);
+
 }
     
 async function prevTrack(resetFade) {                     
@@ -615,28 +647,49 @@ async function prevTrack(resetFade) {
     }
     stopSource();
     await preLoadTrack(track_index);
-    loadTrack(track_index);
+    await loadTrack(track_index, resetFade);
+    if (!isPlaying) {
+        audioContext.resume();
+        isPlaying = true;
+    }
 }
 
-function getSourceOne() {
-    return sourceOne;
-}
 
 function seekTo() {
+    seekedToEnd = true;
     let seekto = track_list[track_index].ts + (track_list[track_index].te - track_list[track_index].ts) * (seek_slider.value / 100);  
-    if (track_list[track_index].ts >= 2)
-     seekto -= 2;
-    sourceOne.stop();
-    const buf = sourceOne.buffer;
-    sourceOne.disconnect();
-    sourceOne = audioContext.createBufferSource();
-    sourceOne.buffer = buf;
-    sourceOne.connect(audioContext.destination);
-    sourceOne.start(0, seekto);
-    sourceTime = parseInt(seekto);
+    console.log(seekto + "seekto");
+    seekto -= 2;
+    if (seekto < 0)
+        seekto = 0;
+    if (seekto >= track_list[track_index].te - faderLength) {
+        nextTrack(true);
+    } else {
+        if (currentAudio) {
+            sourceOne.stop();
+            const buf = sourceOne.buffer;
+            sourceOne.disconnect();
+            sourceOne = audioContext.createBufferSource();
+            sourceOne.buffer = buf;
+            sourceOne.connect(audioContext.destination);
+            sourceOne.start(0, seekto);
+            sourceTime = parseInt(seekto);
+        } else {
+            console.log("in sourcetwo seekto");
+            sourceTwo.stop();
+            const buf = sourceTwo.buffer;
+            sourceTwo.disconnect();
+            sourceTwo = audioContext.createBufferSource();
+            sourceTwo.buffer = buf;
+            sourceTwo.connect(audioContext.destination);
+            sourceTwo.start(0, seekto);
+            sourceTime = parseInt(seekto);
+        }
+    }
+    seekedToEnd = false;
         
 }
-    
+    let firstclick = false;
 function handleListClick(index) {
     if (index != undefined) {
         displaySongs(index);
@@ -646,6 +699,10 @@ function handleListClick(index) {
         createSettingsFields(index);
         settings_title.textContent = datajson[index].name;
         viewPlaylistIndex = index;
+        if (!firstclick) {
+            document.getElementById("gotcha").play();
+            firstclick = true;
+        }
     }
 }
 
@@ -752,7 +809,7 @@ function changeListTextColor(index) {
     active.style.borderTop = "10px solid #F072A9";          
     active.style.borderBottom = "10px solid #F072A9";
 }
-
+let firstplay = false;
 let handleSongClick = async function(event) {     
     if (event != undefined && event.target.name >= 0) {
         fading = false;
@@ -760,11 +817,15 @@ let handleSongClick = async function(event) {
         track_list = datajson[viewPlaylistIndex].data;
         currentPlaylist = viewPlaylistIndex;          
         track_index = track_index_finder(event.target.name);
-        if (isPlaying)
+        if (firstplay)
             stopSource();
         await preLoadTrack(track_index);
-        loadTrack(track_index);
+        loadTrack(track_index, true);
+        if (audioContext.state === "suspended" && firstplay) {
+            audioContext.resume();
+        }
         isPlaying = true;
+        firstplay = true;
     }
 }
 
