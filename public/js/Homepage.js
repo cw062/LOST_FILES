@@ -1000,7 +1000,7 @@ function createSettingsFields(index) {          //this function is huge
         tsInputMin.addEventListener('focusout', function(e) {       
             let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
             let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-            if (start + faderLength >= end || start) {
+            if (start + faderLength >= end) {
                 tsInputMin.value = "00";
                 tsInputSec.value = "00";
             }
