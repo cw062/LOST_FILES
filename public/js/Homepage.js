@@ -201,11 +201,11 @@ dropZoneElement.addEventListener("click", (e) => {
         inputElement.click();
 });
 
-edit_list.addEventListener("drop", (event) => {
-    async function reorder() {
-        await reorderPlaylist();
-     }
-    reorder();
+edit_list.addEventListener("drop", async  (event) => {
+    await reorderPlaylist();
+    if(!otherflag) {
+        await preLoadTrack(getNextTrack());
+        }
     sendNewPlaylistOrder(datajson[viewPlaylistIndex].data);
     recolorPlaylist();   
 });
@@ -518,6 +518,7 @@ async function loadSourceTwo(track_index, createNextGain) {
 
 async function createGainNodes() {
     const currentGain = audioContext.createGain();
+    console.log(currentAudio);
     if (currentAudio) {
         sourceOne.connect(currentGain);
     } else {
