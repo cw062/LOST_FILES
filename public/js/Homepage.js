@@ -424,7 +424,6 @@ async function loadTrack(track_index, createNextGain) {
     clearInterval(updateTimer);
     resetValues();
     sourceTime = track_list[track_index].ts;
-    otherflag = true;
     let x;
     if (currentAudio) {
         x = await loadSourceOne(track_index, createNextGain);
@@ -539,7 +538,7 @@ async function createGainNodes() {
 
 let flag = false;
 let otherflag = true;
-function handleTime() {
+async function handleTime() {
     if (isPlaying && !seekedToEnd) {
         if (sourceTime - track_list[track_index].ts > faderLength && fading) {
             console.log("called");
@@ -548,12 +547,13 @@ function handleTime() {
         }
         sourceTime += 1;
         seekUpdate(); 
+        console.log(otherflag);
         if (sourceTime >= track_list[track_index].te - faderLength - 10 && otherflag) {
-            preLoadTrack(getNextTrack());
+            await preLoadTrack(getNextTrack());
             otherflag = false;
         }
         if (sourceTime >= track_list[track_index].te - faderLength && !fading) {
-            createGainNodes();
+            await createGainNodes();
             fading = true;
             let updatetimer;
         }
@@ -596,6 +596,7 @@ function resetValues() {
     curr_time.textContent = "00:00";
     total_duration.textContent = "00:00";
     seek_slider.value = 0;
+    otherflag = true;
 }
 
 function playpauseTrack() {
@@ -742,6 +743,9 @@ function handleSaveButton(playlistIndex) {
         let timeend = (temin * 60 ) + tesec;
         datajson[playlistIndex].data[i].ts = timestart;
         datajson[playlistIndex].data[i].te = timeend;
+        //if (i === track_index && currentPlaylist === viewPlaylistIndex && timeend >= sourceTime - faderLength) {
+          //  nextTrack(true);
+        //}
     }
 }
 
