@@ -95,7 +95,8 @@ const getDataFromDbHelper = async (uid) => {
                 path: trackRow[0].path,
                 ts: element.ts,
                 te: element.te,
-                duration: trackRow[0].duration
+                duration: trackRow[0].duration,
+                fade: element.fade
             });
 
         }

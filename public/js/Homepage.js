@@ -72,7 +72,6 @@ let seekedToEnd = false;
 
 
 
-
 let playlistIdentifier = document.createElement('input');
 playlistIdentifier.type = "hidden";
 playlistIdentifier.value = "";
@@ -82,7 +81,7 @@ let playlistPlayingIndex = 0;
 
 //event listeners
 window.addEventListener("DOMContentLoaded", function () {
-    loadData();
+    setup();
 });
 
 function createPlaylistDisplay() {
@@ -167,17 +166,18 @@ document.getElementById("new-playlist-form").addEventListener('submit', function
     bhl.style.backgroundColor = 'white';
     
     datajson.push({
-    name: form_data.get("new_playlist_name"),
-    data: []
+        name: form_data.get("new_playlist_name"),
+        data: []
     });
     
     let li = document.createElement("li");
     let x = datajson.length-1;
     li.className = "playlist-list-item" + x;
-    li.onclick = function () { handleListClick(x); };
+    li.setAttribute("onclick", "handleListClick("+x+")");
     li.textContent = form_data.get("new_playlist_name");
     playlist_list.appendChild(li);
     createCheckboxes();
+    handleListClick(x);
 });
 
 let submitPlayAndRemove = async () => {
@@ -274,6 +274,13 @@ async function loadData() {
     createCheckboxes();
 }
 
+async function setup() {
+    await loadData();
+    if(datajson.length != 0)
+        handleListClick(0);
+    console.log(datajson);
+}
+
 async function addTracksData() {
     let y = document.querySelectorAll(".checkboxes:checked")
     let checkedArray = [];
@@ -294,8 +301,9 @@ async function addTracksData() {
         image: "yeee.png",
         path: newPathAndID.pathFromServer,
         ts: 0,
-        te: Math.floor(dur)
-        };
+        te: Math.floor(dur),
+        fade: 5
+    };
         
         datajson[tempIndex].data.push(reformattedDataObj);
         if (tempIndex == viewPlaylistIndex) {
@@ -424,6 +432,7 @@ async function loadTrack(track_index, createNextGain) {
     clearInterval(updateTimer);
     resetValues();
     sourceTime = track_list[track_index].ts;
+    setFadeLength(track_list[track_index].fade);
     let x;
     if (currentAudio) {
         x = await loadSourceOne(track_index, createNextGain);
@@ -478,7 +487,7 @@ async function loadSourceOne(track_index, createNextGain) {
             sourceOne.connect(nextGain);
             nextGain.connect(audioContext.destination);
             nextGain.gain.value = -1;
-            nextGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + faderLength);
+            nextGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + getFadeLength());
         }
         playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
         return "loaded source one";
@@ -505,7 +514,7 @@ async function loadSourceTwo(track_index, createNextGain) {
             sourceTwo.connect(nextGain);
             nextGain.connect(audioContext.destination);
             nextGain.gain.value = -1;
-            nextGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + faderLength);
+            nextGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + getFadeLength());
         }
         playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
         return "loaded source two";
@@ -533,14 +542,14 @@ async function createGainNodes() {
     //nextGain.gain.linearRampToValueAtTime(-1, audioContext.currentTime + 1);
     //console.log(nextGain.gain.value);
     //nextGain.gain.setValueAtTime(-1, audioContext.currentTime); //trying to get this to start the fading track on mute
-    currentGain.gain.linearRampToValueAtTime(-1, audioContext.currentTime + faderLength);
+    currentGain.gain.linearRampToValueAtTime(-1, audioContext.currentTime + getFadeLength());
 }
 
 let flag = false;
 let otherflag = true;
 async function handleTime() {
     if (isPlaying && !seekedToEnd) {
-        if (sourceTime - track_list[track_index].ts > faderLength && fading) {
+        if (sourceTime - track_list[track_index].ts > getFadeLength() && fading) {
             console.log("called");
             stopPrevSource();
             fading = false;
@@ -548,16 +557,24 @@ async function handleTime() {
         sourceTime += 1;
         seekUpdate(); 
         console.log(otherflag);
-        if (sourceTime >= track_list[track_index].te - faderLength - 10 && otherflag) {
+        if (sourceTime >= track_list[track_index].te - getFadeLength() - 10 && otherflag) {
             await preLoadTrack(getNextTrack());
             otherflag = false;
         }
-        if (sourceTime >= track_list[track_index].te - faderLength && !fading) {
+        if (sourceTime >= track_list[track_index].te - getFadeLength() && !fading) {
             await createGainNodes();
             fading = true;
             let updatetimer;
         }
     }
+}
+
+function setFadeLength(fadeLength) {
+    faderLength = fadeLength;
+}
+
+function getFadeLength() {
+    return faderLength;
 }
 
 function getNextTrack() {
@@ -664,7 +681,7 @@ function seekTo() {
     seekto -= 2;
     if (seekto < 0)
         seekto = 0;
-    if (seekto >= track_list[track_index].te - faderLength) {
+    if (seekto >= track_list[track_index].te - getFadeLength()) {
         nextTrack(true);
     } else {
         if (currentAudio) {
@@ -839,42 +856,45 @@ function displaySongs(index) {
         edit_list.removeChild(edit_list.lastChild);
         playlistData.removeChild(playlistData.lastChild);
     }
-    let displayingList = datajson[index].data;
-    for (let i = 0; i < displayingList.length; i++) {
-        const elem = displayingList.find(o => o.index === i);
-        let li = document.createElement('li');
-        li.className = "playlist-songs-item";
-        li.innerText = elem.name;
-        li.name = elem.id;
-        let list_span = document.createElement("span");
-        list_span.textContent = elem.artist;
-        list_span.className = "artist-name-span";
-        list_span.name = elem.id;
-        li.appendChild(list_span);
-        let editli = document.createElement("li");
-        let trackArtist = document.createElement("div");
-        trackArtist.className = "settingsInfo";
-        editli.className = "edit-songs-item";
-        editli.draggable = true;
-        editli.id = elem.id; 
-        let track_span = document.createElement("span");
-        track_span.textContent = elem.name;
-        track_span.className = "track-name-span";
-        trackArtist.appendChild(track_span);
-        let artist_span = document.createElement("span");
-        artist_span.textContent = elem.artist;
-        artist_span.className = "artist-name-span";
-        trackArtist.appendChild(artist_span);
-        editli.appendChild(trackArtist);
-        if (i %2 == 0) {                                                                     
-            li.style.color = 'white';
-            li.style.background = '#1e1e1e';
-            editli.style.backgroundColor = '#1e1e1e';
+    console.log(datajson[index]);
+    if (datajson[index].data != 0) {
+        let displayingList = datajson[index].data;
+        for (let i = 0; i < displayingList.length; i++) {
+            const elem = displayingList.find(o => o.index === i);
+            let li = document.createElement('li');
+            li.className = "playlist-songs-item";
+            li.innerText = elem.name;
+            li.name = elem.id;
+            let list_span = document.createElement("span");
+            list_span.textContent = elem.artist;
+            list_span.className = "artist-name-span";
+            list_span.name = elem.id;
+            li.appendChild(list_span);
+            let editli = document.createElement("li");
+            let trackArtist = document.createElement("div");
+            trackArtist.className = "settingsInfo";
+            editli.className = "edit-songs-item";
+            editli.draggable = true;
+            editli.id = elem.id; 
+            let track_span = document.createElement("span");
+            track_span.textContent = elem.name;
+            track_span.className = "track-name-span";
+            trackArtist.appendChild(track_span);
+            let artist_span = document.createElement("span");
+            artist_span.textContent = elem.artist;
+            artist_span.className = "artist-name-span";
+            trackArtist.appendChild(artist_span);
+            editli.appendChild(trackArtist);
+            if (i %2 == 0) {                                                                     
+                li.style.color = 'white';
+                li.style.background = '#1e1e1e';
+                editli.style.backgroundColor = '#1e1e1e';
+            }
+            edit_list.appendChild(editli);
+            playlistData.appendChild(li);
         }
-        edit_list.appendChild(editli);
-        playlistData.appendChild(li);
+        playlistData.addEventListener('click', handleSongClick, true);
     }
-    playlistData.addEventListener('click', handleSongClick, true);
 }
 
 function track_id_finder(track_index_number) {
@@ -901,7 +921,7 @@ function createSettingsFields(index) {          //this function is huge
         let timestart = songobj.ts;
         let timeend = songobj.te;
         let songid = songobj.id;
-
+        let fl = songobj.fade;
         const tsInputMin = document.createElement('input');
         tsInputMin.type = "text";
         tsInputMin.classList ="tsmin";
@@ -1000,7 +1020,7 @@ function createSettingsFields(index) {          //this function is huge
         tsInputMin.addEventListener('focusout', function(e) {       
             let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
             let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-            if (start + faderLength >= end) {
+            if (start + songobj.fade >= end) {
                 tsInputMin.value = "00";
                 tsInputSec.value = "00";
             }
@@ -1010,7 +1030,7 @@ function createSettingsFields(index) {          //this function is huge
         tsInputSec.addEventListener('focusout', function(e) {
             let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
             let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-            if (start + faderLength >= end || formatNumber(tsInputSec.value) > 59) {
+            if (start + songonj.fade >= end || formatNumber(tsInputSec.value) > 59) {
                 tsInputMin.value = "00";
                 tsInputSec.value = "00";
             }
@@ -1019,7 +1039,7 @@ function createSettingsFields(index) {          //this function is huge
         teInputMin.addEventListener('focusout', function() {   
             let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
             let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-            if (start + faderLength >= end || end > songobj.duration) {
+            if (start + songobj.fade >= end || end > songobj.duration) {
                 teInputMin.value = reverseFormatNumber(Math.floor(songobj.duration / 60));
                 teInputSec.value = reverseFormatNumber(Math.floor(songobj.duration % 60));
             } 
@@ -1028,7 +1048,7 @@ function createSettingsFields(index) {          //this function is huge
         teInputSec.addEventListener('focusout', function() {    
             let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
             let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-            if (start + faderLength >= end || end > songobj.duration || formatNumber(teInputSec.value) > 59) {
+            if (start + songobj.fade >= end || end > songobj.duration || formatNumber(teInputSec.value) > 59) {
                 teInputMin.value = reverseFormatNumber(Math.floor(songobj.duration / 60));
                 teInputSec.value = reverseFormatNumber(Math.floor(songobj.duration % 60));
             }
@@ -1063,11 +1083,13 @@ function deleteSongFromPlaylist(id, djIndex) {
 }
 
 function deletePlaylist() {
-    let index = viewPlaylistIndex;
-    let confirmResult = confirm("Are you sure you want to delete playlist " + datajson[index].name + "? Any tracks that dont belong to other playlists will be completely deleted from the database.");
-    if (confirmResult) {
-        sendDeletePlaylistRequest(document.querySelector(".playlist-list-item" + index).textContent);
-        deletePlaylistHelper(index);        
+    if (datajson.length != 0) {
+        let index = viewPlaylistIndex;
+        let confirmResult = confirm("Are you sure you want to delete playlist " + datajson[index].name + "? Any tracks that dont belong to other playlists will be completely deleted from the database.");
+        if (confirmResult) {
+            sendDeletePlaylistRequest(document.querySelector(".playlist-list-item" + index).textContent);
+            deletePlaylistHelper(index);        
+        }
     }
 }
 
@@ -1080,25 +1102,27 @@ function deletePlaylistHelper(index) {
     }
     datajson = newArray;
     viewPlaylistIndex = 0; //this needs work
-    handleListClick(0);
-    if (index === currentPlaylist) {
-        currentPlaylist = 0;
-        track_list = datajson[0].data;
-        //curr_track.pause();
-        //other_track.pause();
-    }
     playlist_list.removeChild(document.querySelector(".playlist-list-item" + index));
-    for (let i = index + 1; i < datajson.length+1; i++) {
-        let num = i - 1;
-        let element = document.querySelector(".playlist-list-item" + i);
-        element.removeAttribute("onclick");
-        element.addEventListener("click", () => {
-            handleListClick(num);
-        });
-        element.className = "playlist-list-item" + num;
+    settings_title.textContent = "";
+    if(datajson != 0) {
+        handleListClick(0);
+        if (index === currentPlaylist) {
+            currentPlaylist = 0;
+            track_list = datajson[0].data;
+            //curr_track.pause();
+            //other_track.pause();
+        }
+        console.log(index);
+        console.log(datajson.length);
+        for (let i = index + 1; i < datajson.length+1; i++) {
+            let num = i - 1;
+            let element = document.querySelector(".playlist-list-item" + i);
+            element.removeAttribute("onclick");
+            element.setAttribute("onclick", "handleListClick("+num+")");
+            element.className = "playlist-list-item" + num;
+        }
+        createCheckboxes();
     }
-    createCheckboxes();
-    
     
 }
 

@@ -374,14 +374,15 @@ const insertPlaylistIntoDB = (uid, name) => {
 }
 //inserts a the playlist metadata into the database, true on success, false on fail
 const insertIntoPlaylistDataDb = (pid, sid, uid, index, ts, te) => {
+  const fade = 5;
   return new Promise(resolve => {
     pool.getConnection(function(err, connection) {
       if(err) {
         console.error("Database connection failed" + err.stack);
         return;
       }
-      let sqlstring = 'INSERT INTO Playlist_Data (pid, sid, uid, song_index, ts, te) VALUES (?)';
-      let values = [pid, sid, uid, index, ts, te];
+      let sqlstring = 'INSERT INTO Playlist_Data (pid, sid, uid, song_index, ts, te, fade) VALUES (?)';
+      let values = [pid, sid, uid, index, ts, te, fade];
       connection.query(sqlstring, [values], function (err, result) {
         if(err) {
           resolve(false);

@@ -55,13 +55,13 @@ const initialRequest = (req, res) => {
         req.session.newUser = false;
         req.session.isLoggedIn = true;
         loggedInUsers.push(req.session.user);
-        res.render('Homepage');
+        res.redirect('/Homepage');
     } else if (req.session.isLoggedIn) {
-        res.render('Homepage');  
+        res.redirect('/Homepage');  
     } else if (req.session.user && !loggedInUsers.includes(req.session.user)) {
         loggedInUsers.push(req.session.user);
         req.session.isLoggedIn = true;
-        res.render('Homepage');  
+        res.redirect('/Homepage');  
     } else {
         res.redirect('/Login');
     }   

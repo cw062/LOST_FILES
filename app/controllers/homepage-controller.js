@@ -11,7 +11,8 @@ const { uploadS3,
         writeSongToTempStorage,
         deleteSongFromTempStorage } = require('../services/homepage-service');
 const { insertPlaylistIntoDB } = require('../database/access-database'); 
-const renderHomepage = (req, res) => {
+
+const renderHomepage = async (req, res) => {
     res.render('Homepage');
 }
 
