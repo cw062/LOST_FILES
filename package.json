@@ -4,7 +4,7 @@
   "description": "Music upload, player, and playlist editor",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "web": "node server.js"
   },
   "author": "Calder West",
   "license": "ISC",
@@ -41,6 +41,7 @@
     "babel-cli": "^6.26.0"
   },
   "engines": {
-    "node": "18.16.0"
+    "node": "18.16.0",
+    "npm": "9.5.1"
   }
 }
