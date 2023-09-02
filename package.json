@@ -4,7 +4,7 @@
   "description": "Music upload, player, and playlist editor",
   "main": "server.js",
   "scripts": {
-    "web": "node server.js"
+    "start": "node server.js"
   },
   "author": "Calder West",
   "license": "ISC",
