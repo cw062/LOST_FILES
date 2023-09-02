@@ -8,8 +8,8 @@ const { addTrack,
         newTrackOrder,
         deleteSong,
         deletePlaylist, 
-        logoutRequest,
-        renderHomepage } = require('../controllers/homepage-controller');
+        renderHomepage,
+        updateFade } = require('../controllers/homepage-controller');
 
 router.get('/', renderHomepage);
 router.post('/AddTrack', addTrack);
@@ -20,5 +20,6 @@ router.post('/GetSong', getSong);
 router.post('/NewTrackOrder', newTrackOrder);
 router.post('/DeleteSong', deleteSong);
 router.post('/DeletePlaylist', deletePlaylist);
+router.post('/UpdateFade', updateFade);
 
 module.exports = router;

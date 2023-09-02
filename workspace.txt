@@ -205,3 +205,27 @@ and (min-device-width: 500px)
           <li class="playlist-list-item<%=index%>" onclick="handleListClick( <%= index %> )"><%= element.name %></li>
         <% }); %>
 
+
+async function loadTrack(track_index, track, source) {
+    clearInterval(updateTimer);
+    resetValues();
+   if (isPlaying)
+    source.stop();
+    isPlaying = true;
+    source.disconnect();
+    source = audioContext.createBufferSource();
+    fetch('public/uploads/' + track_list[track_index].path) // Replace with your audio file's path
+        .then(response => response.arrayBuffer())
+        .then(buffer => {
+            audioContext.decodeAudioData(buffer, decodedAudioBuffer => {
+            // `decodedAudioBuffer` is the decoded audio data in an AudioBuffer object
+            // You can now use this `decodedAudioBuffer` for further processing
+                source.buffer = decodedAudioBuffer;
+
+            });
+        })
+        .catch(error => {
+            console.error('Error loading or decoding audio:', error);
+        });
+        source.connect(audioContext.destination);
+        source.start(track_list[track_index].ts);

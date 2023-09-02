@@ -211,6 +211,29 @@ const updateTimeValues = (ts, te, song_index, pid) => {
     });
   });
 }
+
+const updateFadeDb = (id, value) => {
+  return new Promise(resolve => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        console.error("Database connection failed" + err.stack);
+        return;
+      }
+      let sqlstring = 'UPDATE Playlist_Data set fade = ? WHERE sid = ' + id + ';';
+      let values = [value];
+      connection.query(sqlstring, [values], function (err, result) {
+        if(err) {
+          console.log(err);
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    connection.release();
+    });
+  });
+}
+
 //updates the song_index of a track 
 const updateOrderInDB = (id, index, pid) => {
   return new Promise(resolve => {
@@ -396,6 +419,8 @@ const insertIntoPlaylistDataDb = (pid, sid, uid, index, ts, te) => {
 }
 
 
+
+
 module.exports = {
     checkDatabaseForUsername,
     storeUserInfo,
@@ -415,6 +440,7 @@ module.exports = {
     deleteSongfromPlaylistData,
     updateOrderInDB,
     updateSongIndex,
-    updateTimeValues
+    updateTimeValues,
+    updateFadeDb
 
 };

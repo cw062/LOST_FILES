@@ -68,10 +68,12 @@ const initialRequest = (req, res) => {
 }
 
 
+
+
 module.exports = {
     serveLoginPage,
     handleLoginAttempt,
     logoutRequest,
-    initialRequest
+    initialRequest,
 
 };

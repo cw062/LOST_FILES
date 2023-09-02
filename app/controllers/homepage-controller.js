@@ -10,10 +10,13 @@ const { uploadS3,
         insertTrackIntoDbHelper, 
         writeSongToTempStorage,
         deleteSongFromTempStorage } = require('../services/homepage-service');
-const { insertPlaylistIntoDB } = require('../database/access-database'); 
+const { insertPlaylistIntoDB, updateFadeDb } = require('../database/access-database'); 
 
 const renderHomepage = async (req, res) => {
-    res.render('Homepage');
+    if (req.session.isLoggedIn)
+        res.render('Homepage');
+    else 
+        res.redirect('/Login');
 }
 
 const addTrack = async (req, res) => {
@@ -48,14 +51,18 @@ const updateTimeValues = (req, res) => {
 
 const getSong = async (req, res) => {
     const newPath = JSON.parse(JSON.stringify(req.body)).path;
+    let response;
+    console.log(req.session.path);
+    console.log(newPath);
     if (newPath != req.session.path) {
         if(req.session.path != undefined)
             deleteSongFromTempStorage(req.session.path);
         req.session.path = newPath;
         const song = await downloadS3(newPath);
-        let response = await writeSongToTempStorage(JSON.parse(JSON.stringify(req.body)).path, song.Body);
+        response = await writeSongToTempStorage(JSON.parse(JSON.stringify(req.body)).path, song.Body);
+        console.log(response);
     }
-    res.json({success: true});
+    res.json({response: response});
 }
 
 const newTrackOrder = (req, res) => {
@@ -73,6 +80,11 @@ const deletePlaylist = (req, res) => {
     res.json({success: true});
 }
 
+const updateFade = (req, res) => {
+    updateFadeDb(JSON.stringify(JSON.parse(req.body.id)), JSON.stringify(JSON.parse(req.body.value)));
+    res.send({success: true});
+}
+
 module.exports = {
     addTrack,
     getAllData,
@@ -82,7 +94,8 @@ module.exports = {
     newTrackOrder,
     deleteSong,
     deletePlaylist,
-    renderHomepage
+    renderHomepage,
+    updateFade
 
 };
 

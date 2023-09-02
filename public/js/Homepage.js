@@ -69,6 +69,7 @@ let sourceOne = audioContext.createBufferSource();
 let sourceTwo = audioContext.createBufferSource();
 let sourceTime = 0;
 let seekedToEnd = false;
+let firstplay = false;
 
 
 
@@ -302,15 +303,16 @@ async function addTracksData() {
         path: newPathAndID.pathFromServer,
         ts: 0,
         te: Math.floor(dur),
-        fade: 5
+        fade: 5,
+        duration: Math.floor(dur)
     };
         
         datajson[tempIndex].data.push(reformattedDataObj);
         if (tempIndex == viewPlaylistIndex) {
-        displaySongs(tempIndex);
-        changeListTextColor(tempIndex);
-        addDrag();
-        createSettingsFields(tempIndex);
+            displaySongs(tempIndex);
+            changeListTextColor(tempIndex);
+            addDrag();
+            createSettingsFields(tempIndex);
         }
     });
     document.getElementById("add_tracks_form").reset();
@@ -389,6 +391,16 @@ function sendDeletePlaylistRequest(name) {
     ajax.send(formData);
 }
 
+function sendNewFadeValue(id, value) {
+    let ajax = new XMLHttpRequest();
+    ajax.open("POST", "/Homepage/UpdateFade", true);
+    ajax.contentType = 'application/json'
+    const formData = new FormData();
+    formData.append('id', id);
+    formData.append('value', value);
+    ajax.send(formData);
+}
+
 //Functions---------------------------------------------------------------------------------------------------------------------------------------------Functions
 
 function changeView(nextView, prevView) {
@@ -432,6 +444,7 @@ async function loadTrack(track_index, createNextGain) {
     clearInterval(updateTimer);
     resetValues();
     sourceTime = track_list[track_index].ts;
+    console.log(track_list[track_index].fade);
     setFadeLength(track_list[track_index].fade);
     let x;
     if (currentAudio) {
@@ -439,7 +452,7 @@ async function loadTrack(track_index, createNextGain) {
     } else {
         x = await loadSourceTwo(track_index, createNextGain);
     }
-
+    console.log(x);
     track_name.textContent = track_list[track_index].name;
     track_artist.textContent = track_list[track_index].artist;
     now_playing.textContent = datajson[currentPlaylist].name;
@@ -450,12 +463,13 @@ async function loadTrack(track_index, createNextGain) {
 }
 
 function stopSource() {
-
-    if(!currentAudio) {
-        sourceTwo.stop();
-    }
-    else {
-        sourceOne.stop();
+    if (isPlaying) {
+        if(!currentAudio) {
+            sourceTwo.stop();
+        }
+        else {
+            sourceOne.stop();
+        }
     }
 }
 
@@ -470,10 +484,12 @@ function stopPrevSource() {
         sourceOne.disconnect();
     }
 }
-
+let safe = true;
 async function loadSourceOne(track_index, createNextGain) {
     sourceOne = audioContext.createBufferSource();
+    isPlaying = false;
     try {
+        safe = false;
         const response = await fetch('public/uploads/' + track_list[track_index].path);
         const buffer = await response.arrayBuffer();
         const decodedAudioBuffer = await audioContext.decodeAudioData(buffer);
@@ -490,16 +506,23 @@ async function loadSourceOne(track_index, createNextGain) {
             nextGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + getFadeLength());
         }
         playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
+        isPlaying = true;
+        safe = true;
         return "loaded source one";
 
     } catch (error) {
+        
         console.error('Error loading or decoding audio:', error);
+        return "error decode";
     }
 }
 
 async function loadSourceTwo(track_index, createNextGain) {
     sourceTwo = audioContext.createBufferSource();
+    isPlaying = false;
+    
     try {
+        safe = false;
         const response = await fetch('public/uploads/' + track_list[track_index].path);
         const buffer = await response.arrayBuffer();
         const decodedAudioBuffer = await audioContext.decodeAudioData(buffer);
@@ -517,10 +540,13 @@ async function loadSourceTwo(track_index, createNextGain) {
             nextGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + getFadeLength());
         }
         playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
+        isPlaying = true;
+        safe = true;
         return "loaded source two";
 
     } catch (error) {
         console.error('Error loading or decoding audio:', error);
+        return "error decode";
     }
 }
 
@@ -554,7 +580,6 @@ async function handleTime() {
             stopPrevSource();
             fading = false;
         }
-        sourceTime += 1;
         seekUpdate(); 
         console.log(otherflag);
         if (sourceTime >= track_list[track_index].te - getFadeLength() - 10 && otherflag) {
@@ -566,6 +591,8 @@ async function handleTime() {
             fading = true;
             let updatetimer;
         }
+        sourceTime += 1;
+
     }
 }
 
@@ -617,59 +644,64 @@ function resetValues() {
 }
 
 function playpauseTrack() {
-    if (!isPlaying) {
-        audioContext.resume();    
-        isPlaying = true;
-        playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
-    } else {
-        audioContext.suspend();    
-        isPlaying = false;
-        playpause_btn.innerHTML = '<i class="fa fa-play-circle fa-5x"></i>';
+    if (firstplay) {
+        if (!isPlaying) {
+            audioContext.resume();    
+            isPlaying = true;
+            playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
+        } else {
+            audioContext.suspend();    
+            isPlaying = false;
+            playpause_btn.innerHTML = '<i class="fa fa-play-circle fa-5x"></i>';
+        }
     }
 }
     
 async function nextTrack(resetFade) {
-    let track_index_helper = track_list[track_index].index;
-    if (track_index_helper < track_list.length - 1)
-        track_index_helper += 1;
-    else track_index_helper = 0;
-    
-    track_index = track_id_finder(track_index_helper);
-    if (resetFade) {
-        console.log("in resetfade");
-        fading = false;
-        await preLoadTrack(track_index);
-        if (isPlaying) {
-            stopSource();
+    if (safe && firstplay) {
+        let track_index_helper = track_list[track_index].index;
+        if (track_index_helper < track_list.length - 1)
+            track_index_helper += 1;
+        else track_index_helper = 0;
+        
+        track_index = track_id_finder(track_index_helper);
+        if (resetFade) {
+            console.log("in resetfade");
+            fading = false;
+            await preLoadTrack(track_index);
+            if (isPlaying) {
+                console.log("made it");
+                stopSource();
+                await loadTrack(track_index, resetFade);
+            } else {
+                stopSource();
+                await loadTrack(track_index, resetFade);
+                audioContext.resume();
+            }
+        } else 
             await loadTrack(track_index, resetFade);
-        } else {
-            stopSource();
-            await loadTrack(track_index, resetFade);
-            audioContext.resume();
-            isPlaying = true;
-        }
-    } else 
-        await loadTrack(track_index, resetFade);
+    }
 
 }
     
 async function prevTrack(resetFade) {                     
-    let track_index_helper = track_list[track_index].index; 
-    if (track_index_helper > 0)
-        track_index_helper -= 1;
-    else 
-        track_index_helper = track_list.length - 1;
+    if (safe && firstplay) {
+        let track_index_helper = track_list[track_index].index; 
+        if (track_index_helper > 0)
+            track_index_helper -= 1;
+        else 
+            track_index_helper = track_list.length - 1;
 
-    track_index = track_id_finder(track_index_helper);
-    if (resetFade) {
-        fading = false;
-    }
-    stopSource();
-    await preLoadTrack(track_index);
-    await loadTrack(track_index, resetFade);
-    if (!isPlaying) {
-        audioContext.resume();
-        isPlaying = true;
+        track_index = track_id_finder(track_index_helper);
+        if (resetFade) {
+            fading = false;
+        }
+        stopSource();
+        await preLoadTrack(track_index);
+        await loadTrack(track_index, resetFade);
+        if (!isPlaying) {
+            audioContext.resume();
+        }
     }
 }
 
@@ -708,7 +740,6 @@ function seekTo() {
     seekedToEnd = false;
         
 }
-    let firstclick = false;
 function handleListClick(index) {
     if (index != undefined) {
         displaySongs(index);
@@ -718,10 +749,6 @@ function handleListClick(index) {
         createSettingsFields(index);
         settings_title.textContent = datajson[index].name;
         viewPlaylistIndex = index;
-        if (!firstclick) {
-            document.getElementById("gotcha").play();
-            firstclick = true;
-        }
     }
 }
 
@@ -831,7 +858,7 @@ function changeListTextColor(index) {
     active.style.borderTop = "10px solid #F072A9";          
     active.style.borderBottom = "10px solid #F072A9";
 }
-let firstplay = false;
+
 let handleSongClick = async function(event) {     
     if (event != undefined && event.target.name >= 0) {
         fading = false;
@@ -846,7 +873,6 @@ let handleSongClick = async function(event) {
         if (audioContext.state === "suspended" && firstplay) {
             audioContext.resume();
         }
-        isPlaying = true;
         firstplay = true;
     }
 }
@@ -922,6 +948,24 @@ function createSettingsFields(index) {          //this function is huge
         let timeend = songobj.te;
         let songid = songobj.id;
         let fl = songobj.fade;
+
+        const startSpan = document.createElement("span");
+        const endSpan = document.createElement("span");
+        const fadeSpan = document.createElement("span");
+        const min = reverseFormatNumber(Math.floor(songobj.duration / 60));
+        const sec = reverseFormatNumber(songobj.duration % 60);
+        const inputsDiv = document.createElement("div");
+        inputsDiv.className = "range-inputs-container";
+        startSpan.className = "playback-range";
+        endSpan.className = "playback-label";
+        fadeSpan.className = "fade-label";
+        startSpan.textContent = "00:00 - " + min + ":" + sec + "";
+        endSpan.textContent = "Playback";
+        fadeSpan.textContent = "Fade";
+        const fadeInput = document.createElement("input");
+        fadeInput.type = "number";
+        fadeInput.className = "fadeInput" + songobj.id;
+        fadeInput.value = fl;
         const tsInputMin = document.createElement('input');
         tsInputMin.type = "text";
         tsInputMin.classList ="tsmin";
@@ -976,26 +1020,41 @@ function createSettingsFields(index) {          //this function is huge
         if (teInputSec.value < 10)
             teInputSec.value = "0" + teInputSec.value;
     
-        listSpan.appendChild(tsInputMin);
-        listSpan.appendChild(colon);
-        listSpan.appendChild(tsInputSec);
-        listSpan.appendChild(hyphen);
-        listSpan.appendChild(teInputMin);
-        listSpan.appendChild(colon2);
-        listSpan.appendChild(teInputSec);
+        inputsDiv.appendChild(tsInputMin);
+        inputsDiv.appendChild(colon);
+        inputsDiv.appendChild(tsInputSec);
+        inputsDiv.appendChild(hyphen);
+        inputsDiv.appendChild(teInputMin);
+        inputsDiv.appendChild(colon2);
+        inputsDiv.appendChild(teInputSec);
+        listSpan.appendChild(inputsDiv);
+        listSpan.appendChild(fadeInput);
+        listSpan.appendChild(startSpan);
+        listSpan.appendChild(endSpan);
+        listSpan.appendChild(fadeSpan);
         edit_list_items[i].appendChild(deleteIcon);
         edit_list_items[i].appendChild(listSpan);
         const regex = new RegExp("^[0-9]*$");
 
         deleteIcon.addEventListener("click", (event) => {       
-            let obj = datajson[viewPlaylistIndex].data[dataJsonIndexFinder(viewPlaylistIndex, Number(event.target.id.substring(12)))];                                            
-            let result = confirm("Are you sure you want to delete " + obj.name + " from " + datajson[viewPlaylistIndex].name + "? If it does not belong to any other playlist, it will be deleted from the database entirely.");
-            if (result) {
-                sendDeleteSongRequest(Number(event.target.id.substring(12)), datajson[viewPlaylistIndex].name, datajson[viewPlaylistIndex].data.length, obj.path);
-                deleteSongFromPlaylist(Number(event.target.id.substring(12)), viewPlaylistIndex);
+           // console.log(track_list[track_index].id);
+           // console.log(event.target.id.substring(12));
+            if (track_list != 0 && track_list[track_index].id == event.target.id.substring(12)) {
+                alert("Cannot delete song that is currently playing!");
+            } else {
+                let obj = datajson[viewPlaylistIndex].data[dataJsonIndexFinder(viewPlaylistIndex, Number(event.target.id.substring(12)))];                                            
+                let result = confirm("Are you sure you want to delete " + obj.name + " from " + datajson[viewPlaylistIndex].name + "? If it does not belong to any other playlist, it will be deleted from the database entirely.");
+                if (result) {
+                    sendDeleteSongRequest(Number(event.target.id.substring(12)), datajson[viewPlaylistIndex].name, datajson[viewPlaylistIndex].data.length, obj.path);
+                    deleteSongFromPlaylist(Number(event.target.id.substring(12)), viewPlaylistIndex);
 
+                }
             }
         });
+
+        fadeInput.addEventListener("change", function(e) {
+            sendNewFadeValue(e.target.className.substring(9), fadeInput.value);
+        })
         
         tsInputMin.addEventListener("beforeinput", (event) => {
             if (event.data != null && !regex.test(event.data)) 
@@ -1062,6 +1121,8 @@ function dataJsonIndexFinder(index, id) {
     return datajson[index].data.findIndex(o => o.id == id);
 }
 
+
+
 function deleteSongFromPlaylist(id, djIndex) {
     let removeIndex = datajson[djIndex].data[dataJsonIndexFinder(djIndex, id)].index;
     let array = datajson[djIndex].data;
@@ -1080,6 +1141,11 @@ function deleteSongFromPlaylist(id, djIndex) {
     changeListTextColor(viewPlaylistIndex);
     addDrag();
     createSettingsFields(viewPlaylistIndex);
+    if (viewPlaylistIndex === currentPlaylist) {
+        let tempId = track_list[track_index].id;
+        track_list = datajson[viewPlaylistIndex].data;
+        track_index = track_index_finder(tempId);
+    }
 }
 
 function deletePlaylist() {
