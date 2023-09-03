@@ -53,7 +53,7 @@ const logoutRequest = (req, res) => {
 }
 
 const initialRequest = (req, res) => {
-    console.log(req.session);
+    console.log(req.session.isLoggedIn);
     console.log(loggedInUsers);
     if(req.session.user && req.session.newUser) {
         console.log("1");
