@@ -13,6 +13,7 @@ const { uploadS3,
 const { insertPlaylistIntoDB, updateFadeDb } = require('../database/access-database'); 
 
 const renderHomepage = async (req, res) => {
+    console.log("hello from render homepage");
     if (req.session.isLoggedIn)
         res.render('Homepage');
     else {

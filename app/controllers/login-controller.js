@@ -7,6 +7,7 @@ let loggedInUsers = [];
 
 
 const serveLoginPage = (req, res) => {
+    console.log("hello from serveloginpage");
     res.render('Login', {data: "No message"});
     console.log(req.session);
 };
@@ -14,7 +15,7 @@ const serveLoginPage = (req, res) => {
 
 const handleLoginAttempt = async (req, res) => {
     let dbrow = await checkDatabaseForUsername(req.body.username);
-    
+    console.log("hello from handleloginattampt");
     if (dbrow == 0) {
         res.render('Login', {data: 'Username Incorrect Try Again'});
     }
@@ -31,6 +32,8 @@ const handleLoginAttempt = async (req, res) => {
             if (err)
                 return next(err)
         });
+        req.session.isLoggedIn = true;
+        loggedInUsers.push(req.session.user);
         res.redirect('/Homepage');
     }
 }
@@ -60,6 +63,7 @@ const initialRequest = (req, res) => {
     } else if (req.session.isLoggedIn) {
         res.redirect('/Homepage');  
     } else if (req.session.user && !loggedInUsers.includes(req.session.user)) {
+        console.log("hello from this place");
         loggedInUsers.push(req.session.user);
         req.session.isLoggedIn = true;
         res.redirect('/Homepage');  
