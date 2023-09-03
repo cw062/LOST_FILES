@@ -25,10 +25,11 @@ const handleLoginAttempt = async (req, res) => {
         res.render('Login', {data: 'User Is Already Logged In on Another Device'});
     }
     else {
+        console.log("goog");
         req.session.user = dbrow[0].uid;
         req.session.save(function (err) {
             if (err)
-            return next(err)
+                return next(err)
         });
         res.redirect('/Homepage');
     }
