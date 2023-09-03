@@ -30,7 +30,7 @@ const handleLoginAttempt = async (req, res) => {
             if (err)
             return next(err)
         });
-        res.redirect('../Homepage');
+        res.redirect('/Homepage');
     }
 }
 

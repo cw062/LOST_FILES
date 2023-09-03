@@ -15,8 +15,10 @@ const { insertPlaylistIntoDB, updateFadeDb } = require('../database/access-datab
 const renderHomepage = async (req, res) => {
     if (req.session.isLoggedIn)
         res.render('Homepage');
-    else 
+    else {
+        console.log("ere");
         res.redirect('/Login');
+    }
 }
 
 const addTrack = async (req, res) => {
