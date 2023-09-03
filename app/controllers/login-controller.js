@@ -7,6 +7,7 @@ let loggedInUsers = [];
 
 
 const serveLoginPage = (req, res) => {
+    console.log("hello from serveloginpage");
     res.render('Login', {data: "No message"});
     console.log(req.session);
 };
@@ -14,7 +15,7 @@ const serveLoginPage = (req, res) => {
 
 const handleLoginAttempt = async (req, res) => {
     let dbrow = await checkDatabaseForUsername(req.body.username);
-    
+    console.log("hello from handleloginattampt");
     if (dbrow == 0) {
         res.render('Login', {data: 'Username Incorrect Try Again'});
     }
@@ -25,12 +26,15 @@ const handleLoginAttempt = async (req, res) => {
         res.render('Login', {data: 'User Is Already Logged In on Another Device'});
     }
     else {
+        console.log("goog");
         req.session.user = dbrow[0].uid;
         req.session.save(function (err) {
             if (err)
-            return next(err)
+                return next(err)
         });
-        res.redirect('../');
+        req.session.isLoggedIn = true;
+        loggedInUsers.push(req.session.user);
+        res.redirect('/Homepage');
     }
 }
 
@@ -52,17 +56,21 @@ const initialRequest = (req, res) => {
     console.log(req.session);
     console.log(loggedInUsers);
     if(req.session.user && req.session.newUser) {
+        console.log("1");
         req.session.newUser = false;
         req.session.isLoggedIn = true;
         loggedInUsers.push(req.session.user);
         res.redirect('/Homepage');
     } else if (req.session.isLoggedIn) {
+        console.log("2");
         res.redirect('/Homepage');  
     } else if (req.session.user && !loggedInUsers.includes(req.session.user)) {
+        console.log("hello from this place");
         loggedInUsers.push(req.session.user);
         req.session.isLoggedIn = true;
         res.redirect('/Homepage');  
     } else {
+        console.log("3");
         res.redirect('/Login');
     }   
 }
