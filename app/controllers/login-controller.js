@@ -56,11 +56,13 @@ const initialRequest = (req, res) => {
     console.log(req.session);
     console.log(loggedInUsers);
     if(req.session.user && req.session.newUser) {
+        console.log("1");
         req.session.newUser = false;
         req.session.isLoggedIn = true;
         loggedInUsers.push(req.session.user);
         res.redirect('/Homepage');
     } else if (req.session.isLoggedIn) {
+        console.log("2");
         res.redirect('/Homepage');  
     } else if (req.session.user && !loggedInUsers.includes(req.session.user)) {
         console.log("hello from this place");
@@ -68,6 +70,7 @@ const initialRequest = (req, res) => {
         req.session.isLoggedIn = true;
         res.redirect('/Homepage');  
     } else {
+        console.log("3");
         res.redirect('/Login');
     }   
 }
