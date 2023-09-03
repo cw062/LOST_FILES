@@ -4,6 +4,7 @@ if (process.env.NODE_ENV != 'production') {
 
 const express = require('express');
 const app = express();
+app.set('trust proxy', 1);
 const fileupload = require('express-fileupload');
 const cors = require('cors');
 const path = require('path');
