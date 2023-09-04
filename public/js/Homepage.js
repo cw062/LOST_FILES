@@ -428,7 +428,7 @@ async function getSong(path) {
         formData.append('path', path);
         ajax.onreadystatechange = function() {
             if (ajax.readyState == 4 && ajax.status == 200) {
-              resolve(true);
+              resolve(this.response);
              }
            };
         ajax.open("POST", "/Homepage/GetSong", true);
@@ -463,14 +463,13 @@ async function loadTrack(track_index, createNextGain) {
 }
 
 function stopSource() {
-    if (isPlaying) {
+
         if(!currentAudio) {
             sourceTwo.stop();
         }
         else {
             sourceOne.stop();
         }
-    }
 }
 
 function stopPrevSource() {
@@ -487,7 +486,6 @@ function stopPrevSource() {
 let safe = true;
 async function loadSourceOne(track_index, createNextGain) {
     sourceOne = audioContext.createBufferSource();
-    isPlaying = false;
     try {
         safe = false;
         const response = await fetch('public/uploads/' + track_list[track_index].path);
@@ -506,7 +504,6 @@ async function loadSourceOne(track_index, createNextGain) {
             nextGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + getFadeLength());
         }
         playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
-        isPlaying = true;
         safe = true;
         return "loaded source one";
 
@@ -519,7 +516,6 @@ async function loadSourceOne(track_index, createNextGain) {
 
 async function loadSourceTwo(track_index, createNextGain) {
     sourceTwo = audioContext.createBufferSource();
-    isPlaying = false;
     
     try {
         safe = false;
@@ -540,7 +536,6 @@ async function loadSourceTwo(track_index, createNextGain) {
             nextGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + getFadeLength());
         }
         playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
-        isPlaying = true;
         safe = true;
         return "loaded source two";
 
@@ -680,6 +675,7 @@ async function nextTrack(resetFade) {
             }
         } else 
             await loadTrack(track_index, resetFade);
+        isPlaying = true;
     }
 
 }
@@ -699,9 +695,12 @@ async function prevTrack(resetFade) {
         stopSource();
         await preLoadTrack(track_index);
         await loadTrack(track_index, resetFade);
+        console.log("aa");
         if (!isPlaying) {
+            console.log("bb");
             audioContext.resume();
         }
+        isPlaying = true;
     }
 }
 
@@ -870,9 +869,10 @@ let handleSongClick = async function(event) {
             stopSource();
         await preLoadTrack(track_index);
         loadTrack(track_index, true);
-        if (audioContext.state === "suspended" && firstplay) {
+        if (audioContext.state === "suspended" ) {
             audioContext.resume();
         }
+        isPlaying = true;
         firstplay = true;
     }
 }
