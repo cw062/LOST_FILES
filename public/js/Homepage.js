@@ -487,7 +487,6 @@ let safe = true;
 async function loadSourceOne(track_index, createNextGain) {
     sourceOne = audioContext.createBufferSource();
     try {
-        safe = false;
         const response = await fetch('public/uploads/' + track_list[track_index].path);
         const buffer = await response.arrayBuffer();
         const decodedAudioBuffer = await audioContext.decodeAudioData(buffer);
@@ -504,7 +503,6 @@ async function loadSourceOne(track_index, createNextGain) {
             nextGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + getFadeLength());
         }
         playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
-        safe = true;
         return "loaded source one";
 
     } catch (error) {
@@ -518,7 +516,6 @@ async function loadSourceTwo(track_index, createNextGain) {
     sourceTwo = audioContext.createBufferSource();
     
     try {
-        safe = false;
         const response = await fetch('public/uploads/' + track_list[track_index].path);
         const buffer = await response.arrayBuffer();
         const decodedAudioBuffer = await audioContext.decodeAudioData(buffer);
@@ -536,7 +533,6 @@ async function loadSourceTwo(track_index, createNextGain) {
             nextGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + getFadeLength());
         }
         playpause_btn.innerHTML = '<i class="fa fa-pause-circle fa-5x"></i>';
-        safe = true;
         return "loaded source two";
 
     } catch (error) {
@@ -654,6 +650,7 @@ function playpauseTrack() {
     
 async function nextTrack(resetFade) {
     if (safe && firstplay) {
+        safe = false;
         let track_index_helper = track_list[track_index].index;
         if (track_index_helper < track_list.length - 1)
             track_index_helper += 1;
@@ -676,12 +673,14 @@ async function nextTrack(resetFade) {
         } else 
             await loadTrack(track_index, resetFade);
         isPlaying = true;
+        safe = true;
     }
 
 }
     
 async function prevTrack(resetFade) {                     
     if (safe && firstplay) {
+        safe = false;
         let track_index_helper = track_list[track_index].index; 
         if (track_index_helper > 0)
             track_index_helper -= 1;
@@ -701,6 +700,7 @@ async function prevTrack(resetFade) {
             audioContext.resume();
         }
         isPlaying = true;
+        safe = true;
     }
 }
 
