@@ -35,7 +35,7 @@ const handleLoginAttempt = async (req, res) => {
                 return next(err)
         });
         req.session.isLoggedIn = true;
-        setInterval(removeUserFromLoggedInUsers(req.session.user), TWO_HOURS)
+        setInterval(removeUserFromLoggedInUsers, TWO_HOURS, req.session.user);
         loggedInUsers.push(req.session.user);
         res.redirect('/Homepage');
     }
@@ -63,7 +63,7 @@ const initialRequest = (req, res) => {
         req.session.newUser = false;
         req.session.isLoggedIn = true;
         loggedInUsers.push(req.session.user);
-        setInterval(removeUserFromLoggedInUsers(req.session.user), TWO_HOURS)
+        setInterval(removeUserFromLoggedInUsers, TWO_HOURS, req.session.user);
         res.redirect('/Homepage');
     } else if (req.session.isLoggedIn) {
         console.log("2");
@@ -72,7 +72,7 @@ const initialRequest = (req, res) => {
         console.log("hello from this place");
         loggedInUsers.push(req.session.user);
         req.session.isLoggedIn = true;
-        setInterval(removeUserFromLoggedInUsers(req.session.user), TWO_HOURS)
+        setInterval(removeUserFromLoggedInUsers, TWO_HOURS, req.sessiom.user)
         res.redirect('/Homepage');  
     } else {
         console.log("3");

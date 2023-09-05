@@ -16,7 +16,7 @@ const handleSignup = async (req, res) => {
       createLocalFolder(req.session.user);
       res.redirect('../');
     } else {
-      res.render('Signup', {data: 'Username Already Taken'});
+      res.render('SignUp', {data: 'Username Already Taken'});
     }
 }
 

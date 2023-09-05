@@ -11,11 +11,14 @@ const { uploadS3,
         writeSongToTempStorage,
         deleteSongFromTempStorage } = require('../services/homepage-service');
 const { insertPlaylistIntoDB, updateFadeDb } = require('../database/access-database'); 
+const { createLocalFolder } = require('../services/signup-services');
 
 const renderHomepage = async (req, res) => {
     console.log("hello from render homepage");
-    if (req.session.isLoggedIn)
+    if (req.session.isLoggedIn) {
         res.render('Homepage');
+        createLocalFolder(req.session.user);
+    }
     else {
         console.log("ere");
         res.redirect('/Login');
