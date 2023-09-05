@@ -4,6 +4,8 @@ const { checkDatabaseForUsername } = require('../database/access-database');
 
 const iterations = 10000;
 let loggedInUsers = [];
+const TWO_HOURS = 1000 * 60 * 60 * 2;
+
 
 
 const serveLoginPage = (req, res) => {
@@ -33,6 +35,7 @@ const handleLoginAttempt = async (req, res) => {
                 return next(err)
         });
         req.session.isLoggedIn = true;
+        setInterval(removeUserFromLoggedInUsers(req.session.user), TWO_HOURS)
         loggedInUsers.push(req.session.user);
         res.redirect('/Homepage');
     }
@@ -60,6 +63,7 @@ const initialRequest = (req, res) => {
         req.session.newUser = false;
         req.session.isLoggedIn = true;
         loggedInUsers.push(req.session.user);
+        setInterval(removeUserFromLoggedInUsers(req.session.user), TWO_HOURS)
         res.redirect('/Homepage');
     } else if (req.session.isLoggedIn) {
         console.log("2");
@@ -68,11 +72,17 @@ const initialRequest = (req, res) => {
         console.log("hello from this place");
         loggedInUsers.push(req.session.user);
         req.session.isLoggedIn = true;
+        setInterval(removeUserFromLoggedInUsers(req.session.user), TWO_HOURS)
         res.redirect('/Homepage');  
     } else {
         console.log("3");
         res.redirect('/Login');
     }   
+}
+
+function removeUserFromLoggedInUsers(id) {
+    if (loggedInUsers.includes(id))
+        loggedInUsers.splice(loggedInUsers.indexOf(id), 1);
 }
 
 
