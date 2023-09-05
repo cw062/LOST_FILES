@@ -212,7 +212,9 @@ edit_list.addEventListener("drop", async  (event) => {
 });
 
 inputElement.addEventListener("change", (e) => {
+    console.log("top");
     if (inputElement.files[0].type == 'audio/wav' || inputElement.files[0].type == 'audio/mpeg') {
+        console.log("jaun");
         if (inputElement.files.length) {
             updateThumbnail(dropZoneElement, inputElement.files[0]);
         }
@@ -966,6 +968,9 @@ function createSettingsFields(index) {          //this function is huge
         fadeInput.type = "number";
         fadeInput.className = "fadeInput" + songobj.id;
         fadeInput.value = fl;
+        fadeInput.setAttribute("min", "0");
+        fadeInput.setAttribute("max", "30");
+        fadeInput.setAttribute("onpaste", "return false");
         const tsInputMin = document.createElement('input');
         tsInputMin.type = "text";
         tsInputMin.classList ="tsmin";
@@ -1175,8 +1180,6 @@ function deletePlaylistHelper(index) {
         if (index === currentPlaylist) {
             currentPlaylist = 0;
             track_list = datajson[0].data;
-            //curr_track.pause();
-            //other_track.pause();
         }
         console.log(index);
         console.log(datajson.length);
@@ -1206,10 +1209,10 @@ function formatNumber(x) {
         return Number(x);
     } else {
         if (x[0] == '0') {
-        return Number(x[1]);
+            return Number(x[1]);
         }
         else
-        return Number(x);
+            return Number(x);
     }
 }
 
@@ -1231,6 +1234,7 @@ function computeLength(file) {
         let objectURL = URL.createObjectURL(file);
         let mySound = new Audio();
         mySound.src = objectURL;
+        mySound.load();
         mySound.addEventListener(
         "canplaythrough",
         () => {
