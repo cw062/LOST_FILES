@@ -16,8 +16,8 @@ const { createLocalFolder } = require('../services/signup-services');
 const renderHomepage = async (req, res) => {
     console.log("hello from render homepage");
     if (req.session.isLoggedIn) {
-        res.render('Homepage');
         createLocalFolder(req.session.user);
+        res.render('Homepage');
     }
     else {
         console.log("ere");
