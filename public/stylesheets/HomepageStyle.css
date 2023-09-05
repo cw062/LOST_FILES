@@ -263,6 +263,8 @@ input[type="range"]::-ms-fill-upper {
     cursor: pointer;
     transition-duration: 500ms;
     transition-property: transform;
+    width: 50%;
+    height: 50%;
   }
 
   .button-vertical-line {

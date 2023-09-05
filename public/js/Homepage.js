@@ -56,7 +56,6 @@ let faderLength = 5;
 let fading = false;
 let fadingTrackTe = 0;
 let updateTimer;
-let iWindow = null;
 let viewPlaylistIndex = 0;
 let add_button_clicked = false;
 let assignFadingTrack = true;
