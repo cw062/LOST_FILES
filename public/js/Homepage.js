@@ -56,7 +56,6 @@ let faderLength = 5;
 let fading = false;
 let fadingTrackTe = 0;
 let updateTimer;
-let iWindow = null;
 let viewPlaylistIndex = 0;
 let add_button_clicked = false;
 let assignFadingTrack = true;
@@ -70,6 +69,8 @@ let sourceTwo = audioContext.createBufferSource();
 let sourceTime = 0;
 let seekedToEnd = false;
 let firstplay = false;
+let flag = false;
+let otherflag = true;
 
 
 
@@ -212,9 +213,7 @@ edit_list.addEventListener("drop", async  (event) => {
 });
 
 inputElement.addEventListener("change", (e) => {
-    console.log("top");
     if (inputElement.files[0].type == 'audio/wav' || inputElement.files[0].type == 'audio/mpeg') {
-        console.log("jaun");
         if (inputElement.files.length) {
             updateThumbnail(dropZoneElement, inputElement.files[0]);
         }
@@ -281,7 +280,6 @@ async function setup() {
     await loadData();
     if(datajson.length != 0)
         handleListClick(0);
-    console.log(datajson);
 }
 
 async function addTracksData() {
@@ -446,21 +444,20 @@ async function loadTrack(track_index, createNextGain) {
     clearInterval(updateTimer);
     resetValues();
     sourceTime = track_list[track_index].ts;
-    console.log(track_list[track_index].fade);
-    setFadeLength(track_list[track_index].fade);
+    
     let x;
     if (currentAudio) {
-        x = await loadSourceOne(track_index, createNextGain);
+        await loadSourceOne(track_index, createNextGain);
     } else {
-        x = await loadSourceTwo(track_index, createNextGain);
+        await loadSourceTwo(track_index, createNextGain);
     }
-    console.log(x);
     track_name.textContent = track_list[track_index].name;
     track_artist.textContent = track_list[track_index].artist;
     now_playing.textContent = datajson[currentPlaylist].name;
     
     updateTimer = setInterval(handleTime, 1000);    
     assignFadingTrack = true;
+    setFadeLength(track_list[track_index].fade);
     return x;
 }
 
@@ -480,7 +477,6 @@ function stopPrevSource() {
         sourceTwo.disconnect();
     }
     else {
-        console.log("called correct one");
         sourceOne.stop();
         sourceOne.disconnect();
     }
@@ -524,7 +520,6 @@ async function loadSourceTwo(track_index, createNextGain) {
         sourceTwo.buffer = decodedAudioBuffer;
 
         // Connect and start playback
-        console.log("getsourceTwo");
         sourceTwo.connect(audioContext.destination);
         sourceTwo.start(0, track_list[track_index].ts);
         if (!createNextGain) {
@@ -545,7 +540,6 @@ async function loadSourceTwo(track_index, createNextGain) {
 
 async function createGainNodes() {
     const currentGain = audioContext.createGain();
-    console.log(currentAudio);
     if (currentAudio) {
         sourceOne.connect(currentGain);
     } else {
@@ -555,26 +549,16 @@ async function createGainNodes() {
     currentGain.gain.value = 0;
     currentAudio = !currentAudio;
     await nextTrack(false);
-    //console.log(x);
-    //console.log(nextGain.gain.value);
-    //nextGain.gain.value = 0;
-    //nextGain.gain.linearRampToValueAtTime(-1, audioContext.currentTime + 1);
-    //console.log(nextGain.gain.value);
-    //nextGain.gain.setValueAtTime(-1, audioContext.currentTime); //trying to get this to start the fading track on mute
     currentGain.gain.linearRampToValueAtTime(-1, audioContext.currentTime + getFadeLength());
 }
 
-let flag = false;
-let otherflag = true;
 async function handleTime() {
     if (isPlaying && !seekedToEnd) {
         if (sourceTime - track_list[track_index].ts > getFadeLength() && fading) {
-            console.log("called");
             stopPrevSource();
             fading = false;
         }
         seekUpdate(); 
-        console.log(otherflag);
         if (sourceTime >= track_list[track_index].te - getFadeLength() - 10 && otherflag) {
             await preLoadTrack(getNextTrack());
             otherflag = false;
@@ -607,7 +591,6 @@ function getNextTrack() {
 }
 function seekUpdate() {  
     let seekPosition = 0;
-    console.log(sourceTime);
     const displayTime = sourceTime - track_list[track_index].ts
     if (!isNaN(track_list[track_index].te)) {
         seekPosition = Number(displayTime * (100 /  (track_list[track_index].te - track_list[track_index].ts)));
@@ -660,11 +643,9 @@ async function nextTrack(resetFade) {
         
         track_index = track_id_finder(track_index_helper);
         if (resetFade) {
-            console.log("in resetfade");
             fading = false;
             await preLoadTrack(track_index);
             if (isPlaying) {
-                console.log("made it");
                 stopSource();
                 await loadTrack(track_index, resetFade);
             } else {
@@ -696,9 +677,7 @@ async function prevTrack(resetFade) {
         stopSource();
         await preLoadTrack(track_index);
         await loadTrack(track_index, resetFade);
-        console.log("aa");
         if (!isPlaying) {
-            console.log("bb");
             audioContext.resume();
         }
         isPlaying = true;
@@ -710,7 +689,6 @@ async function prevTrack(resetFade) {
 function seekTo() {
     seekedToEnd = true;
     let seekto = track_list[track_index].ts + (track_list[track_index].te - track_list[track_index].ts) * (seek_slider.value / 100);  
-    console.log(seekto + "seekto");
     seekto -= 2;
     if (seekto < 0)
         seekto = 0;
@@ -727,7 +705,6 @@ function seekTo() {
             sourceOne.start(0, seekto);
             sourceTime = parseInt(seekto);
         } else {
-            console.log("in sourcetwo seekto");
             sourceTwo.stop();
             const buf = sourceTwo.buffer;
             sourceTwo.disconnect();
@@ -884,7 +861,6 @@ function displaySongs(index) {
         edit_list.removeChild(edit_list.lastChild);
         playlistData.removeChild(playlistData.lastChild);
     }
-    console.log(datajson[index]);
     if (datajson[index].data != 0) {
         let displayingList = datajson[index].data;
         for (let i = 0; i < displayingList.length; i++) {
@@ -1042,8 +1018,6 @@ function createSettingsFields(index) {          //this function is huge
         const regex = new RegExp("^[0-9]*$");
 
         deleteIcon.addEventListener("click", (event) => {       
-           // console.log(track_list[track_index].id);
-           // console.log(event.target.id.substring(12));
             if (track_list != 0 && track_list[track_index].id == event.target.id.substring(12)) {
                 alert("Cannot delete song that is currently playing!");
             } else {
@@ -1058,6 +1032,9 @@ function createSettingsFields(index) {          //this function is huge
         });
 
         fadeInput.addEventListener("change", function(e) {
+            if (e.target.value === '') {
+                fadeInput.value = 0;
+            }
             sendNewFadeValue(e.target.className.substring(9), fadeInput.value);
         })
         
@@ -1094,7 +1071,7 @@ function createSettingsFields(index) {          //this function is huge
         tsInputSec.addEventListener('focusout', function(e) {
             let start = convertToSeconds(formatNumber(tsInputMin.value), formatNumber(tsInputSec.value));
             let end = convertToSeconds(formatNumber(teInputMin.value), formatNumber(teInputSec.value));
-            if (start + songonj.fade >= end || formatNumber(tsInputSec.value) > 59) {
+            if (start + songobj.fade >= end || formatNumber(tsInputSec.value) > 59) {
                 tsInputMin.value = "00";
                 tsInputSec.value = "00";
             }
@@ -1172,7 +1149,7 @@ function deletePlaylistHelper(index) {
         }
     }
     datajson = newArray;
-    viewPlaylistIndex = 0; //this needs work
+    viewPlaylistIndex = 0;
     playlist_list.removeChild(document.querySelector(".playlist-list-item" + index));
     settings_title.textContent = "";
     if(datajson != 0) {
@@ -1181,8 +1158,6 @@ function deletePlaylistHelper(index) {
             currentPlaylist = 0;
             track_list = datajson[0].data;
         }
-        console.log(index);
-        console.log(datajson.length);
         for (let i = index + 1; i < datajson.length+1; i++) {
             let num = i - 1;
             let element = document.querySelector(".playlist-list-item" + i);

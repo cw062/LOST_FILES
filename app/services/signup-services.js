@@ -22,8 +22,6 @@ const createLocalFolder = (id) => {
     fs.mkdir(process.cwd() + '/public/uploads/' + id, (error) => {
         if (error) {
           console.log(error);
-        } else {
-          console.log("New Directory created successfully !!");
         }
       });
 };

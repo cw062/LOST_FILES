@@ -14,13 +14,11 @@ const { insertPlaylistIntoDB, updateFadeDb } = require('../database/access-datab
 const { createLocalFolder } = require('../services/signup-services');
 
 const renderHomepage = async (req, res) => {
-    console.log("hello from render homepage");
     if (req.session.isLoggedIn) {
-        res.render('Homepage');
         createLocalFolder(req.session.user);
+        res.render('Homepage');
     }
     else {
-        console.log("ere");
         res.redirect('/Login');
     }
 }
@@ -58,15 +56,12 @@ const updateTimeValues = (req, res) => {
 const getSong = async (req, res) => {
     const newPath = JSON.parse(JSON.stringify(req.body)).path;
     let response;
-    console.log(req.session.path);
-    console.log(newPath);
     if (newPath != req.session.path) {
         if(req.session.path != undefined)
             deleteSongFromTempStorage(req.session.path);
         req.session.path = newPath;
         const song = await downloadS3(newPath);
         response = await writeSongToTempStorage(JSON.parse(JSON.stringify(req.body)).path, song.Body);
-        console.log(response);
     }
     res.json({response: response});
 }
