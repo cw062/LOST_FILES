@@ -1,5 +1,10 @@
 const express = require('express');
 const fs = require('fs');
+const AudioContext = require("web-audio-api").AudioContext;
+const MusicTempo = require("music-tempo");
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegPath);
 const { S3Client, GetObjectCommand, PutObjectCommand, ListObjectsCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const s3Client = new S3Client({ region: process.env.S3_REGION });
 const bucket = process.env.S3_BUCKET_NAME;
@@ -19,6 +24,7 @@ const { insertTrackData,
         updateOrderInDB,
         updateSongIndex,
         updateTimeValues } = require('../database/access-database');
+const TRIMMED_FILE = "trimmed-output.mp3";
 
 const uploadS3 =  async (file, name) => {
     const uploadParams = {
@@ -172,15 +178,66 @@ const deleteSongFromTempStorage = (path) => {
 
 function formatNumber(x) {
     if (x.length == 1) {
-      return Number(x);
-    } else {
-      if (x[0] == '0') {
-        return Number(x[1]);
-      }
-      else
         return Number(x);
+    } else {
+        if (x[0] == '0') 
+            return Number(x[1]);
+        else
+            return Number(x);
     }
 }
+
+async function trim(inputFile) {
+    return new Promise((resolve, reject) => {
+    ffmpeg(inputFile)
+      .inputOptions(['-t 10',
+                    '-ss 30']) // 2s
+      .output(TRIMMED_FILE)
+      .on('end', async () => {
+        resolve();
+      })
+      .on('error', (err) => {
+        console.error('Error:', err);
+        reject(err);
+      })
+      .run()
+    });
+  }
+  const calcTempo = async function (buffer) {
+    console.log(buffer);
+      let audioData = [];
+    // Take the average of the two channels
+    if (buffer.numberOfChannels == 2) {
+      const channel1Data = buffer.getChannelData(0);
+      const channel2Data = buffer.getChannelData(1);
+      const length = channel1Data.length;
+      for (let i = 0; i < length; i++) {
+        audioData[i] = (channel1Data[i] + channel2Data[i]) / 2;
+      }
+    } else {
+      audioData = buffer.getChannelData(0);
+    }
+    const mt = new MusicTempo(audioData);
+   
+    return mt.tempo;
+  }
+   
+  async function runBPM() {
+    return new Promise((resolve, reject) => {
+        const data = fs.readFileSync(TRIMMED_FILE);
+        const context = new AudioContext();
+        context.decodeAudioData(data, async function(decodeData) {
+            resolve(await calcTempo(decodeData));
+        });
+    });
+  }
+
+async function getBPM(inputFile) {
+    await trim(inputFile);
+    return await runBPM();
+}
+
+
 
 
 

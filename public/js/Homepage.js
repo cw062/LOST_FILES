@@ -86,16 +86,6 @@ window.addEventListener("DOMContentLoaded", function () {
     setup();
 });
 
-function createPlaylistDisplay() {
-    datajson.forEach((element, index) => {
-        let li = document.createElement('li');
-        li.className = "playlist-list-item" + index;
-        li.onclick = function () { handleListClick(index); };
-        li.textContent = element.name;
-        playlist_list.appendChild(li);
-    });
-}
-
 deletePlaylistButton.addEventListener("click", () => {
     deletePlaylist();
 });
@@ -418,7 +408,16 @@ function changeView(nextView, prevView) {
     } else {
         list_container.style.display = 'none';
     }
-    
+}
+
+function createPlaylistDisplay() {
+    datajson.forEach((element, index) => {
+        let li = document.createElement('li');
+        li.className = "playlist-list-item" + index;
+        li.onclick = function () { handleListClick(index); };
+        li.textContent = element.name;
+        playlist_list.appendChild(li);
+    });
 }
 
 async function getSong(path) {
