@@ -189,7 +189,7 @@ function formatNumber(x) {
 
 async function trim(inputFile) {
     return new Promise((resolve, reject) => {
-    ffmpeg(inputFile)
+    ffmpeg('public/uploads/'+inputFile)
       .inputOptions(['-t 10',
                     '-ss 30']) // 2s
       .output(TRIMMED_FILE)
@@ -253,5 +253,6 @@ module.exports = {
     getDataFromDbHelper,
     insertTrackIntoDbHelper,
     writeSongToTempStorage,
-    deleteSongFromTempStorage
+    deleteSongFromTempStorage,
+    getBPM
 };

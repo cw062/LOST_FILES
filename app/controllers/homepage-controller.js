@@ -9,7 +9,8 @@ const { uploadS3,
         getDataFromDbHelper,
         insertTrackIntoDbHelper, 
         writeSongToTempStorage,
-        deleteSongFromTempStorage } = require('../services/homepage-service');
+        deleteSongFromTempStorage, 
+        getBPM} = require('../services/homepage-service');
 const { insertPlaylistIntoDB, updateFadeDb } = require('../database/access-database'); 
 const { createLocalFolder } = require('../services/signup-services');
 
@@ -34,6 +35,11 @@ const addTrack = async (req, res) => {
     };
     await uploadS3(req.files.file.data, obj.path);
     let sid = await insertTrackIntoDbHelper(obj, req.session.user); //inserts track into database after submitting add_tracks 
+    console.log(req.files.file.data);
+    await writeSongToTempStorage('uploadFile.mp3', req.files.file.data);
+    const bpm = await getBPM('uploadFile.mp3');
+    console.log(bpm);
+    
     
     res.json({pathFromServer: obj.path, songid: sid});  
 }
@@ -62,6 +68,7 @@ const getSong = async (req, res) => {
         req.session.path = newPath;
         const song = await downloadS3(newPath);
         response = await writeSongToTempStorage(JSON.parse(JSON.stringify(req.body)).path, song.Body);
+
     }
     res.json({response: response});
 }
