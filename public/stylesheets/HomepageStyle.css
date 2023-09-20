@@ -12,6 +12,14 @@ body {
 
 }
 
+@media only screen
+and (min-device-width: 300px)
+and (max-device-width: 500px) {
+  body {
+    height: 85vh;
+  }
+}
+
 .top-grid-left {
   display: grid;
   grid-template-rows: 1fr 6fr 1fr;
@@ -120,6 +128,16 @@ body {
   align-items: center;
   justify-content: center;
 } 
+@media only screen
+and (min-device-width: 300px)
+and (max-device-width: 500px) {
+  .slider_container {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    
+
+  }
+}
   
   Modify the appearance of the slider 
 .seek_slider {
@@ -340,8 +358,15 @@ input[type="range"]::-ms-fill-upper {
   direction: rtl;
   border: 2px solid #F072A9;
   scrollbar-color: #F072A9 black;
-  scrollbar-width: none;
-  
+  scrollbar-width: none;  
+}
+
+@media only screen
+and (min-device-width: 300px)
+and (max-device-width: 500px) {
+  .playlist-songs-container {
+    font-size: 30px;
+  }
 }
 .playlist-songs-container::-webkit-scrollbar {
   display: none;
@@ -427,6 +452,15 @@ input[type="range"]::-ms-fill-upper {
   transition-duration: 500ms;
   transition-property: top;
 }
+
+@media only screen
+and (min-device-width: 300px)
+and (max-device-width: 500px) {
+  .playlist-list-container {
+    font-size: 30px;
+  }
+}
+
 
 .playlist-list-container::-webkit-scrollbar {
   display: none;

@@ -73,6 +73,7 @@ and (max-device-width: 500px) {
     outline: none;
     transition-duration: 750ms;
     transition-property: border;
+    font-size: 1em;
 }
 .pass {
     position: relative;
@@ -88,6 +89,7 @@ and (max-device-width: 500px) {
     outline: none;
     transition-duration: 750ms;
     transition-property: border;
+    font-size: 1em;
 }
 
 .password-label {
